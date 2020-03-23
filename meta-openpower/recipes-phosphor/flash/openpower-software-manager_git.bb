@@ -29,6 +29,7 @@ EXTRA_OECONF += " \
 
 DEPENDS += " \
         autoconf-archive-native \
+        openssl \
         phosphor-dbus-interfaces \
         phosphor-logging \
         sdbusplus \
@@ -43,7 +44,7 @@ S = "${WORKDIR}/git"
 
 SRC_URI += "git://github.com/openbmc/openpower-pnor-code-mgmt"
 
-SRCREV = "59d5657643c1cd24de579867abff1dcfa54d3803"
+SRCREV = "7f1967d56b89ffae5ea8e3313c000beb79cb63cd"
 
 DBUS_SERVICE_${PN} += "org.open_power.Software.Host.Updater.service"
 

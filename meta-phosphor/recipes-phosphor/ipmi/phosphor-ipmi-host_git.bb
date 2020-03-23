@@ -23,7 +23,7 @@ def ipmi_whitelists(d):
 
 DEPENDS += "autoconf-archive-native"
 DEPENDS += "nlohmann-json"
-DEPENDS += "obmc-targets"
+DEPENDS += "phosphor-state-manager"
 DEPENDS += "${@ipmi_whitelists(d)}"
 DEPENDS += "phosphor-dbus-interfaces"
 DEPENDS += "phosphor-logging"
@@ -35,6 +35,9 @@ DEPENDS += "virtual/phosphor-ipmi-fru-merge-config"
 DEPENDS += "virtual/phosphor-ipmi-sensor-inventory"
 DEPENDS += "boost"
 DEPENDS += "sdeventplus"
+DEPENDS += "${PYTHON_PN}-native"
+DEPENDS += "${PYTHON_PN}-pyyaml-native"
+DEPENDS += "${PYTHON_PN}-mako-native"
 
 VIRTUAL-RUNTIME_ipmi-config ?= "phosphor-ipmi-config"
 

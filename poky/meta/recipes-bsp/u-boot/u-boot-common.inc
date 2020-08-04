@@ -12,9 +12,11 @@ PE = "1"
 
 # We use the revision in order to avoid having to fetch it from the
 # repo during parse
-SRCREV = "61ba1244b548463dbfb3c5285b6b22e7c772c5bd"
+SRCREV = "2f5fbb5b39f7b67044dda5c35e4a4b31685a3109"
 
 SRC_URI = "git://git.denx.de/u-boot.git \
           "
 
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
+do_configure[cleandirs] = "${B}"

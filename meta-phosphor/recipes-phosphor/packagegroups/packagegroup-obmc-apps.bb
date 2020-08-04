@@ -50,7 +50,6 @@ RDEPENDS_${PN}-extras = " \
 
 SUMMARY_${PN}-extrasdev = "Development features"
 RDEPENDS_${PN}-extrasdev = " \
-        rest-dbus \
         "
 
 SUMMARY_${PN}-extrasdevtools = "Development tools"
@@ -106,8 +105,11 @@ RDEPENDS_${PN}-sensors = " \
 ${PN}-software-extras = ""
 
 ${PN}-software-extras_df-obmc-ubi-fs = " \
-        phosphor-image-signing \
         phosphor-software-manager-updater-ubi \
+        "
+
+${PN}-software-extras_df-phosphor-mmc = " \
+        phosphor-software-manager-updater-mmc \
         "
 
 SUMMARY_${PN}-software = "Software applications"
@@ -128,7 +130,7 @@ RDEPENDS_${PN}-debug-collector = " \
 
 SUMMARY_${PN}-settings = "Settings applications"
 RDEPENDS_${PN}-settings = " \
-        ${VIRTUAL-RUNTIME_obmc-settings-mgmt} \
+        phosphor-settings-manager \
         "
 
 SUMMARY_${PN}-network = "BMC Network Manager"

@@ -47,7 +47,7 @@ def find_git_folder(d, sourcedir):
     return None
 
 def get_source_date_epoch_from_git(d, sourcedir):
-    if not "git://" in d.getVar('SRC_URI'):
+    if not "git://" in d.getVar('SRC_URI') and not "gitsm://" in d.getVar('SRC_URI'):
         return None
 
     gitpath = find_git_folder(d, sourcedir)
@@ -56,13 +56,13 @@ def get_source_date_epoch_from_git(d, sourcedir):
 
     # Check that the repository has a valid HEAD; it may not if subdir is used
     # in SRC_URI
-    p = subprocess.run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=gitpath)
+    p = subprocess.run(['git', '--git-dir', gitpath, 'rev-parse', 'HEAD'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if p.returncode != 0:
         bb.debug(1, "%s does not have a valid HEAD: %s" % (gitpath, p.stdout.decode('utf-8')))
         return None
 
     bb.debug(1, "git repository: %s" % gitpath)
-    p = subprocess.run(['git','log','-1','--pretty=%ct'], check=True, stdout=subprocess.PIPE, cwd=gitpath)
+    p = subprocess.run(['git', '--git-dir', gitpath, 'log', '-1', '--pretty=%ct'], check=True, stdout=subprocess.PIPE)
     return int(p.stdout.decode('utf-8'))
 
 def get_source_date_epoch_from_youngest_file(d, sourcedir):
@@ -90,8 +90,12 @@ def get_source_date_epoch_from_youngest_file(d, sourcedir):
         bb.debug(1, "Newest file found: %s" % newest_file)
     return source_date_epoch
 
-def fixed_source_date_epoch():
+def fixed_source_date_epoch(d):
     bb.debug(1, "No tarball or git repo found to determine SOURCE_DATE_EPOCH")
+    source_date_epoch = d.getVar('SOURCE_DATE_EPOCH_FALLBACK')
+    if source_date_epoch:
+        bb.debug(1, "Using SOURCE_DATE_EPOCH_FALLBACK")
+        return int(source_date_epoch)
     return 0
 
 def get_source_date_epoch(d, sourcedir):
@@ -99,6 +103,6 @@ def get_source_date_epoch(d, sourcedir):
         get_source_date_epoch_from_git(d, sourcedir) or
         get_source_date_epoch_from_known_files(d, sourcedir) or
         get_source_date_epoch_from_youngest_file(d, sourcedir) or
-        fixed_source_date_epoch()       # Last resort
+        fixed_source_date_epoch(d)       # Last resort
     )
 

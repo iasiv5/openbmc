@@ -13,4 +13,4 @@ DEPENDS += "sdbusplus"
 
 S = "${WORKDIR}/git"
 SRC_URI = "git://github.com/YADRO-KNS/obmc-yadro-lssensors.git"
-SRCREV  = "4f55f0e21c5000d7a9e9c49cc2ad16bc6ba6463e"
+SRCREV  = "39c37655bb777f1876cdddc4b624b38d75105b8e"

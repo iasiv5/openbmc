@@ -51,11 +51,11 @@ class KickStartParser(ArgumentParser):
     def error(self, message):
         raise ArgumentError(None, message)
 
-def sizetype(default):
+def sizetype(default, size_in_bytes=False):
     def f(arg):
         """
         Custom type for ArgumentParser
-        Converts size string in <num>[K|k|M|G] format into the integer value
+        Converts size string in <num>[S|s|K|k|M|G] format into the integer value
         """
         try:
             suffix = default
@@ -67,12 +67,20 @@ def sizetype(default):
             except ValueError:
                 raise ArgumentTypeError("Invalid size: %r" % arg)
 
+
+        if size_in_bytes:
+            if suffix == 's' or suffix == 'S':
+                return size * 512
+            mult = 1024
+        else:
+            mult = 1
+
         if suffix == "k" or suffix == "K":
-            return size
+            return size * mult
         if suffix == "M":
-            return size * 1024
+            return size * mult * 1024
         if suffix == "G":
-            return size * 1024 * 1024
+            return size * mult * 1024 * 1024
 
         raise ArgumentTypeError("Invalid size: %r" % arg)
     return f
@@ -141,7 +149,7 @@ class KickStart():
         part.add_argument('mountpoint', nargs='?')
         part.add_argument('--active', action='store_true')
         part.add_argument('--align', type=int)
-        part.add_argument('--offset', type=sizetype("K"))
+        part.add_argument('--offset', type=sizetype("K", True))
         part.add_argument('--exclude-path', nargs='+')
         part.add_argument('--include-path', nargs='+', action='append')
         part.add_argument('--change-directory')
@@ -149,7 +157,8 @@ class KickStart():
         part.add_argument('--fsoptions', dest='fsopts')
         part.add_argument('--fstype', default='vfat',
                           choices=('ext2', 'ext3', 'ext4', 'btrfs',
-                                   'squashfs', 'vfat', 'msdos', 'swap'))
+                                   'squashfs', 'vfat', 'msdos', 'erofs',
+                                   'swap'))
         part.add_argument('--mkfs-extraopts', default='')
         part.add_argument('--label')
         part.add_argument('--use-label', action='store_true')
@@ -221,6 +230,27 @@ class KickStart():
                                 err = "%s:%d: SquashFS does not support LABEL" \
                                        % (confpath, lineno)
                                 raise KickStartError(err)
+                        # erofs does not support filesystem labels
+                        if parsed.fstype == 'erofs' and parsed.label:
+                            err = "%s:%d: erofs does not support LABEL" % (confpath, lineno)
+                            raise KickStartError(err)
+                        if parsed.fstype == 'msdos' or parsed.fstype == 'vfat':
+                            if parsed.fsuuid:
+                                if parsed.fsuuid.upper().startswith('0X'):
+                                    if len(parsed.fsuuid) > 10:
+                                        err = "%s:%d: fsuuid %s given in wks kickstart file " \
+                                              "exceeds the length limit for %s filesystem. " \
+                                              "It should be in the form of a 32 bit hexadecimal" \
+                                              "number (for example, 0xABCD1234)." \
+                                              % (confpath, lineno, parsed.fsuuid, parsed.fstype)
+                                        raise KickStartError(err)
+                                elif len(parsed.fsuuid) > 8:
+                                    err = "%s:%d: fsuuid %s given in wks kickstart file " \
+                                          "exceeds the length limit for %s filesystem. " \
+                                          "It should be in the form of a 32 bit hexadecimal" \
+                                          "number (for example, 0xABCD1234)." \
+                                          % (confpath, lineno, parsed.fsuuid, parsed.fstype)
+                                    raise KickStartError(err)
                         if parsed.use_label and not parsed.label:
                             err = "%s:%d: Must set the label with --label" \
                                   % (confpath, lineno)

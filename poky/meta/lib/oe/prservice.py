@@ -3,15 +3,11 @@
 #
 
 def prserv_make_conn(d, check = False):
-    # Otherwise this fails when called from recipes which e.g. inherit python3native (which sets _PYTHON_SYSCONFIGDATA_NAME) with:
-    # No module named '_sysconfigdata'
-    if '_PYTHON_SYSCONFIGDATA_NAME' in os.environ:
-        del os.environ['_PYTHON_SYSCONFIGDATA_NAME']
     import prserv.serv
     host_params = list([_f for _f in (d.getVar("PRSERV_HOST") or '').split(':') if _f])
     try:
         conn = None
-        conn = prserv.serv.PRServerConnection(host_params[0], int(host_params[1]))
+        conn = prserv.serv.connect(host_params[0], int(host_params[1]))
         if check:
             if not conn.ping():
                 raise Exception('service not available')

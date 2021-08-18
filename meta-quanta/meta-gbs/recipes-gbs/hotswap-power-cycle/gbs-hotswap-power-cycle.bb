@@ -7,15 +7,21 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/Apache-2.0;md5
 inherit systemd
 
 DEPENDS += "systemd"
-RDEPENDS_${PN} += "bash"
+RDEPENDS:${PN} += "bash"
+RDEPENDS:${PN} += "libgpiod-tools"
 
-SRC_URI = " file://hotswap-power-cycle.service"
+SRC_URI = " file://hotswap-power-cycle.service \
+            file://tray_powercycle.sh \
+          "
 
 do_install() {
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${WORKDIR}/hotswap-power-cycle.service ${D}${systemd_system_unitdir}
+
+    install -d ${D}${bindir}
+    install -m 0755 ${WORKDIR}/tray_powercycle.sh ${D}${bindir}
 }
 
 SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE_${PN} = "hotswap-power-cycle.service"
+SYSTEMD_SERVICE:${PN} = "hotswap-power-cycle.service"
 

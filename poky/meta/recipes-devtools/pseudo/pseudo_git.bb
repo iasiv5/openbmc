@@ -6,9 +6,9 @@ SRC_URI = "git://git.yoctoproject.org/pseudo;branch=oe-core \
            file://fallback-group \
            "
 
-SRCREV = "8efb082863ff0ceec7b7e46f9a44750e12f48039"
+SRCREV = "b988b0a6b8afd8d459bc9a2528e834f63a3d59b2"
 S = "${WORKDIR}/git"
 PV = "1.9.0+git${SRCPV}"
 
 # error: use of undeclared identifier '_STAT_VER'
-COMPATIBLE_HOST_libc-musl = 'null'
+COMPATIBLE_HOST:libc-musl = 'null'

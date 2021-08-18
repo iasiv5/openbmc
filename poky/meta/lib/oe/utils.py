@@ -193,7 +193,7 @@ def parallel_make(d, makeinst=False):
 
         return int(v)
 
-    return None
+    return ''
 
 def parallel_make_argument(d, fmt, limit=None, makeinst=False):
     """
@@ -249,8 +249,7 @@ def trim_version(version, num_parts=2):
     return trimmed
 
 def cpu_count(at_least=1):
-    import multiprocessing
-    cpus = multiprocessing.cpu_count()
+    cpus = len(os.sched_getaffinity(0))
     return max(cpus, at_least)
 
 def execute_pre_post_process(d, cmds):
@@ -537,3 +536,34 @@ class ImageQAFailed(Exception):
 def sh_quote(string):
     import shlex
     return shlex.quote(string)
+
+def directory_size(root, blocksize=4096):
+    """
+    Calculate the size of the directory, taking into account hard links,
+    rounding up every size to multiples of the blocksize.
+    """
+    def roundup(size):
+        """
+        Round the size up to the nearest multiple of the block size.
+        """
+        import math
+        return math.ceil(size / blocksize) * blocksize
+
+    def getsize(filename):
+        """
+        Get the size of the filename, not following symlinks, taking into
+        account hard links.
+        """
+        stat = os.lstat(filename)
+        if stat.st_ino not in inodes:
+            inodes.add(stat.st_ino)
+            return stat.st_size
+        else:
+            return 0
+
+    inodes = set()
+    total = 0
+    for root, dirs, files in os.walk(root):
+        total += sum(roundup(getsize(os.path.join(root, name))) for name in files)
+        total += roundup(getsize(root))
+    return total

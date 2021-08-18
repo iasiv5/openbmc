@@ -13,10 +13,14 @@ DEPENDS += " \
     openssl \
 "
 
-EXTRA_OEMESON_df-openpower = " \
-    -Dopenpower-support=true \
-"
+PACKAGECONFIG[obmc-phosphor-image] = "-Dbmc-image-type=obmc-phosphor-image,,,,,intel-platforms"
+PACKAGECONFIG[intel-platforms] = "-Dbmc-image-type=intel-platforms,,,,,obmc-phosphor-image"
+PACKAGECONFIG[reboot-guard-support] = "-Dreboot-guard-support=true,-Dreboot-guard-support=false"
+PACKAGECONFIG[openpower-support] = "-Dopenpower-support=true,-Dopenpower-support=false"
+
+PACKAGECONFIG ??= " obmc-phosphor-image reboot-guard-support "
+PACKAGECONFIG_append_df-openpower = "openpower-support"
 
 SRC_URI = "git://github.com/YADRO-KNS/obmc-yadro-fwupdate"
-SRCREV = "b922eb474447b76fb72cc615c025e3845b7c4b7e"
+SRCREV = "0e3c0714f344a2f7f289c851434955360e6f075b"
 S = "${WORKDIR}/git"

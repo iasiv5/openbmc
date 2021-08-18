@@ -96,7 +96,7 @@ def glob(args):
                 pn = os.path.basename(pkgdata_file)
                 with open(pkgdata_file, 'r') as f:
                     for line in f:
-                        if line.startswith("PKG_%s:" % pn):
+                        if line.startswith("PKG:%s:" % pn):
                             renamed = line.split(': ')[1].rstrip()
                 return renamed
 
@@ -213,7 +213,7 @@ def lookup_pkglist(pkgs, pkgdata_dir, reverse):
                 with open(pkgfile, 'r') as f:
                     for line in f:
                         fields = line.rstrip().split(': ')
-                        if fields[0] == 'PKG_%s' % pkg:
+                        if fields[0] == 'PKG:%s' % pkg:
                             mappings[pkg].append(fields[1])
                             break
     return mappings
@@ -598,6 +598,9 @@ def main():
             logger.error("Unable to find bitbake by searching parent directory of this script or PATH")
             sys.exit(1)
         logger.debug('Found bitbake path: %s' % bitbakepath)
+        if not os.environ.get('BUILDDIR', ''):
+            logger.error("This script can only be run after initialising the build environment (e.g. by using oe-init-build-env)")
+            sys.exit(1)
         tinfoil = tinfoil_init()
         try:
             args.pkgdata_dir = tinfoil.config_data.getVar('PKGDATA_DIR')

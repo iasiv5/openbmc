@@ -25,12 +25,9 @@ pe_eeprom_addr=( 50 54 )
 SERVICE_NAME="xyz.openbmc_project.Inventory.Manager"
 INTERFACE_NAME="xyz.openbmc_project.Inventory.Item"
 
-PE_PRESENT_OBJPATH=("/xyz/openbmc_project/inventory/system/chassis/gpios/pe_slot0_prsnt"
-"/xyz/openbmc_project/inventory/system/chassis/gpios/pe_slot1_prsnt")
-HSBP_PRESENT_OBJPATH="/xyz/openbmc_project/inventory/system/chassis/gpios/hsbp_cab_prsnt"
-FANBD_PRESENT_OBJPATH="/xyz/openbmc_project/inventory/system/chassis/gpios/fanbd_cab_prsnt"
-BP12V_PRESENT_OBJPATH="/xyz/openbmc_project/inventory/system/chassis/gpios/bp12v_cab_prsnt"
-SATA0_PRESENT_OBJPATH="/xyz/openbmc_project/inventory/system/chassis/gpios/sata0_prsnt"
+PE_PRESENT_OBJPATH=("/xyz/openbmc_project/inventory/system/chassis/entity/pe_slot0_prsnt"
+"/xyz/openbmc_project/inventory/system/chassis/entity/pe_slot1_prsnt")
+SATA0_PRESENT_OBJPATH="/xyz/openbmc_project/inventory/system/chassis/entity/sata0_prsnt"
 
 set_gpio_persistence() {
   reg_val=$(devmem ${WD1RCR_ADDR} 32)
@@ -66,12 +63,12 @@ get_board_sku_id() {
     | sed 's/ //g' > ~/board_sku_id.txt
 }
 
-get_hsp_board_rev_id() {
+get_hsbp_board_rev_id() {
     echo $(get_gpio_value 'HSBP_BRD_REV_ID3')\
     $(get_gpio_value 'HSBP_BRD_REV_ID2')\
     $(get_gpio_value 'HSBP_BRD_REV_ID1')\
     $(get_gpio_value 'HSBP_BRD_REV_ID0')\
-    | sed 's/ //g' > ~/hsp_board_rev_id.txt
+    | sed 's/ //g' > ~/hsbp_board_rev_id.txt
 }
 
 get_fan_board_rev_id() {
@@ -119,21 +116,29 @@ set_uart_en_low() {
 set_hdd_prsnt() {
   # On PVT need to forward SATA0_PRSNT_N to HDD_PRSNT_N
   # The signal is safe to set on DVT boards so just set universally.
+  mapper wait ${SATA0_PRESENT_OBJPATH}
   sata_prsnt_n="$(busctl get-property $SERVICE_NAME ${SATA0_PRESENT_OBJPATH} \
-                 $INTERFACE_NAME Present | awk '{print $2}')"
-  if [[ ${sata_prsnt_n} != "true" ]]; then
-    return 1
-  fi
+                 $INTERFACE_NAME Present)"
+
   # sata_prsnt_n is active low => value "true" means low
-  if [[ ${sata_prsnt_n} == "true" ]]; then
+  if [[ ${sata_prsnt_n} == "b true" ]]; then
     set_gpio_direction 'HDD_PRSNT_N' low
   else
     set_gpio_direction 'HDD_PRSNT_N' high
   fi
 }
 
-KERNEL_FIU_ID="c0000000.fiu"
+KERNEL_FIU_ID="c0000000.spi"
 KERNEL_SYSFS_FIU="/sys/bus/platform/drivers/NPCM-FIU"
+
+# the node of FIU is spi for kernel 5.10, but
+# for less than or equal kernel 5.4, the node
+# is fiu
+shopt -s nullglob
+for fiu in "$KERNEL_SYSFS_FIU"/*.fiu; do
+  KERNEL_FIU_ID="c0000000.fiu"
+  break
+done
 
 bind_host_mtd() {
   set_gpio_direction 'SPI_SW_SELECT' high
@@ -177,21 +182,15 @@ verify_host_bios() {
   unbind_host_mtd
 }
 
-reset_phy() {
-  ifconfig eth1 down
-  set_gpio_direction 'RST_BMC_PHY_N' low
-  set_gpio_direction 'RST_BMC_PHY_N' high
-  ifconfig eth1 up
-}
-
 parse_pe_fru() {
   pe_fruid=3
   for i in {1..2};
   do
+     mapper wait ${PE_PRESENT_OBJPATH[$(($i-1))]}
      pe_prsnt_n="$(busctl get-property $SERVICE_NAME ${PE_PRESENT_OBJPATH[$(($i-1))]} \
-                  $INTERFACE_NAME Present | awk '{print $2}')"
+                  $INTERFACE_NAME Present)"
 
-     if [[ ${pe_prsnt_n} != "true" ]]; then
+     if [[ ${pe_prsnt_n} == "b false" ]]; then
          pe_fruid=$(($pe_fruid+1))
          continue
      fi
@@ -222,15 +221,25 @@ parse_pe_fru() {
 }
 
 check_power_status() {
-    res0="$(busctl get-property -j xyz.openbmc_project.State.Chassis \
+    res0="$(busctl get-property -j xyz.openbmc_project.State.Chassis0 \
         /xyz/openbmc_project/state/chassis0 xyz.openbmc_project.State.Chassis \
         CurrentPowerState | jq -r '.["data"]')"
     echo $res0
 }
 
+clk_buf_bus_switch="11-0076"
+clk_buf_driver="/sys/bus/i2c/drivers/pca954x/"
+
+bind_clk_buf_switch() {
+  echo "Re-bind i2c bus 11 clk_buf_switch"
+  echo "${clk_buf_bus_switch}" > "${clk_buf_driver}"/bind
+}
+
 main() {
   get_board_rev_id
   get_board_sku_id
+  get_hsbp_board_rev_id
+  get_fan_board_rev_id
 
   check_board_ver
   if [[ "${BOARD_VER}" == "PREPVT" ]]; then
@@ -238,34 +247,6 @@ main() {
   fi
 
   check_board_sku
-
-  hsbp_prsnt="$(busctl get-property $SERVICE_NAME ${HSBP_PRESENT_OBJPATH} \
-               $INTERFACE_NAME Present | awk '{print $2}')"
-  if [[ ${hsbp_prsnt} == "true" ]]; then
-    get_hsp_board_rev_id
-    hsbp_12v_prsnt="$(busctl get-property $SERVICE_NAME ${BP12V_PRESENT_OBJPATH} \
-                     $INTERFACE_NAME Present | awk '{print $2}')"
-    if [[ ${hsbp_12v_prsnt} != "true" ]]; then
-      echo "HSBP board power cable(12V) not present !!"
-    fi
-  else
-    echo "HSBP board sideband cable not present !!"
-    echo "Stop NVMe Power/LED control Service "
-    systemctl stop xyz.openbmc_project.Control.Nvme.Power
-    systemctl stop xyz.openbmc_project.nvme.manager
-  fi
-
-  fan_prsnt="$(busctl get-property $SERVICE_NAME ${FANBD_PRESENT_OBJPATH} \
-              $INTERFACE_NAME Present | awk '{print $2}')"
-  if [[ ${fan_prsnt} == "true" ]]; then
-    get_fan_board_rev_id
-  else
-    echo "Fan board sideband cable not present !!"
-  fi
-
-  set_hdd_prsnt
-
-  reset_phy
 
   if [[ $(check_power_status) != \
        'xyz.openbmc_project.State.Chassis.PowerState.On' ]]; then
@@ -279,15 +260,19 @@ main() {
     set_gpio_persistence
 
     echo "Starting host power!" >&2
-    busctl set-property xyz.openbmc_project.State.Host \
+    busctl set-property xyz.openbmc_project.State.Host0 \
         /xyz/openbmc_project/state/host0 \
         xyz.openbmc_project.State.Host \
         RequestedHostTransition s \
         xyz.openbmc_project.State.Host.Transition.On
+
+    sleep 1
+    bind_clk_buf_switch
   else
     echo "Host is already running, doing nothing!" >&2
   fi
 
+  set_hdd_prsnt
   parse_pe_fru
 }
 

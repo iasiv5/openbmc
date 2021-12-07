@@ -6,9 +6,9 @@ DEPENDS = "libsocketcan"
 
 SRC_URI = "git://github.com/linux-can/${BPN}.git;protocol=git"
 
-SRCREV = "e9dd86fa5c4e6ecdfc34e487634a32f19e5c4d63"
+SRCREV = "3615bac17e539a06835dcb90855eae844ee18053"
 
-PV = "2021.06.0"
+PV = "2021.08.0"
 
 S = "${WORKDIR}/git"
 
@@ -45,3 +45,8 @@ ALTERNATIVE:${PN} = "candump cansend cansequence"
 ALTERNATIVE_LINK_NAME[candump] = "${bindir}/candump"
 ALTERNATIVE_LINK_NAME[cansend] = "${bindir}/cansend"
 ALTERNATIVE_LINK_NAME[cansequence] = "${bindir}/cansequence"
+
+# busybox ip fails to configure can interfaces, so we need iproute2 to do so.
+# See details in http://www.armadeus.com/wiki/index.php?title=CAN_bus_Linux_driver.
+RRECOMMENDS:${PN} += "iproute2"
+

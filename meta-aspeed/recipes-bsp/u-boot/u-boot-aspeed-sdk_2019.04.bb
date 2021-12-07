@@ -2,8 +2,7 @@ require u-boot-common-aspeed-sdk_${PV}.inc
 
 UBOOT_MAKE_TARGET ?= "DEVICE_TREE=${UBOOT_DEVICETREE}"
 
-require u-boot-aspeed.inc
-inherit socsec-sign
+require recipes-bsp/u-boot/u-boot.inc
 
 PROVIDES += "u-boot"
 DEPENDS += "bc-native dtc-native"
@@ -18,14 +17,17 @@ SOCSEC_SIGN_KEY ?= "${WORKDIR}/rsa_oem_dss_key.pem"
 SOCSEC_SIGN_ALGO ?= "RSA4096_SHA512"
 SOCSEC_SIGN_EXTRA_OPTS ?= "--stack_intersects_verification_region=false"
 
+inherit socsec-sign
+
 UBOOT_ENV_SIZE:df-phosphor-mmc = "0x10000"
 UBOOT_ENV:df-phosphor-mmc = "u-boot-env"
 UBOOT_ENV_SUFFIX:df-phosphor-mmc = "bin"
+UBOOT_ENV_TXT:df-phosphor-mmc = "u-boot-env-ast2600.txt"
 
 do_compile:append() {
     if [ -n "${UBOOT_ENV}" ]
     then
         # Generate redundant environment image
-        ${B}/tools/mkenvimage -r -s ${UBOOT_ENV_SIZE} -o ${WORKDIR}/${UBOOT_ENV_BINARY} ${WORKDIR}/u-boot-env-ast2600.txt
+        ${B}/tools/mkenvimage -r -s ${UBOOT_ENV_SIZE} -o ${WORKDIR}/${UBOOT_ENV_BINARY} ${WORKDIR}/${UBOOT_ENV_TXT}
     fi
 }

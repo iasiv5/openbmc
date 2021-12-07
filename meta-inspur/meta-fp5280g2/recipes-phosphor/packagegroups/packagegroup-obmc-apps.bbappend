@@ -17,9 +17,13 @@ RDEPENDS:${PN}-extras:append:fp5280g2 = " \
                                           ${POWER_SERVICE_PACKAGES_FP5280G2} \
                                           phosphor-led-manager \
                                           pldm \
-                                          mctp \
+                                          libmctp \
                                           phosphor-fp5280g2-psu-update \
                                           phosphor-psu-software-manager \
+                                          biosconfig-manager \
+                                          srvcfg-manager \
+                                          phosphor-sel-logger \
+                                          tzdata \
                                           webui-vue \
                                          "
 

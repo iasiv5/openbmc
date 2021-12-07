@@ -5,9 +5,11 @@
 # and pasting into another recipe ensure it is understood
 # what that means!
 
+OS_RELEASE_ROOTPATH ?= "${COREBASE}"
+
 def run_git(d, cmd):
     try:
-        oeroot = d.getVar('COREBASE', True)
+        oeroot = d.getVar('OS_RELEASE_ROOTPATH', True)
         return bb.process.run(("export PSEUDO_DISABLED=1; " +
                                "git --work-tree %s --git-dir %s/.git %s")
             % (oeroot, oeroot, cmd))[0].strip('\n')
@@ -26,7 +28,6 @@ DISTRO_VERSION ??= "${PHOSPHOR_OS_RELEASE_DISTRO_VERSION}"
 
 VERSION = "${@'-'.join(d.getVar('VERSION_ID').split('-')[0:2])}"
 
-BUILD_ID := "${@run_git(d, 'describe --abbrev=0')}"
 OPENBMC_TARGET_MACHINE = "${MACHINE}"
 
 OS_RELEASE_FIELDS:append = " BUILD_ID OPENBMC_TARGET_MACHINE EXTENDED_VERSION"

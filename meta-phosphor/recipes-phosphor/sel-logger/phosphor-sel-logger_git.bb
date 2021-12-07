@@ -9,7 +9,7 @@ DESCRIPTION = "Utility to write IPMI SEL records to the journal"
 #   SEL_LOGGER_MONITOR_THRESHOLD_EVENTS:
 #      Monitors and logs SEL records for threshold sensor events
 
-inherit meson systemd
+inherit pkgconfig meson systemd
 S = "${WORKDIR}/git"
 
 LICENSE = "Apache-2.0"
@@ -22,7 +22,7 @@ DEPENDS += " \
   "
 
 SRC_URI = "git://github.com/openbmc/phosphor-sel-logger.git;protocol=git"
-SRCREV = "9f476e82f72e78d2be6cdeb95f7d5552c19d97a7"
+SRCREV = "87e3fcf439f2b943272365e1d294984f39bb52b8"
 
 PV = "0.1+git${SRCPV}"
 
@@ -34,3 +34,4 @@ PACKAGECONFIG[log-pulse] = "-Dlog-pulse=true,-Dlog-pulse=false,"
 PACKAGECONFIG[log-watchdog] = "-Dlog-watchdog=true,-Dlog-watchdog=false,"
 PACKAGECONFIG[log-alarm] = "-Dlog-alarm=true,-Dlog-alarm=false,"
 PACKAGECONFIG[send-to-logger] = "-Dsend-to-logger=true,-Dsend-to-logger=false,phosphor-logging"
+PACKAGECONFIG[clears-sel] = "-Dclears-sel=true,-Dclears-sel=false"

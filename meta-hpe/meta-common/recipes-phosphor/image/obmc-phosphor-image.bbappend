@@ -10,7 +10,7 @@ def do_get_version(d):
     import io
     path = d.getVar('STAGING_DIR_TARGET', True) + d.getVar('sysconfdir', True)
     path = os.path.join(path, 'os-release')
-    parser = configparser.SafeConfigParser(strict=False)
+    parser = configparser.ConfigParser(strict=False)
     parser.optionxform = str
     version = ''
     try:
@@ -47,19 +47,19 @@ do_generate_static[depends] += " \
         "
 
 
-make_image_links_append() {
+make_image_links:append() {
     ln -sf ${DEPLOY_DIR_IMAGE}/hpe-section image-section
 }
 
-do_mk_static_symlinks_append() {
+do_mk_static_symlinks:append() {
     ln -sf hpe-section image-section
 }
 
-do_generate_static_prepend() {
+do_generate_static:prepend() {
     bb.build.exec_func("do_generate_hpe_image", d)
 }
 
-do_generate_static_append() {
+do_generate_static:append() {
     _append_image(os.path.join(d.getVar('DEPLOY_DIR_IMAGE', True),
                                'hpe-section'),
                   int(d.getVar('FLASH_SECTION_OFFSET', True)),

@@ -21,5 +21,5 @@ DEPENDS += "cli11"
 
 S = "${WORKDIR}/git"
 SRC_URI = "git://github.com/openbmc/ssifbridge.git;protocol=git;branch=master"
-SRCREV= "22f04265eb07c73ba33c488548b7f797cc1c2b30"
+SRCREV= "2c2b8280584d05d16a4d0c180be8c3a6ee37aec2"
 

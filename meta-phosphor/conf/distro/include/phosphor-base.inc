@@ -99,17 +99,15 @@ DISTRO_FEATURES_DEFAULT = " \
         ipv4 \
         ipv6 \
         pam \
+        security \
         slp \
         systemd \
+        seccomp \
         "
 
 DISTRO_FEATURES += " \
         ${DISTRO_FEATURES_DEFAULT} \
         ${DISTRO_FEATURES_OBMC} \
-        "
-
-MACHINE_FEATURES += " \
-        ${OBMC_MACHINE_FEATURES} \
         "
 
 DISTRO_EXTRA_RDEPENDS:remove:qemuarm = "packagegroup-core-device-devel"

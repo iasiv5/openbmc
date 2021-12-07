@@ -6,32 +6,48 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/Apache-2.0;md5
 inherit systemd
 
 SRC_URI += " \
+  file://-bmc-gbmcbrncsidhcp.netdev \
+  file://-bmc-gbmcbrncsidhcp.network \
+  file://-bmc-gbmcncsidhcp.netdev \
+  file://-bmc-gbmcncsidhcp.network \
   file://50-gbmc-ncsi.rules.in \
+  file://gbmc-ncsi-dhcrelay.service.in \
+  file://gbmc-ncsi-ip-from-ra.service.in \
+  file://gbmc-ncsi-ip-from-ra.sh.in \
   file://gbmc-ncsi-sslh.socket.in \
   file://gbmc-ncsi-sslh.service \
   file://gbmc-ncsi-nft.sh.in \
   file://gbmc-ncsi-br-pub-addr.sh.in \
+  file://gbmc-ncsi-br-deprecated-ips.sh.in \
   file://gbmc-ncsi-set-nicenabled.service.in \
+  file://25-gbmc-ncsi-clear-ip.sh.in \
   "
 
 S = "${WORKDIR}"
 
 RDEPENDS:${PN} += " \
+  bash \
+  dhcp-relay \
   gbmc-ip-monitor \
   ncsid \
+  network-sh \
   nftables-systemd \
   sslh \
+  ndisc6-rdisc6 \
   "
 
 FILES:${PN} += " \
+  ${datadir}/gbmc-br-dhcp \
   ${datadir}/gbmc-ip-monitor \
   ${systemd_unitdir} \
   "
 
 SYSTEMD_SERVICE:${PN} += " \
+  gbmc-ncsi-dhcrelay.service \
   gbmc-ncsi-sslh.service \
   gbmc-ncsi-sslh.socket \
   gbmc-ncsi-set-nicenabled.service \
+  gbmc-ncsi-ip-from-ra.service \
   "
 
 do_install:append() {
@@ -46,6 +62,16 @@ do_install:append() {
     >>${D}${sysconfdir}/sysctl.d/25-gbmc-ncsi.conf
   echo "net.ipv6.conf.$if_name.dad_transmits=0" \
     >>${D}${sysconfdir}/sysctl.d/25-gbmc-ncsi.conf
+
+  install -d -m0755 ${D}${systemd_unitdir}/network
+  install -m0644 ${WORKDIR}/-bmc-gbmcbrncsidhcp.netdev \
+    ${D}${systemd_unitdir}/network/
+  install -m0644 ${WORKDIR}/-bmc-gbmcbrncsidhcp.network \
+    ${D}${systemd_unitdir}/network/
+  install -m0644 ${WORKDIR}/-bmc-gbmcncsidhcp.netdev \
+    ${D}${systemd_unitdir}/network/
+  install -m0644 ${WORKDIR}/-bmc-gbmcncsidhcp.network \
+    ${D}${systemd_unitdir}/network/
 
   netdir=${D}${systemd_unitdir}/network/00-bmc-$if_name.network.d
   install -d -m0755 "$netdir"
@@ -77,7 +103,33 @@ do_install:append() {
   sed "s,@NCSI_IF@,$if_name,g" ${WORKDIR}/gbmc-ncsi-br-pub-addr.sh.in \
     >${WORKDIR}/gbmc-ncsi-br-pub-addr.sh
   install -m644 ${WORKDIR}/gbmc-ncsi-br-pub-addr.sh $mondir
+  sed "s,@NCSI_IF@,$if_name,g" ${WORKDIR}/gbmc-ncsi-br-deprecated-ips.sh.in \
+    >${WORKDIR}/gbmc-ncsi-br-deprecated-ips.sh
+  install -m644 ${WORKDIR}/gbmc-ncsi-br-deprecated-ips.sh $mondir
+
+  dhcpdir=${D}${datadir}/gbmc-br-dhcp/
+  install -d -m0755 $dhcpdir
+  sed "s,@NCSI_IF@,$if_name,g" ${WORKDIR}/25-gbmc-ncsi-clear-ip.sh.in \
+    >${WORKDIR}/25-gbmc-ncsi-clear-ip.sh
+  install -m644 ${WORKDIR}/25-gbmc-ncsi-clear-ip.sh $dhcpdir
 
   sed "s,@NCSI_IF@,$if_name,g" ${WORKDIR}/gbmc-ncsi-set-nicenabled.service.in \
     >${D}${systemd_system_unitdir}/gbmc-ncsi-set-nicenabled.service
+
+  sed "s,@NCSI_IF@,$if_name,g" ${WORKDIR}/gbmc-ncsi-dhcrelay.service.in \
+    >${D}${systemd_system_unitdir}/gbmc-ncsi-dhcrelay.service
+
+  sed "s,@NCSI_IF@,$if_name,g" ${WORKDIR}/gbmc-ncsi-ip-from-ra.service.in \
+    >${WORKDIR}/gbmc-ncsi-ip-from-ra.service
+  install -m0644 ${WORKDIR}/gbmc-ncsi-ip-from-ra.service ${D}${systemd_system_unitdir}
+  sed "s,@NCSI_IF@,$if_name,g" ${WORKDIR}/gbmc-ncsi-ip-from-ra.sh.in \
+    >${WORKDIR}/gbmc-ncsi-ip-from-ra.sh
+  install -d -m0755 ${D}${libexecdir}
+  install -m0755 ${WORKDIR}/gbmc-ncsi-ip-from-ra.sh ${D}${libexecdir}/
+}
+
+do_rm_work:prepend() {
+  # HACK: Work around broken do_rm_work not properly calling rm with `--`
+  # It doesn't like filenames that start with `-`
+  rm -rf -- ${WORKDIR}/-*
 }

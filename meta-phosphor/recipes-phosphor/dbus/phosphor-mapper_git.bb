@@ -6,13 +6,12 @@ PV = "1.0+git${SRCPV}"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=fa818a259cbed7ce8bc2a22d35a464fc"
 
-inherit autotools pkgconfig
+inherit meson pkgconfig
 inherit obmc-phosphor-dbus-service
 inherit obmc-phosphor-systemd
 inherit phosphor-mapperdir
 
 DEPENDS += "systemd"
-DEPENDS += "autoconf-archive-native"
 DEPENDS += "boost"
 DEPENDS += "libtinyxml2"
 DEPENDS += "sdbusplus"
@@ -26,11 +25,11 @@ SYSTEMD_SERVICE:${PN} += " \
         "
 SRC_URI += "git://github.com/openbmc/phosphor-objmgr"
 
-SRCREV = "bdaa7f8bb4b34ec4d5f806135364e3ffcc427c0e"
+SRCREV = "bbf456b448b8f281ad3a077083a86e61c86e2249"
 
 S = "${WORKDIR}/git"
 
-EXTRA_OECONF += "--disable-tests"
+EXTRA_OEMESON += "-Dtests=disabled"
 
 python populate_packages:prepend () {
     mapperlibdir = d.getVar("libdir", True)

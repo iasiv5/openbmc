@@ -178,9 +178,9 @@ class LayerIndex():
         '''Load the layerindex.
 
            indexURI - An index to load.  (Use multiple calls to load multiple indexes)
-           
+
            reload - If reload is True, then any previously loaded indexes will be forgotten.
-           
+
            load - List of elements to load.  Default loads all items.
                   Note: plugs may ignore this.
 
@@ -198,7 +198,7 @@ The format of the indexURI:
 
   For example:
 
-  http://layers.openembedded.org/layerindex/api/;branch=master;desc=OpenEmbedded%20Layer%20Index
+  https://layers.openembedded.org/layerindex/api/;branch=master;desc=OpenEmbedded%20Layer%20Index
   cooker://
 '''
         if reload:
@@ -383,7 +383,14 @@ layerBranches set.  If not, they are effectively blank.'''
 
                 # Get a list of dependencies and then recursively process them
                 for layerdependency in layerbranch.index.layerDependencies_layerBranchId[layerbranch.id]:
-                    deplayerbranch = layerdependency.dependency_layerBranch
+                    try:
+                        deplayerbranch = layerdependency.dependency_layerBranch
+                    except AttributeError as e:
+                            logger.error('LayerBranch does not exist for dependent layer {}:{}\n' \
+                                '       Cannot continue successfully.\n' \
+                                '       You might be able to resolve this by checking out the layer locally.\n' \
+                                '       Consider reaching out the to the layer maintainers or the layerindex admins' \
+                                .format(layerdependency.dependency.name, layerbranch.branch.name))
 
                     if ignores and deplayerbranch.layer.name in ignores:
                         continue
@@ -576,7 +583,7 @@ This function is used to implement debugging and provide the user info.
 #   index['config'] - configuration data for this index
 #   index['branches'] - dictionary of Branch objects, by id number
 #   index['layerItems'] - dictionary of layerItem objects, by id number
-#   ...etc...  (See: http://layers.openembedded.org/layerindex/api/)
+#   ...etc...  (See: https://layers.openembedded.org/layerindex/api/)
 #
 # The class needs to manage the 'index' entries and allow easily adding
 # of new items, as well as simply loading of the items.
@@ -846,7 +853,7 @@ class LayerIndexObj():
                     continue
 
                 for layerdependency in layerbranch.index.layerDependencies_layerBranchId[layerbranch.id]:
-                    deplayerbranch = layerdependency.dependency_layerBranch
+                    deplayerbranch = layerdependency.dependency_layerBranch or None
 
                     if ignores and deplayerbranch.layer.name in ignores:
                         continue
@@ -1278,7 +1285,7 @@ class Recipe(LayerIndexItemObj_LayerBranch):
                     filename, filepath, pn, pv, layerbranch,
                     summary="", description="", section="", license="",
                     homepage="", bugtracker="", provides="", bbclassextend="",
-                    inherits="", blacklisted="", updated=None):
+                    inherits="", disallowed="", updated=None):
         self.id = id
         self.filename = filename
         self.filepath = filepath
@@ -1294,7 +1301,7 @@ class Recipe(LayerIndexItemObj_LayerBranch):
         self.bbclassextend = bbclassextend
         self.inherits = inherits
         self.updated = updated or datetime.datetime.today().isoformat()
-        self.blacklisted = blacklisted
+        self.disallowed = disallowed
         if isinstance(layerbranch, LayerBranch):
             self.layerbranch = layerbranch
         else:

@@ -22,20 +22,13 @@ do_prepare_bootloaders() {
 }
 
 do_prepare_bootloaders[depends] += " \
+    u-boot:do_deploy \
     npcm7xx-bootblock:do_deploy \
     npcm7xx-bingo-native:do_populate_sysroot \
     npcm7xx-igps-native:do_populate_sysroot \
     "
 
 addtask do_prepare_bootloaders before do_generate_static after do_generate_rwfs_static
-
-# Include the full bootblock and u-boot in the final static image
-python do_generate_static:append() {
-    _append_image(os.path.join(d.getVar('DEPLOY_DIR_IMAGE', True),
-                               'u-boot.%s' % d.getVar('UBOOT_SUFFIX',True)),
-                  int(d.getVar('FLASH_UBOOT_OFFSET', True)),
-                  int(d.getVar('FLASH_KERNEL_OFFSET', True)))
-}
 
 do_make_ubi:append() {
     # Concatenate the uboot and ubi partitions

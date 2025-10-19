@@ -1,16 +1,3 @@
-# This recipe requires online access to build, as it uses NPM for dependency
-# management and resolution.
-PR = "r1"
-PV = "1.0+git${SRCPV}"
-LICENSE = "Apache-2.0"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=e3fc50a88d0a364313df4b21ef20c29e"
-
-SRC_URI = "git://github.com/openbmc/webui-vue.git"
-SRCREV = "799bcd3fb476c7a0c38a4779aa91f59a7c931c6a"
-S = "${WORKDIR}/git"
-
-DEPENDS:prepend = "nodejs-native nlf-native "
-
 # allarch is required because the files this recipe produces (html and
 # javascript) are valid for any target, regardless of architecture.  The allarch
 # class removes your compiler definitions, as it assumes that anything that
@@ -19,8 +6,30 @@ DEPENDS:prepend = "nodejs-native nlf-native "
 # build the library that it then uses to compress the scss into normal css.
 # Enabling allarch, then re-adding the compiler flags was the best of the bad
 # options
+LICENSE = "Apache-2.0"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=e3fc50a88d0a364313df4b21ef20c29e"
+DEPENDS:prepend = "nodejs-native "
+SRCREV = "e1420032fef78a490fb2be7b407c4a6bd82b1b02"
+PV = "1.0+git${SRCPV}"
+# This recipe requires online access to build, as it uses NPM for dependency
+# management and resolution.
+PR = "r1"
+
+SRC_URI = "git://github.com/openbmc/webui-vue.git;branch=master;protocol=https"
+
+S = "${WORKDIR}/git"
 
 inherit allarch
+
+# Ideally this recipe would use npm.bbclass, but it doesn't.  Since npm uses
+# python3, we need to inherit this to get the Yocto version of python3 instead
+# of the hosttools one.
+inherit python3native
+
+RDEPENDS:${PN}:append = " bmcweb"
+
+EXTRA_OENPM ?= ""
+NPM_CONFIG_CACHE ?= "${WORKDIR}/npm-cache"
 
 export CXX = "${BUILD_CXX}"
 export CC = "${BUILD_CC}"
@@ -28,17 +37,19 @@ export CFLAGS = "${BUILD_CFLAGS}"
 export CPPFLAGS = "${BUILD_CPPFLAGS}"
 export CXXFLAGS = "${BUILD_CXXFLAGS}"
 
-FILES:${PN} += "${datadir}/www/*"
-
-EXTRA_OENPM ?= ""
-
+# Workaround
+# Network access from task are disabled by default on Yocto 3.5
+# https://git.yoctoproject.org/poky/tree/documentation/migration-guides/migration-3.5.rst#n25
+do_compile[network] = "1"
 do_compile () {
+    export NPM_CONFIG_CACHE="${NPM_CONFIG_CACHE}"
     cd ${S}
     rm -rf node_modules
     npm --loglevel info --proxy=${http_proxy} --https-proxy=${https_proxy} install
+    # vue-cli-plugin-i18n isn't needed in build and causes a segv in node 22.12.
+    npm uninstall vue-cli-plugin-i18n
     npm run build ${EXTRA_OENPM}
 }
-
 do_install () {
    # create directory structure
    install -d ${D}${datadir}/www
@@ -47,9 +58,4 @@ do_install () {
    find ${D}${datadir}/www -type d -exec chmod a=rx,u+w '{}' +
 }
 
-do_find_node_licenses() {
-    cd ${S}
-    nlf -s detail > ${LICENSE_DIRECTORY}/${PN}/node-licenses
-}
-
-addtask find_node_licenses after do_compile before do_build
+FILES:${PN} += "${datadir}/www/*"

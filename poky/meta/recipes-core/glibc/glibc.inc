@@ -1,7 +1,7 @@
 require glibc-common.inc
 require glibc-ld.inc
 
-DEPENDS = "virtual/${TARGET_PREFIX}gcc libgcc-initial linux-libc-headers"
+DEPENDS = "virtual/cross-cc virtual/cross-binutils libgcc-initial linux-libc-headers"
 
 PROVIDES = "virtual/libc"
 PROVIDES += "virtual/libintl virtual/libiconv"
@@ -40,6 +40,10 @@ PARALLEL_MAKE = ""
 # it's output which make calls via the SHELL also has issues, so
 # ensure make uses /bin/bash
 EXTRA_OEMAKE += "SHELL=/bin/bash"
+
+# We do not need bash to run tzselect script, the default is to use
+# bash but it can be configured by setting KSHELL Makefile variable
+EXTRA_OEMAKE += "KSHELL=/bin/sh"
 
 do_configure:prepend() {
 	sed -e "s#/bin/bash#/bin/sh#" -i ${S}/elf/ldd.bash.in

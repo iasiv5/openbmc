@@ -3,6 +3,8 @@
 # Copyright (C) 2018 Xilinx
 # Written by: Chandana Kalluri <ckalluri@xilinx.com>
 #
+# SPDX-License-Identifier: MIT
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
@@ -21,9 +23,6 @@
 import os
 import bb
 import logging
-import argparse
-import re
-import glob
 from devtool import setup_tinfoil, parse_recipe, DevtoolError, standard, exec_build_env_command
 from devtool import check_workspace_recipe
 logger = logging.getLogger('devtool')
@@ -32,7 +31,6 @@ def menuconfig(args, config, basepath, workspace):
     """Entry point for the devtool 'menuconfig' subcommand"""
 
     rd = ""
-    kconfigpath = ""
     pn_src = ""
     localfilesdir = ""
     workspace_dir = ""
@@ -43,13 +41,12 @@ def menuconfig(args, config, basepath, workspace):
             return 1
 
         check_workspace_recipe(workspace, args.component)
-        pn = rd.getVar('PN', True)
+        pn = rd.getVar('PN')
 
         if not rd.getVarFlag('do_menuconfig','task'):
             raise DevtoolError("This recipe does not support menuconfig option")
 
         workspace_dir = os.path.join(config.workspace_path,'sources')
-        kconfigpath = rd.getVar('B')
         pn_src = os.path.join(workspace_dir,pn)
 
         # add check to see if oe_local_files exists or not
@@ -68,7 +65,7 @@ def menuconfig(args, config, basepath, workspace):
     logger.info('Launching menuconfig')
     exec_build_env_command(config.init_path, basepath, 'bitbake -c menuconfig %s' % pn, watch=True)
     fragment = os.path.join(localfilesdir, 'devtool-fragment.cfg')
-    res = standard._create_kconfig_diff(pn_src,rd,fragment)
+    standard._create_kconfig_diff(pn_src,rd,fragment)
 
     return 0
 

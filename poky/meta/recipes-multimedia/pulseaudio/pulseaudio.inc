@@ -2,10 +2,10 @@ SUMMARY = "Sound server for Linux and Unix-like operating systems"
 DESCRIPTION = "A general purpose sound server intended to run as a middleware \
 between your applications and your hardware devices, either using ALSA or OSS."
 HOMEPAGE = "http://www.pulseaudio.org"
-AUTHOR = "Lennart Poettering"
 SECTION = "libs/multimedia"
 
-# Most of PulseAudio code is under LGPLv2.1+. There are a few exceptions:
+# Most of PulseAudio code is under LGPL-2.1-or-later. There are a few
+# exceptions:
 #
 # The "adrian" echo canceller variant has code under a non-standard permissive
 # license. See src/modules/echo-cancel/adrian-license.txt for details. This
@@ -39,12 +39,13 @@ SECTION = "libs/multimedia"
 # The dependency with the most complicated licensing considerations is libdbus.
 # When PACKAGECONFIG[dbus] is enabled (like it is by default), libdbus will be
 # used by both the server and the client library (libpulse). Does this affect
-# applications that use libpulse? It should be also noted that libdbus is
-# dual-licensed: either GPLv2+ or AFL-2 terms apply. Whose decision is it which
-# of the licenses apply? What a mess. Some people hold the view that libdbus is
-# a system library that is covered by the "special exception" in GPLv2's
-# section 3, and therefore libdbus's GPL license doesn't affect PulseAudio.
-LICENSE = "LGPLv2.1+ & MIT & BSD-3-Clause"
+# applications that use libpulse? It should also be noted that libdbus is
+# dual-licensed: either GPL-2.0-or-later or AFL-2.0 terms apply. Whose decision
+# is it which of the licenses apply? What a mess. Some people hold the view that
+# libdbus is a system library that is covered by the "special exception" in
+# GPLv2's section 3, and therefore libdbus's GPL license doesn't affect
+# PulseAudio.
+LICENSE = "LGPL-2.1-or-later & MIT & BSD-3-Clause"
 
 LIC_FILES_CHKSUM = "file://LICENSE;md5=0e5cd938de1a7a53ea5adac38cc10c39 \
                     file://GPL;md5=4325afd396febcb659c36b49533135d4 \
@@ -59,7 +60,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=0e5cd938de1a7a53ea5adac38cc10c39 \
 "
 
 # libtool is needed for libltdl, used in module loading.
-DEPENDS = "libatomic-ops libsndfile1 libtool"
+DEPENDS = "m4-native libatomic-ops libsndfile1 libtool"
 # optional
 DEPENDS += "udev alsa-lib glib-2.0"
 DEPENDS += "speexdsp libxml-parser-perl-native libcap"
@@ -69,6 +70,14 @@ inherit bash-completion meson pkgconfig useradd gettext perlnative systemd manpa
 # *.desktop rules wont be generated during configure and build will fail
 # if using --disable-nls
 USE_NLS = "yes"
+
+# Helps tests for -msse fail on non-SSE architectures which is all non-x86
+TUNE_CCARGS:append:toolchain-clang = " -Werror=unused-command-line-argument"
+
+# mix_neon.c:179:9: error: invalid operand in inline asm: 'vld1.s32 ${0:h}, [$2]
+#      vld1.s32 ${1:h}, [$3] '
+TOOLCHAIN:armv7ve = "gcc"
+TOOLCHAIN:armv7a = "gcc"
 
 EXTRA_OEMESON = "\
 		-Dhal-compat=false \
@@ -120,9 +129,10 @@ PACKAGECONFIG[jack] = "-Djack=enabled,-Djack=disabled,jack"
 # able to use pulseaudio autospawn for root as well.
 PACKAGECONFIG[autospawn-for-root] = ",,,"
 PACKAGECONFIG[lirc] = "-Dlirc=enabled,-Dlirc=disabled,lirc"
-PACKAGECONFIG[webrtc] = "-Dwebrtc-aec=enabled,-Dwebrtc-aec=disabled,webrtc-audio-processing"
+PACKAGECONFIG[webrtc] = "-Dwebrtc-aec=enabled,-Dwebrtc-aec=disabled,webrtc-audio-processing-1"
 PACKAGECONFIG[ipv6] = "-Dipv6=true,-Dipv6=false,"
 PACKAGECONFIG[manpages] = "-Dman=true,-Dman=false,"
+PACKAGECONFIG[oss-output] = "-Doss-output=enabled,-Doss-output=disabled,"
 
 export TARGET_PFPU = "${TARGET_FPU}"
 
@@ -141,7 +151,7 @@ do_compile:append () {
 
 do_install:append() {
 	install -d ${D}${sysconfdir}/default/volatiles
-	install -m 0644 ${WORKDIR}/volatiles.04_pulse  ${D}${sysconfdir}/default/volatiles/04_pulse
+	install -m 0644 ${UNPACKDIR}/volatiles.04_pulse  ${D}${sysconfdir}/default/volatiles/04_pulse
 }
 
 USERADD_PACKAGES = "pulseaudio-server"
@@ -186,6 +196,7 @@ FILES:${PN}-dev += "${libdir}/pulse-${PV}/modules/*.la ${datadir}/vala"
 FILES:${PN}-bin += "${sysconfdir}/default/volatiles/04_pulse"
 FILES:${PN}-pa-info = "${bindir}/pa-info"
 FILES:${PN}-server = "${bindir}/pulseaudio ${bindir}/start-* ${sysconfdir} ${bindir}/pactl */udev/rules.d/*.rules */*/udev/rules.d/*.rules ${systemd_user_unitdir}/*"
+FILES:${PN}-server += "${datadir}/dbus-1/system.d/pulseaudio-system.conf"
 
 #SYSTEMD_PACKAGES = "${PN}-server"
 SYSTEMD_SERVICE:${PN}-server = "pulseaudio.service"
@@ -211,7 +222,7 @@ pkg_postinst:${PN}-server() {
 }
 
 python populate_packages:prepend() {
-    plugindir = d.expand('${libdir}/pulse-${PV}/modules/')
+    plugindir = d.expand('${libdir}/pulseaudio/modules/')
     do_split_packages(d, plugindir, r'^module-(.*)\.so$', '${PN}-module-%s', 'PulseAudio module for %s', extra_depends='', prepend=True)
     do_split_packages(d, plugindir, r'^lib(.*)\.so$', '${PN}-lib-%s', 'PulseAudio library for %s', extra_depends='', prepend=True)
 }
@@ -252,11 +263,11 @@ RDEPENDS:pulseaudio-server = " \
 # If the server is installed, it's usually desirable to make ALSA applications
 # use PulseAudio. alsa-plugins-pulseaudio-conf will install the configuration
 # that makes the PulseAudio plugin the default ALSA device.
-RDEPENDS:pulseaudio-server += "alsa-plugins-pulseaudio-conf"
+RDEPENDS:pulseaudio-server += "${@bb.utils.contains('DISTRO_FEATURES', 'pulseaudio', 'alsa-plugins-pulseaudio-conf', '', d)}"
 
 # pulseaudio-module-console-kit is built whenever dbus is enabled by PACKAGECONFIG
 # but consolekit depends on libx11 and is available only for DISTRO with x11 in DISTRO_FEATURES
-RDEPENDS:pulseaudio-module-console-kit =+ "${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'consolekit', '', d)}"
+RDEPENDS:pulseaudio-module-console-kit =+ "${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit x11', 'consolekit', '', d)}"
 RDEPENDS:pulseaudio-misc += "pulseaudio-module-cli-protocol-unix"
 
 FILES:${PN}-module-alsa-card += "${datadir}/pulseaudio/alsa-mixer"

@@ -5,7 +5,8 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/Apache-2.0;md5
 inherit systemd
 inherit obmc-phosphor-systemd
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 SRC_URI = "file://init_once.sh \
            file://poweroff.sh \
@@ -22,7 +23,7 @@ SYSTEMD_SERVICE:${PN} = "host-gpio.service host-poweron.service host-poweroff.se
 
 do_install() {
     install -d ${D}/${bindir}
-    install -m 0755 ${S}init_once.sh ${D}/${bindir}/
-    install -m 0755 ${S}poweroff.sh ${D}/${bindir}/
-    install -m 0755 ${S}poweron.sh ${D}/${bindir}/
+    install -m 0755 ${S}/init_once.sh ${D}/${bindir}/
+    install -m 0755 ${S}/poweroff.sh ${D}/${bindir}/
+    install -m 0755 ${S}/poweron.sh ${D}/${bindir}/
 }

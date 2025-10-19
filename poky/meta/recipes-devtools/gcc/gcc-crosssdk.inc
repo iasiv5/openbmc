@@ -8,5 +8,7 @@ SYSTEMLIBS1 = "${SDKPATHNATIVE}${libdir_nativesdk}/"
 
 GCCMULTILIB = "--disable-multilib"
 
-DEPENDS = "virtual/${TARGET_PREFIX}binutils-crosssdk gettext-native ${NATIVEDEPS}"
-PROVIDES = "virtual/${TARGET_PREFIX}gcc-crosssdk virtual/${TARGET_PREFIX}g++-crosssdk"
+DEPENDS = "virtual/nativesdk-cross-binutils gettext-native ${NATIVEDEPS}"
+PROVIDES = "virtual/nativesdk-cross-cc virtual/nativesdk-cross-c++"
+
+gcc_multilib_setup[vardepsexclude] = "MULTILIB_VARIANTS"

@@ -1,8 +1,7 @@
 SUMMARY = "Simple Xserver Init Script (no dm)"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe"
 SECTION = "x11"
-PR = "r31"
 
 SRC_URI = "file://xserver-nodm \
            file://Xserver \
@@ -13,7 +12,8 @@ SRC_URI = "file://xserver-nodm \
            file://capability.conf \
 "
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 # Since we refer to ROOTLESS_X which is normally enabled per-machine
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -53,7 +53,7 @@ do_install() {
 
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -d ${D}${systemd_system_unitdir}
-        install -m 0644 ${WORKDIR}/xserver-nodm.service.in ${D}${systemd_system_unitdir}/xserver-nodm.service
+        install -m 0644 ${S}/xserver-nodm.service.in ${D}${systemd_system_unitdir}/xserver-nodm.service
         sed -i "s:@USER@:${XUSER}:" ${D}${systemd_system_unitdir}/xserver-nodm.service
     fi
 

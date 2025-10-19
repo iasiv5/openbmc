@@ -3,7 +3,7 @@ DESCRIPTION = "distcc is a parallel build system that distributes \
 compilation of C/C++/ObjC code across machines on a network."
 HOMEPAGE = "https://github.com/distcc/distcc"
 SECTION = "devel"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=94d55d512a9ba36caa9b7df079bae19f"
 
 DEPENDS = "avahi binutils"
@@ -15,7 +15,7 @@ PACKAGECONFIG[popt] = "--without-included-popt,--with-included-popt,popt"
 
 RRECOMMENDS:${PN}-server = "avahi-daemon"
 
-SRC_URI = "git://github.com/distcc/distcc.git \
+SRC_URI = "git://github.com/distcc/distcc.git;branch=master;protocol=https \
            file://default \
            file://distcc \
            file://distcc.service \
@@ -50,10 +50,10 @@ do_install() {
     oe_runmake 'DESTDIR=${D}'  "GZIP_BIN=gzip -n" install
     install -d ${D}${sysconfdir}/init.d/
     install -d ${D}${sysconfdir}/default
-    install -m 0755 ${WORKDIR}/distcc ${D}${sysconfdir}/init.d/
-    install -m 0755 ${WORKDIR}/default ${D}${sysconfdir}/default/distcc
+    install -m 0755 ${UNPACKDIR}/distcc ${D}${sysconfdir}/init.d/
+    install -m 0755 ${UNPACKDIR}/default ${D}${sysconfdir}/default/distcc
     install -d ${D}${systemd_system_unitdir}/
-    install -m 0644 ${WORKDIR}/distcc.service ${D}${systemd_system_unitdir}
+    install -m 0644 ${UNPACKDIR}/distcc.service ${D}${systemd_system_unitdir}
     sed -i -e 's,@BINDIR@,${bindir},g' ${D}${systemd_system_unitdir}/distcc.service
 }
 

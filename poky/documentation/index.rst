@@ -26,6 +26,7 @@ Welcome to the Yocto Project Documentation
    :caption: Manuals
 
    Overview and Concepts Manual <overview-manual/index>
+   Contributor Guide <contributor-guide/index>
    Reference Manual <ref-manual/index>
    Board Support Package (BSP) Developer's guide <bsp-guide/index>
    Development Tasks Manual <dev-manual/index>
@@ -38,10 +39,10 @@ Welcome to the Yocto Project Documentation
 
 .. toctree::
    :maxdepth: 1
-   :caption: Releases manual
+   :caption: Release Manuals
    :hidden:
 
-   Release Migration Guides <migration-guides/index>
+   Release Information <migration-guides/index>
    releases
 
 .. toctree::
@@ -50,3 +51,10 @@ Welcome to the Yocto Project Documentation
    :hidden:
 
    genindex
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Documentation Downloads
+   :hidden:
+
+   downloads

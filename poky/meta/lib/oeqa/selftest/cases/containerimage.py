@@ -1,4 +1,6 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: MIT
 #
 
@@ -13,7 +15,7 @@ from oeqa.utils.commands import bitbake, get_bb_vars, runCmd
 # The only package added to the image is container_image_testpkg, which
 # contains one file. However, due to some other things not cleaning up during
 # rootfs creation, there is some cruft. Ideally bugs will be filed and the
-# cruft removed, but for now we whitelist some known set.
+# cruft removed, but for now we ignore some known set.
 #
 # Also for performance reasons we're only checking the cruft when using ipk.
 # When using deb, and rpm it is a bit different and we could test all
@@ -40,7 +42,6 @@ class ContainerImageTests(OESelftestTestCase):
         self.write_config("""PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
 IMAGE_FSTYPES = "container"
 PACKAGE_CLASSES = "package_ipk"
-IMAGE_FEATURES = ""
 IMAGE_BUILDINFO_FILE = ""
 INIT_MANAGER = "sysvinit"
 IMAGE_INSTALL:remove = "ssh-pregen-hostkeys"
@@ -53,8 +54,6 @@ IMAGE_INSTALL:remove = "ssh-pregen-hostkeys"
         expected_files = [
                     './',
                     '.{bindir}/theapp',
-                    '.{sysconfdir}/default/',
-                    '.{sysconfdir}/default/postinst',
                     '.{sysconfdir}/ld.so.cache',
                     '.{sysconfdir}/timestamp',
                     '.{sysconfdir}/version',

@@ -48,7 +48,11 @@ class Trace:
         self.filename = None
         self.parent_map = None
         self.mem_stats = []
+        self.net_stats = []
         self.monitor_disk = None
+        self.cpu_pressure = []
+        self.io_pressure = []
+        self.mem_pressure = []
         self.times = [] # Always empty, but expected by draw.py when drawing system charts.
 
         if len(paths):
@@ -128,7 +132,7 @@ class Trace:
     def compile(self, writer):
 
         def find_parent_id_for(pid):
-            if pid is 0:
+            if pid == 0:
                 return 0
             ppid = self.parent_map.get(pid)
             if ppid:
@@ -454,7 +458,7 @@ def _parse_proc_disk_stat_log(file):
     not sda1, sda2 etc. The format of relevant lines should be:
     {major minor name rio rmerge rsect ruse wio wmerge wsect wuse running use aveq}
     """
-    disk_regex_re = re.compile ('^([hsv]d.|mtdblock\d|mmcblk\d|cciss/c\d+d\d+.*)$')
+    disk_regex_re = re.compile (r'^([hsv]d.|mtdblock\d|mmcblk\d|cciss/c\d+d\d+.*)$')
 
     # this gets called an awful lot.
     def is_relevant_line(linetokens):
@@ -555,6 +559,44 @@ def _parse_monitor_disk_log(file):
     return disk_stats
 
 
+def _parse_reduced_net_log(file):
+    net_stats = {}
+    for time, lines in _parse_timed_blocks(file):
+
+        for line in lines:
+            parts = line.split()
+            iface = parts[0][:-1]
+            if iface not in net_stats:
+                net_stats[iface] = [NetSample(time, iface, int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4]))]
+            else:
+                net_stats[iface].append(NetSample(time, iface, int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4])))
+    return net_stats
+
+
+def _parse_pressure_logs(file, filename):
+    """
+    Parse file for "some" pressure with 'avg10', 'avg60' 'avg300' and delta total values
+    (in that order) directly stored on one line for both CPU and IO, based on filename.
+    """
+    pressure_stats = []
+    if filename == "cpu.log":
+        SamplingClass = CPUPressureSample
+    elif filename == "memory.log":
+        SamplingClass = MemPressureSample
+    else:
+        SamplingClass = IOPressureSample
+    for time, lines in _parse_timed_blocks(file):
+        for line in lines:
+            if not line: continue
+            tokens = line.split()
+            avg10 = float(tokens[0])
+            avg60 = float(tokens[1])
+            avg300 = float(tokens[2])
+            delta = float(tokens[3])
+            pressure_stats.append(SamplingClass(time, avg10, avg60, avg300, delta))
+
+    return pressure_stats
+
 # if we boot the kernel with: initcall_debug printk.time=1 we can
 # get all manner of interesting data from the dmesg output
 # We turn this into a pseudo-process tree: each event is
@@ -568,8 +610,8 @@ def _parse_monitor_disk_log(file):
 # [    0.039993] calling  migration_init+0x0/0x6b @ 1
 # [    0.039993] initcall migration_init+0x0/0x6b returned 1 after 0 usecs
 def _parse_dmesg(writer, file):
-    timestamp_re = re.compile ("^\[\s*(\d+\.\d+)\s*]\s+(.*)$")
-    split_re = re.compile ("^(\S+)\s+([\S\+_-]+) (.*)$")
+    timestamp_re = re.compile (r"^\[\s*(\d+\.\d+)\s*]\s+(.*)$")
+    split_re = re.compile (r"^(\S+)\s+([\S\+_-]+) (.*)$")
     processMap = {}
     idx = 0
     inc = 1.0 / 1000000
@@ -614,7 +656,7 @@ def _parse_dmesg(writer, file):
 #               print "foo: '%s' '%s' '%s'" % (type, func, rest)
         if type == "calling":
             ppid = kernel.pid
-            p = re.match ("\@ (\d+)", rest)
+            p = re.match (r"\@ (\d+)", rest)
             if p is not None:
                 ppid = float (p.group(1)) // 1000
 #                               print "match: '%s' ('%g') at '%s'" % (func, ppid, time_ms)
@@ -716,7 +758,7 @@ def get_num_cpus(headers):
     cpu_model = headers.get("system.cpu")
     if cpu_model is None:
         return 1
-    mat = re.match(".*\\((\\d+)\\)", cpu_model)
+    mat = re.match(r".*\\((\\d+)\\)", cpu_model)
     if mat is None:
         return 1
     return max (int(mat.group(1)), 1)
@@ -741,6 +783,15 @@ def _do_parse(writer, state, filename, file):
         state.cmdline = _parse_cmdline_log(writer, file)
     elif name == "monitor_disk.log":
         state.monitor_disk = _parse_monitor_disk_log(file)
+    elif name == "reduced_proc_net.log":
+        state.net_stats = _parse_reduced_net_log(file)
+    #pressure logs are in a subdirectory
+    elif name == "cpu.log":
+        state.cpu_pressure = _parse_pressure_logs(file, name)
+    elif name == "io.log":
+        state.io_pressure = _parse_pressure_logs(file, name)
+    elif name == "memory.log":
+        state.mem_pressure = _parse_pressure_logs(file, name)
     elif not filename.endswith('.log'):
         _parse_bitbake_buildstats(writer, state, filename, file)
     t2 = time.process_time()

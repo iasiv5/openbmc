@@ -37,17 +37,14 @@ RDEPENDS:${PN}-fans = " \
 
 SUMMARY:${PN}-flash = "Inventec Flash"
 RDEPENDS:${PN}-flash = " \
-        obmc-control-bmc \
         phosphor-ipmi-blobs \
         phosphor-ipmi-flash \
         "
 
 SUMMARY:${PN}-system = "Inventec System"
 RDEPENDS:${PN}-system = " \
-        bmcweb \
         entity-manager \
         dbus-sensors \
-        webui-vue \
         phosphor-snmp \
         phosphor-sel-logger \
         phosphor-gpio-monitor \

@@ -1,11 +1,15 @@
-# ex:ts=4:sw=4:sts=4:et
-# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+# Copyright OpenEmbedded Contributors
+#
+# SPDX-License-Identifier: MIT
+#
+
 #
 # This bbclass is used for creating archive for:
 #  1) original (or unpacked) source: ARCHIVER_MODE[src] = "original"
 #  2) patched source: ARCHIVER_MODE[src] = "patched" (default)
 #  3) configured source: ARCHIVER_MODE[src] = "configured"
-#  4) source mirror: ARCHIVE_MODE[src] = "mirror"
+#  4) source mirror: ARCHIVER_MODE[src] = "mirror"
 #  5) The patches between do_unpack and do_patch:
 #     ARCHIVER_MODE[diff] = "1"
 #     And you can set the one that you'd like to exclude from the diff:
@@ -51,26 +55,49 @@ ARCHIVER_MODE[diff-exclude] ?= ".pc autom4te.cache patches"
 ARCHIVER_MODE[dumpdata] ?= "0"
 ARCHIVER_MODE[recipe] ?= "0"
 ARCHIVER_MODE[mirror] ?= "split"
+ARCHIVER_MODE[compression] ?= "xz"
 
 DEPLOY_DIR_SRC ?= "${DEPLOY_DIR}/sources"
 ARCHIVER_TOPDIR ?= "${WORKDIR}/archiver-sources"
-ARCHIVER_OUTDIR = "${ARCHIVER_TOPDIR}/${TARGET_SYS}/${PF}/"
+ARCHIVER_ARCH = "${TARGET_SYS}"
+ARCHIVER_OUTDIR = "${ARCHIVER_TOPDIR}/${ARCHIVER_ARCH}/${PF}/"
 ARCHIVER_RPMTOPDIR ?= "${WORKDIR}/deploy-sources-rpm"
-ARCHIVER_RPMOUTDIR = "${ARCHIVER_RPMTOPDIR}/${TARGET_SYS}/${PF}/"
+ARCHIVER_RPMOUTDIR = "${ARCHIVER_RPMTOPDIR}/${ARCHIVER_ARCH}/${PF}/"
 ARCHIVER_WORKDIR = "${WORKDIR}/archiver-work/"
 
 # When producing a combined mirror directory, allow duplicates for the case
 # where multiple recipes use the same SRC_URI.
 ARCHIVER_COMBINED_MIRRORDIR = "${ARCHIVER_TOPDIR}/mirror"
-SSTATE_DUPWHITELIST += "${DEPLOY_DIR_SRC}/mirror"
+SSTATE_ALLOW_OVERLAP_FILES += "${DEPLOY_DIR_SRC}/mirror"
 
 do_dumpdata[dirs] = "${ARCHIVER_OUTDIR}"
 do_ar_recipe[dirs] = "${ARCHIVER_OUTDIR}"
 do_ar_original[dirs] = "${ARCHIVER_OUTDIR} ${ARCHIVER_WORKDIR}"
-do_deploy_archives[dirs] = "${WORKDIR}"
 
 # This is a convenience for the shell script to use it
 
+def include_package(d, pn):
+
+    included, reason = copyleft_should_include(d)
+    if not included:
+        bb.debug(1, 'archiver: %s is excluded: %s' % (pn, reason))
+        return False
+
+    else:
+        bb.debug(1, 'archiver: %s is included: %s' % (pn, reason))
+
+    # glibc-locale: do_fetch, do_unpack and do_patch tasks have been deleted,
+    # so avoid archiving source here.
+    if pn.startswith('glibc-locale'):
+        return False
+
+    # We just archive gcc-source for all the gcc related recipes
+    if d.getVar('BPN') in ['gcc', 'libgcc'] \
+            and not pn.startswith('gcc-source'):
+        bb.debug(1, 'archiver: %s is excluded, covered by gcc-source' % pn)
+        return False
+
+    return True
 
 python () {
     pn = d.getVar('PN')
@@ -81,24 +108,12 @@ python () {
                 pn = p
                 break
 
-    included, reason = copyleft_should_include(d)
-    if not included:
-        bb.debug(1, 'archiver: %s is excluded: %s' % (pn, reason))
-        return
-    else:
-        bb.debug(1, 'archiver: %s is included: %s' % (pn, reason))
-
-
-    # glibc-locale: do_fetch, do_unpack and do_patch tasks have been deleted,
-    # so avoid archiving source here.
-    if pn.startswith('glibc-locale'):
+    if not include_package(d, pn):
         return
 
-    # We just archive gcc-source for all the gcc related recipes
-    if d.getVar('BPN') in ['gcc', 'libgcc'] \
-            and not pn.startswith('gcc-source'):
-        bb.debug(1, 'archiver: %s is excluded, covered by gcc-source' % pn)
-        return
+    # TARGET_SYS in ARCHIVER_ARCH will break the stamp for gcc-source in multiconfig
+    if pn.startswith('gcc-source'):
+        d.setVar('ARCHIVER_ARCH', "allarch")
 
     def hasTask(task):
         return bool(d.getVarFlag(task, "task", False)) and not bool(d.getVarFlag(task, "noexec", False))
@@ -151,6 +166,7 @@ python () {
             d.appendVarFlag('do_package_write_rpm', 'dirs', ' ${ARCHIVER_RPMTOPDIR}')
             d.appendVarFlag('do_package_write_rpm', 'sstate-inputdirs', ' ${ARCHIVER_RPMTOPDIR}')
             d.appendVarFlag('do_package_write_rpm', 'sstate-outputdirs', ' ${DEPLOY_DIR_SRC}')
+            d.appendVar('PSEUDO_INCLUDE_PATHS', ',${ARCHIVER_TOPDIR}')
             if ar_dumpdata == "1":
                 d.appendVarFlag('do_package_write_rpm', 'depends', ' %s:do_dumpdata' % pn)
             if ar_recipe == "1":
@@ -324,7 +340,7 @@ python do_ar_mirror() {
     dl_dir = d.getVar('DL_DIR')
     mirror_exclusions = (d.getVar('ARCHIVER_MIRROR_EXCLUDE') or '').split()
     mirror_mode = d.getVarFlag('ARCHIVER_MODE', 'mirror')
-    have_mirror_tarballs = d.getVar('BB_GENERATE_MIRROR_TARBALLS')
+    have_mirror_tarballs = oe.types.boolean(d.getVar('BB_GENERATE_MIRROR_TARBALLS'))
 
     if mirror_mode == 'combined':
         destdir = d.getVar('ARCHIVER_COMBINED_MIRRORDIR')
@@ -386,19 +402,11 @@ python do_ar_mirror() {
         subprocess.check_call(cmd, shell=True)
 }
 
-def exclude_useless_paths(tarinfo):
-    if tarinfo.isdir():
-        if tarinfo.name.endswith('/temp') or tarinfo.name.endswith('/patches') or tarinfo.name.endswith('/.pc'):
-            return None
-        elif tarinfo.name == 'temp' or tarinfo.name == 'patches' or tarinfo.name == '.pc':
-            return None
-    return tarinfo
-
 def create_tarball(d, srcdir, suffix, ar_outdir):
     """
     create the tarball from srcdir
     """
-    import tarfile
+    import subprocess
 
     # Make sure we are only creating a single tarball for gcc sources
     if (d.getVar('SRC_URI') == ""):
@@ -409,17 +417,30 @@ def create_tarball(d, srcdir, suffix, ar_outdir):
     # that we archive the actual directory and not just the link.
     srcdir = os.path.realpath(srcdir)
 
+    compression_method = d.getVarFlag('ARCHIVER_MODE', 'compression')
+    if compression_method == "xz":
+        compression_cmd = "xz %s" % d.getVar('XZ_DEFAULTS')
+    # To keep compatibility with ARCHIVER_MODE[compression]
+    elif compression_method == "gz":
+        compression_cmd = "gzip"
+    elif compression_method == "bz2":
+        compression_cmd = "bzip2"
+    else:
+        bb.fatal("Unsupported compression_method: %s" % compression_method)
+
     bb.utils.mkdirhier(ar_outdir)
     if suffix:
-        filename = '%s-%s.tar.gz' % (d.getVar('PF'), suffix)
+        filename = '%s-%s.tar.%s' % (d.getVar('PF'), suffix, compression_method)
     else:
-        filename = '%s.tar.gz' % d.getVar('PF')
+        filename = '%s.tar.%s' % (d.getVar('PF'), compression_method)
     tarname = os.path.join(ar_outdir, filename)
 
     bb.note('Creating %s' % tarname)
-    tar = tarfile.open(tarname, 'w:gz')
-    tar.add(srcdir, arcname=os.path.basename(srcdir), filter=exclude_useless_paths)
-    tar.close()
+    dirname = os.path.dirname(srcdir)
+    basename = os.path.basename(srcdir)
+    exclude = "--exclude=temp --exclude=patches --exclude='.pc'"
+    tar_cmd = "tar %s -cf - %s | %s > %s" % (exclude, basename, compression_cmd, tarname)
+    subprocess.check_call(tar_cmd, cwd=dirname, shell=True)
 
 # creating .diff.gz between source.orig and source
 def create_diff_gz(d, src_orig, src, ar_outdir):
@@ -452,8 +473,9 @@ def create_diff_gz(d, src_orig, src, ar_outdir):
         os.chdir(cwd)
 
 def is_work_shared(d):
-    pn = d.getVar('PN')
-    return bb.data.inherits_class('kernel', d) or pn.startswith('gcc-source')
+    sharedworkdir = os.path.join(d.getVar('TMPDIR'), 'work-shared')
+    sourcedir = os.path.realpath(d.getVar('S'))
+    return sourcedir.startswith(sharedworkdir)
 
 # Run do_unpack and do_patch
 python do_unpack_and_patch() {
@@ -577,7 +599,7 @@ python do_dumpdata () {
 
 SSTATETASKS += "do_deploy_archives"
 do_deploy_archives () {
-    echo "Deploying source archive files from ${ARCHIVER_TOPDIR} to ${DEPLOY_DIR_SRC}."
+    bbnote "Deploying source archive files from ${ARCHIVER_TOPDIR} to ${DEPLOY_DIR_SRC}."
 }
 python do_deploy_archives_setscene () {
     sstate_setscene(d)

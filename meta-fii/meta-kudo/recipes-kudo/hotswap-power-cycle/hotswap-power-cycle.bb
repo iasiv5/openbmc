@@ -10,11 +10,11 @@ DEPENDS += "systemd"
 RDEPENDS:${PN} += "bash"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
-SRC_URI:append:kudo = " file://hotswap-power-cycle.service"
+SRC_URI += " file://hotswap-power-cycle.service"
 
 do_install() {
     install -d ${D}${systemd_unitdir}/system/
-    install -m 0644 ${WORKDIR}/hotswap-power-cycle.service ${D}${systemd_unitdir}/system/hotswap-power-cycle.service
+    install -m 0644 ${UNPACKDIR}/hotswap-power-cycle.service ${D}${systemd_unitdir}/system/hotswap-power-cycle.service
 }
 
 SYSTEMD_PACKAGES = "${PN}"

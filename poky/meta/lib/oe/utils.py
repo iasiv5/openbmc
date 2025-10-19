@@ -1,10 +1,13 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
 import subprocess
 import multiprocessing
 import traceback
+import errno
 
 def read_file(filename):
     try:
@@ -221,12 +224,12 @@ def packages_filter_out_system(d):
     PN-dbg PN-doc PN-locale-eb-gb removed.
     """
     pn = d.getVar('PN')
-    blacklist = [pn + suffix for suffix in ('', '-dbg', '-dev', '-doc', '-locale', '-staticdev', '-src')]
+    pkgfilter = [pn + suffix for suffix in ('', '-dbg', '-dev', '-doc', '-locale', '-staticdev', '-src')]
     localepkg = pn + "-locale-"
     pkgs = []
 
     for pkg in d.getVar('PACKAGES').split():
-        if pkg not in blacklist and localepkg not in pkg:
+        if pkg not in pkgfilter and localepkg not in pkg:
             pkgs.append(pkg)
     return pkgs
 
@@ -248,24 +251,31 @@ def trim_version(version, num_parts=2):
     trimmed = ".".join(parts[:num_parts])
     return trimmed
 
-def cpu_count(at_least=1):
+def cpu_count(at_least=1, at_most=64):
     cpus = len(os.sched_getaffinity(0))
-    return max(cpus, at_least)
+    return max(min(cpus, at_most), at_least)
 
 def execute_pre_post_process(d, cmds):
     if cmds is None:
         return
 
-    for cmd in cmds.strip().split(';'):
-        cmd = cmd.strip()
-        if cmd != '':
-            bb.note("Executing %s ..." % cmd)
-            bb.build.exec_func(cmd, d)
+    cmds = cmds.replace(";", " ")
 
-# For each item in items, call the function 'target' with item as the first 
+    for cmd in cmds.split():
+        bb.note("Executing %s ..." % cmd)
+        bb.build.exec_func(cmd, d)
+
+def get_bb_number_threads(d):
+    return int(d.getVar("BB_NUMBER_THREADS") or os.cpu_count() or 1)
+
+def multiprocess_launch(target, items, d, extraargs=None):
+    max_process = get_bb_number_threads(d)
+    return multiprocess_launch_mp(target, items, max_process, extraargs)
+
+# For each item in items, call the function 'target' with item as the first
 # argument, extraargs as the other arguments and handle any exceptions in the
 # parent thread
-def multiprocess_launch(target, items, d, extraargs=None):
+def multiprocess_launch_mp(target, items, max_process, extraargs=None):
 
     class ProcessLaunch(multiprocessing.Process):
         def __init__(self, *args, **kwargs):
@@ -300,14 +310,15 @@ def multiprocess_launch(target, items, d, extraargs=None):
             self.update()
             return self._result
 
-    max_process = int(d.getVar("BB_NUMBER_THREADS") or os.cpu_count() or 1)
     launched = []
     errors = []
     results = []
     items = list(items)
     while (items and not errors) or launched:
         if not errors and items and len(launched) < max_process:
-            args = (items.pop(),)
+            args = items.pop()
+            if not type(args) is tuple:
+                args = (args,)
             if extraargs is not None:
                 args = args + extraargs
             p = ProcessLaunch(target=target, args=args)
@@ -473,94 +484,6 @@ def get_multilib_datastore(variant, d):
         localdata.setVar("MLPREFIX", "")
     return localdata
 
-#
-# Python 2.7 doesn't have threaded pools (just multiprocessing)
-# so implement a version here
-#
-
-from queue import Queue
-from threading import Thread
-
-class ThreadedWorker(Thread):
-    """Thread executing tasks from a given tasks queue"""
-    def __init__(self, tasks, worker_init, worker_end):
-        Thread.__init__(self)
-        self.tasks = tasks
-        self.daemon = True
-
-        self.worker_init = worker_init
-        self.worker_end = worker_end
-
-    def run(self):
-        from queue import Empty
-
-        if self.worker_init is not None:
-            self.worker_init(self)
-
-        while True:
-            try:
-                func, args, kargs = self.tasks.get(block=False)
-            except Empty:
-                if self.worker_end is not None:
-                    self.worker_end(self)
-                break
-
-            try:
-                func(self, *args, **kargs)
-            except Exception as e:
-                print(e)
-            finally:
-                self.tasks.task_done()
-
-class ThreadedPool:
-    """Pool of threads consuming tasks from a queue"""
-    def __init__(self, num_workers, num_tasks, worker_init=None,
-            worker_end=None):
-        self.tasks = Queue(num_tasks)
-        self.workers = []
-
-        for _ in range(num_workers):
-            worker = ThreadedWorker(self.tasks, worker_init, worker_end)
-            self.workers.append(worker)
-
-    def start(self):
-        for worker in self.workers:
-            worker.start()
-
-    def add_task(self, func, *args, **kargs):
-        """Add a task to the queue"""
-        self.tasks.put((func, args, kargs))
-
-    def wait_completion(self):
-        """Wait for completion of all the tasks in the queue"""
-        self.tasks.join()
-        for worker in self.workers:
-            worker.join()
-
-def write_ld_so_conf(d):
-    # Some utils like prelink may not have the correct target library paths
-    # so write an ld.so.conf to help them
-    ldsoconf = d.expand("${STAGING_DIR_TARGET}${sysconfdir}/ld.so.conf")
-    if os.path.exists(ldsoconf):
-        bb.utils.remove(ldsoconf)
-    bb.utils.mkdirhier(os.path.dirname(ldsoconf))
-    with open(ldsoconf, "w") as f:
-        f.write(d.getVar("base_libdir") + '\n')
-        f.write(d.getVar("libdir") + '\n')
-
-class ImageQAFailed(Exception):
-    def __init__(self, description, name=None, logfile=None):
-        self.description = description
-        self.name = name
-        self.logfile=logfile
-
-    def __str__(self):
-        msg = 'Function failed: %s' % self.name
-        if self.description:
-            msg = msg + ' (%s)' % self.description
-
-        return msg
-
 def sh_quote(string):
     import shlex
     return shlex.quote(string)
@@ -595,3 +518,14 @@ def directory_size(root, blocksize=4096):
         total += sum(roundup(getsize(os.path.join(root, name))) for name in files)
         total += roundup(getsize(root))
     return total
+
+# Update the mtime of a file, skip if permission/read-only issues
+def touch(filename):
+    try:
+        os.utime(filename, None)
+    except PermissionError:
+        pass
+    except OSError as e:
+        # Handle read-only file systems gracefully
+        if e.errno != errno.EROFS:
+            raise e

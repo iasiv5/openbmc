@@ -1,4 +1,7 @@
-libdnf: allow reproducible binary builds
+From 870f50ba4761317f2db018ac130a42087230dded Mon Sep 17 00:00:00 2001
+From: Joe Slater <joe.slater@windriver.com>
+Date: Wed, 22 Jul 2020 13:31:11 -0700
+Subject: [PATCH] libdnf: allow reproducible binary builds
 
 Use a dummy directory for test data if not built WITH_TESTS.  Allow for overriding
 TESTDATADIR, since the default is guaranteed to be wrong for target builds.
@@ -6,15 +9,19 @@ TESTDATADIR, since the default is guaranteed to be wrong for target builds.
 Upstream-Status: Pending
 
 Signed-off-by: Joe Slater <joe.slater@windriver.com>
+---
+ CMakeLists.txt | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b1daacb..f461e54 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -133,7 +133,12 @@ add_definitions(-DG_LOG_DOMAIN=\\"libdnf
- add_definitions(-D_FILE_OFFSET_BITS=64)
+@@ -131,7 +131,12 @@ add_definitions(-DGETTEXT_DOMAIN="libdnf")
+ add_definitions(-DG_LOG_DOMAIN="libdnf")
  
  # tests
--add_definitions(-DTESTDATADIR=\\"${CMAKE_SOURCE_DIR}/data/tests\\")
+-add_definitions(-DTESTDATADIR="${CMAKE_SOURCE_DIR}/data/tests")
 +if(NOT WITH_TESTS)
 +  set(TEST_DATA_DIR "/notests")
 +elseif(NOT DEFINED TEST_DATA_DIR)
@@ -24,3 +31,6 @@ Signed-off-by: Joe Slater <joe.slater@windriver.com>
  
  # librhsm
  if(ENABLE_RHSM_SUPPORT)
+-- 
+2.43.0
+

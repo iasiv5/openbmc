@@ -6,9 +6,9 @@ The module is split into several packages which are not described in this \
 section; unless stated otherwise, you only need to use XML::LibXML; in \
 your programs."
 
-HOMEPAGE = "http://search.cpan.org/dist/XML-LibXML-1.99/"
+HOMEPAGE = "https://metacpan.org/dist/XML-LibXML"
 SECTION = "libs"
-LICENSE = "Artistic-1.0|GPLv1+"
+LICENSE = "Artistic-1.0 | GPL-1.0-or-later"
 DEPENDS += "libxml2 \
         libxml-sax-perl-native \
         zlib \
@@ -22,10 +22,11 @@ RDEPENDS:${PN} += "\
     zlib \
 "
 
-SRC_URI = "http://search.cpan.org/CPAN/authors/id/S/SH/SHLOMIF/XML-LibXML-${PV}.tar.gz;name=libxml \
+SRC_URI = "${CPAN_MIRROR}/authors/id/S/SH/SHLOMIF/XML-LibXML-${PV}.tar.gz;name=libxml \
     file://disable-libxml2-check.patch \
     file://fix-CATALOG-conditional-compile.patch \
     file://using-DOCB-conditional.patch \
+    file://0001-libxml-mm-Fix-function-prototypes-in-function-pointe.patch \
 "
 LIC_FILES_CHKSUM = "file://debian/copyright;md5=64eda1bc135f0ece1d1187f2a8ac82c1 \
     file://LICENSE;md5=97871bde150daeb5e61ad95137ff2446 \

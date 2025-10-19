@@ -1,4 +1,6 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
@@ -6,6 +8,7 @@ import re
 import shutil
 import subprocess
 from oe.package_manager import *
+from oe.package_manager.common_deb_ipk import OpkgDpkgPM
 
 class OpkgIndexer(Indexer):
     def write_index(self):
@@ -14,6 +17,7 @@ class OpkgIndexer(Indexer):
                      ]
 
         opkg_index_cmd = bb.utils.which(os.getenv('PATH'), "opkg-make-index")
+        opkg_index_cmd_extra_params = self.d.getVar('OPKG_MAKE_INDEX_EXTRA_PARAMS') or ""
         if self.d.getVar('PACKAGE_FEED_SIGN') == '1':
             signer = get_signer(self.d, self.d.getVar('PACKAGE_FEED_GPG_BACKEND'))
         else:
@@ -39,8 +43,8 @@ class OpkgIndexer(Indexer):
                 if not os.path.exists(pkgs_file):
                     open(pkgs_file, "w").close()
 
-                index_cmds.add('%s --checksum md5 --checksum sha256 -r %s -p %s -m %s' %
-                                  (opkg_index_cmd, pkgs_file, pkgs_file, pkgs_dir))
+                index_cmds.add('%s --checksum md5 --checksum sha256 -r %s -p %s -m %s %s' %
+                                  (opkg_index_cmd, pkgs_file, pkgs_file, pkgs_dir, opkg_index_cmd_extra_params))
 
                 index_sign_files.add(pkgs_file)
 
@@ -86,74 +90,6 @@ class PMPkgsList(PkgsList):
 
         return opkg_query(cmd_output)
 
-
-
-class OpkgDpkgPM(PackageManager):
-    def __init__(self, d, target_rootfs):
-        """
-        This is an abstract class. Do not instantiate this directly.
-        """
-        super(OpkgDpkgPM, self).__init__(d, target_rootfs)
-
-    def package_info(self, pkg, cmd):
-        """
-        Returns a dictionary with the package info.
-
-        This method extracts the common parts for Opkg and Dpkg
-        """
-
-        try:
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
-        except subprocess.CalledProcessError as e:
-            bb.fatal("Unable to list available packages. Command '%s' "
-                     "returned %d:\n%s" % (cmd, e.returncode, e.output.decode("utf-8")))
-        return opkg_query(output)
-
-    def extract(self, pkg, pkg_info):
-        """
-        Returns the path to a tmpdir where resides the contents of a package.
-
-        Deleting the tmpdir is responsability of the caller.
-
-        This method extracts the common parts for Opkg and Dpkg
-        """
-
-        ar_cmd = bb.utils.which(os.getenv("PATH"), "ar")
-        tar_cmd = bb.utils.which(os.getenv("PATH"), "tar")
-        pkg_path = pkg_info[pkg]["filepath"]
-
-        if not os.path.isfile(pkg_path):
-            bb.fatal("Unable to extract package for '%s'."
-                     "File %s doesn't exists" % (pkg, pkg_path))
-
-        tmp_dir = tempfile.mkdtemp()
-        current_dir = os.getcwd()
-        os.chdir(tmp_dir)
-        data_tar = 'data.tar.xz'
-
-        try:
-            cmd = [ar_cmd, 'x', pkg_path]
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-            cmd = [tar_cmd, 'xf', data_tar]
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            bb.utils.remove(tmp_dir, recurse=True)
-            bb.fatal("Unable to extract %s package. Command '%s' "
-                     "returned %d:\n%s" % (pkg_path, ' '.join(cmd), e.returncode, e.output.decode("utf-8")))
-        except OSError as e:
-            bb.utils.remove(tmp_dir, recurse=True)
-            bb.fatal("Unable to extract %s package. Command '%s' "
-                     "returned %d:\n%s at %s" % (pkg_path, ' '.join(cmd), e.errno, e.strerror, e.filename))
-
-        bb.note("Extracted %s to %s" % (pkg_path, tmp_dir))
-        bb.utils.remove(os.path.join(tmp_dir, "debian-binary"))
-        bb.utils.remove(os.path.join(tmp_dir, "control.tar.gz"))
-        os.chdir(current_dir)
-
-        return tmp_dir
-
-    def _handle_intercept_failure(self, registered_pkgs):
-        self.mark_packages("unpacked", registered_pkgs.split())
 
 class OpkgPM(OpkgDpkgPM):
     def __init__(self, d, target_rootfs, config_file, archs, task_name='target', ipk_repo_workdir="oe-rootfs-repo", filterbydependencies=True, prepare_index=True):
@@ -243,7 +179,7 @@ class OpkgPM(OpkgDpkgPM):
             """
             if (self.d.getVar('FEED_DEPLOYDIR_BASE_URI') or "") != "":
                 for arch in self.pkg_archs.split():
-                    cfg_file_name = os.path.join(self.target_rootfs,
+                    cfg_file_name = oe.path.join(self.target_rootfs,
                                                  self.d.getVar("sysconfdir"),
                                                  "opkg",
                                                  "local-%s-feed.conf" % arch)
@@ -337,7 +273,7 @@ class OpkgPM(OpkgDpkgPM):
 
         self.deploy_dir_unlock()
 
-    def install(self, pkgs, attempt_only=False):
+    def install(self, pkgs, attempt_only=False, hard_depends_only=False):
         if not pkgs:
             return
 
@@ -346,6 +282,8 @@ class OpkgPM(OpkgDpkgPM):
             cmd += " --add-exclude %s" % exclude
         for bad_recommendation in (self.d.getVar("BAD_RECOMMENDATIONS") or "").split():
             cmd += " --add-ignore-recommends %s" % bad_recommendation
+        if hard_depends_only:
+            cmd += " --no-install-recommends"
         cmd += " install "
         cmd += " ".join(pkgs)
 
@@ -443,15 +381,16 @@ class OpkgPM(OpkgDpkgPM):
         cmd = "%s %s --noaction install %s " % (self.opkg_cmd,
                                                 opkg_args,
                                                 ' '.join(pkgs))
-        try:
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-        except subprocess.CalledProcessError as e:
+        proc = subprocess.run(cmd, capture_output=True, encoding="utf-8", shell=True)
+        if proc.returncode:
             bb.fatal("Unable to dummy install packages. Command '%s' "
-                     "returned %d:\n%s" % (cmd, e.returncode, e.output.decode("utf-8")))
+                     "returned %d:\n%s" % (cmd, proc.returncode, proc.stderr))
+        elif proc.stderr:
+            bb.note("Command '%s' returned stderr: %s" % (cmd, proc.stderr))
 
         bb.utils.remove(temp_rootfs, True)
 
-        return output
+        return proc.stdout
 
     def backup_packaging_data(self):
         # Save the opkglib for increment ipk image generation
@@ -477,7 +416,7 @@ class OpkgPM(OpkgDpkgPM):
         Returns a dictionary with the package info.
         """
         cmd = "%s %s info %s" % (self.opkg_cmd, self.opkg_args, pkg)
-        pkg_info = super(OpkgPM, self).package_info(pkg, cmd)
+        pkg_info = self._common_package_info(cmd)
 
         pkg_arch = pkg_info[pkg]["arch"]
         pkg_filename = pkg_info[pkg]["filename"]
@@ -485,19 +424,3 @@ class OpkgPM(OpkgDpkgPM):
                 os.path.join(self.deploy_dir, pkg_arch, pkg_filename)
 
         return pkg_info
-
-    def extract(self, pkg):
-        """
-        Returns the path to a tmpdir where resides the contents of a package.
-
-        Deleting the tmpdir is responsability of the caller.
-        """
-        pkg_info = self.package_info(pkg)
-        if not pkg_info:
-            bb.fatal("Unable to get information for package '%s' while "
-                     "trying to extract the package."  % pkg)
-
-        tmp_dir = super(OpkgPM, self).extract(pkg, pkg_info)
-        bb.utils.remove(os.path.join(tmp_dir, "data.tar.xz"))
-
-        return tmp_dir

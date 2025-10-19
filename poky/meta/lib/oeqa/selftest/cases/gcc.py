@@ -1,9 +1,14 @@
+#
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: MIT
+#
 import os
+import time
 from oeqa.core.decorator import OETestTag
 from oeqa.core.case import OEPTestResultTestCase
 from oeqa.selftest.case import OESelftestTestCase
-from oeqa.utils.commands import bitbake, get_bb_var, get_bb_vars, runqemu, Command
+from oeqa.utils.commands import bitbake, get_bb_var, get_bb_vars, runqemu
 
 def parse_values(content):
     for i in content:
@@ -32,14 +37,19 @@ class GccSelfTestBase(OESelftestTestCase, OEPTestResultTestCase):
         features = []
         features.append('MAKE_CHECK_TARGETS = "{0}"'.format(" ".join(targets)))
         if ssh is not None:
-            features.append('TOOLCHAIN_TEST_TARGET = "ssh"')
+            features.append('TOOLCHAIN_TEST_TARGET = "linux-ssh"')
             features.append('TOOLCHAIN_TEST_HOST = "{0}"'.format(ssh))
             features.append('TOOLCHAIN_TEST_HOST_USER = "root"')
             features.append('TOOLCHAIN_TEST_HOST_PORT = "22"')
         self.write_config("\n".join(features))
 
         recipe = "gcc-runtime"
+
+        start_time = time.time()
+
         bitbake("{} -c check".format(recipe))
+
+        end_time = time.time()
 
         bb_vars = get_bb_vars(["B", "TARGET_SYS"], recipe)
         builddir, target_sys = bb_vars["B"], bb_vars["TARGET_SYS"]
@@ -54,7 +64,7 @@ class GccSelfTestBase(OESelftestTestCase, OEPTestResultTestCase):
 
             ptestsuite = "gcc-{}".format(suite) if suite != "gcc" else suite
             ptestsuite = ptestsuite + "-user" if ssh is None else ptestsuite
-            self.ptest_section(ptestsuite, logfile = logpath)
+            self.ptest_section(ptestsuite, duration = int(end_time - start_time), logfile = logpath)
             with open(sumspath, "r") as f:
                 for test, result in parse_values(f):
                     self.ptest_result(ptestsuite, test, result)
@@ -73,6 +83,8 @@ class GccSelfTestBase(OESelftestTestCase, OEPTestResultTestCase):
             # validate that SSH is working
             status, _ = qemu.run("uname")
             self.assertEqual(status, 0)
+            qemu.run('echo "MaxStartups 75:30:100" >> /etc/ssh/sshd_config')
+            qemu.run('service sshd restart')
 
             return self.run_check(*args, ssh=qemu.ip, **kwargs)
 
@@ -114,37 +126,44 @@ class GccLibItmSelfTest(GccSelfTestBase):
         self.run_check("libitm")
 
 @OETestTag("toolchain-system")
+@OETestTag("runqemu")
 class GccCrossSelfTestSystemEmulated(GccSelfTestBase):
     def test_cross_gcc(self):
         self.run_check_emulated("gcc")
 
 @OETestTag("toolchain-system")
+@OETestTag("runqemu")
 class GxxCrossSelfTestSystemEmulated(GccSelfTestBase):
     def test_cross_gxx(self):
         self.run_check_emulated("g++")
 
 @OETestTag("toolchain-system")
+@OETestTag("runqemu")
 class GccLibAtomicSelfTestSystemEmulated(GccSelfTestBase):
     def test_libatomic(self):
         self.run_check_emulated("libatomic")
 
 @OETestTag("toolchain-system")
+@OETestTag("runqemu")
 class GccLibGompSelfTestSystemEmulated(GccSelfTestBase):
     def test_libgomp(self):
         self.run_check_emulated("libgomp")
 
 @OETestTag("toolchain-system")
+@OETestTag("runqemu")
 class GccLibStdCxxSelfTestSystemEmulated(GccSelfTestBase):
     def test_libstdcxx(self):
         self.run_check_emulated("libstdc++-v3")
 
 @OETestTag("toolchain-system")
+@OETestTag("runqemu")
 class GccLibSspSelfTestSystemEmulated(GccSelfTestBase):
     def test_libssp(self):
         self.check_skip("libssp")
         self.run_check_emulated("libssp")
 
 @OETestTag("toolchain-system")
+@OETestTag("runqemu")
 class GccLibItmSelfTestSystemEmulated(GccSelfTestBase):
     def test_libitm(self):
         self.check_skip("libitm")

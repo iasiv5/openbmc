@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
@@ -15,8 +17,11 @@ help ()
 clean_cache()
 {
     s=`bitbake -e | grep ^CACHE= | cut -f2 -d\"`
+    # Stop any active memory resident server
+    bitbake -m
+    # Remove cache entries since we want to trigger a full reparse
     if [ "x${s}" != "x" ]; then
-        rm -rf ${s}
+        rm -f ${s}/bb_cache*.dat.*
     fi
 }
 
@@ -50,43 +55,6 @@ do_import ()
     return $ret
 }
 
-do_migrate_localcount ()
-{
-    df=`bitbake -R conf/migrate_localcount.conf -e | \
-                grep ^LOCALCOUNT_DUMPFILE= | cut -f2 -d\"`
-    if [ "x${df}" == "x" ];
-    then
-        echo "LOCALCOUNT_DUMPFILE is not defined!"
-        return 1
-    fi
-
-    rm -rf $df
-    clean_cache
-    echo "Exporting LOCALCOUNT to AUTOINCs..."
-    bitbake -R conf/migrate_localcount.conf -p
-    [ ! $? -eq 0 ] && echo "Exporting to file $df failed!" && exit 1
-
-    if [ -e $df ];
-    then
-        echo "Exporting to file $df succeeded!"
-    else
-        echo "Exporting to file $df failed!"
-        exit 1
-    fi
-    
-    echo "Importing generated AUTOINC entries..."
-    [ -e $df ] && do_import $df
-
-    if [ ! $? -eq 0 ]
-    then
-        echo "Migration from LOCALCOUNT to AUTOINCs failed!"
-        return 1
-    fi
-
-    echo "Migration from LOCALCOUNT to AUTOINCs succeeded!"
-    return 0
-}
-
 [ $# -eq 0 ] && help  && exit 1
 
 case $2 in
@@ -104,9 +72,6 @@ export)
     ;;
 import)
     do_import $2
-    ;;
-migrate_localcount)
-    do_migrate_localcount
     ;;
 *)
     help

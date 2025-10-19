@@ -1,10 +1,10 @@
 SUMMARY = "Architecture-dependent configuration for opkg"
-HOMEPAGE = "http://code.google.com/p/opkg/"
+HOMEPAGE = "https://git.yoctoproject.org/opkg/"
 LICENSE = "MIT"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
-PR = "r1"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 do_compile() {
 	mkdir -p ${S}/${sysconfdir}/opkg/

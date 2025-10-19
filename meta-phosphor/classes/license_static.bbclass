@@ -15,7 +15,7 @@
 # inherit license_static
 ####
 
-STATIC_LICENSE_DIR = "${IMAGE_ROOTFS}/usr/share/www/common-licenses"
+STATIC_LICENSE_DIR = "${IMAGE_ROOTFS}${datadir}/www/common-licenses"
 
 
 def add_index_html_header(f):
@@ -61,4 +61,4 @@ python do_populate_static_lic() {
         bb.warn("Static licenses not copied because 'COPY_LIC_DIRS' is disabled.")
 }
 
-ROOTFS_POSTPROCESS_COMMAND:append = "do_populate_static_lic; "
+ROOTFS_POSTPROCESS_COMMAND:append = " do_populate_static_lic"

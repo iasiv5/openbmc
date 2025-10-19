@@ -49,20 +49,32 @@ class SkipPackage(SkipRecipe):
 __mtime_cache = {}
 def cached_mtime(f):
     if f not in __mtime_cache:
-        __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+        res = os.stat(f)
+        __mtime_cache[f] = (res.st_mtime_ns, res.st_size, res.st_ino)
     return __mtime_cache[f]
 
 def cached_mtime_noerror(f):
     if f not in __mtime_cache:
         try:
-            __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+            res = os.stat(f)
+            __mtime_cache[f] = (res.st_mtime_ns, res.st_size, res.st_ino)
         except OSError:
             return 0
     return __mtime_cache[f]
 
+def check_mtime(f, mtime):
+    try:
+        res = os.stat(f)
+        current_mtime = (res.st_mtime_ns, res.st_size, res.st_ino)
+        __mtime_cache[f] = current_mtime
+    except OSError:
+        current_mtime = 0
+    return current_mtime == mtime
+
 def update_mtime(f):
     try:
-        __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+        res = os.stat(f)
+        __mtime_cache[f] = (res.st_mtime_ns, res.st_size, res.st_ino)
     except OSError:
         if f in __mtime_cache:
             del __mtime_cache[f]
@@ -99,12 +111,12 @@ def supports(fn, data):
             return 1
     return 0
 
-def handle(fn, data, include = 0):
+def handle(fn, data, include=0, baseconfig=False):
     """Call the handler that is appropriate for this file"""
     for h in handlers:
         if h['supports'](fn, data):
             with data.inchistory.include(fn):
-                return h['handle'](fn, data, include)
+                return h['handle'](fn, data, include, baseconfig)
     raise ParseError("not a BitBake file", fn)
 
 def init(fn, data):
@@ -113,6 +125,8 @@ def init(fn, data):
             return h['init'](data)
 
 def init_parser(d):
+    if hasattr(bb.parse, "siggen"):
+        bb.parse.siggen.exit()
     bb.parse.siggen = bb.siggen.init(d)
 
 def resolve_file(fn, d):
@@ -161,5 +175,42 @@ def get_file_depends(d):
     for (fn, _) in depends:
         dep_files.append(os.path.abspath(fn))
     return " ".join(dep_files)
+
+def vardeps(*varnames):
+    """
+    Function decorator that can be used to instruct the bitbake dependency
+    parsing to add a dependency on the specified variables names
+
+    Example:
+
+        @bb.parse.vardeps("FOO", "BAR")
+        def my_function():
+            ...
+
+    """
+    def inner(f):
+        if not hasattr(f, "bb_vardeps"):
+            f.bb_vardeps = set()
+        f.bb_vardeps |= set(varnames)
+        return f
+    return inner
+
+def vardepsexclude(*varnames):
+    """
+    Function decorator that can be used to instruct the bitbake dependency
+    parsing to ignore dependencies on the specified variable names in the code
+
+    Example:
+
+        @bb.parse.vardepsexclude("FOO", "BAR")
+        def my_function():
+            ...
+    """
+    def inner(f):
+        if not hasattr(f, "bb_vardepsexclude"):
+            f.bb_vardepsexclude = set()
+        f.bb_vardepsexclude |= set(varnames)
+        return f
+    return inner
 
 from bb.parse.parse_py import __version__, ConfHandler, BBHandler

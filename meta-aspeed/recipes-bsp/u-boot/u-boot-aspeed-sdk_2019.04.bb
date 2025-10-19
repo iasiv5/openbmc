@@ -11,13 +11,17 @@ SRC_URI:append:df-phosphor-mmc = " file://u-boot-env-ast2600.txt"
 SRC_URI += " \
             file://rsa_oem_dss_key.pem;sha256sum=64a379979200d39949d3e5b0038e3fdd5548600b2f7077a17e35422336075ad4 \
             file://rsa_pub_oem_dss_key.pem;sha256sum=40132a694a10af2d1b094b1cb5adab4d6b4db2a35e02d848b2b6a85e60738264 \
+            file://user/ \
            "
 
-SOCSEC_SIGN_KEY ?= "${WORKDIR}/rsa_oem_dss_key.pem"
+SOCSEC_SIGN_KEY ?= "${UNPACKDIR}/rsa_oem_dss_key.pem"
 SOCSEC_SIGN_ALGO ?= "RSA4096_SHA512"
-SOCSEC_SIGN_EXTRA_OPTS ?= "--stack_intersects_verification_region=false"
+SOCSEC_SIGN_EXTRA_OPTS ?= "--stack_intersects_verification_region=false --rsa_key_order=big"
+
+OTPTOOL_USER_DIR ?= "${UNPACKDIR}/user"
 
 inherit socsec-sign
+inherit otptool
 
 UBOOT_ENV_SIZE:df-phosphor-mmc = "0x10000"
 UBOOT_ENV:df-phosphor-mmc = "u-boot-env"
@@ -28,6 +32,6 @@ do_compile:append() {
     if [ -n "${UBOOT_ENV}" ]
     then
         # Generate redundant environment image
-        ${B}/tools/mkenvimage -r -s ${UBOOT_ENV_SIZE} -o ${WORKDIR}/${UBOOT_ENV_BINARY} ${WORKDIR}/${UBOOT_ENV_TXT}
+        ${B}/tools/mkenvimage -r -s ${UBOOT_ENV_SIZE} -o ${B}/${UBOOT_ENV_BINARY} ${UNPACKDIR}/${UBOOT_ENV_TXT}
     fi
 }

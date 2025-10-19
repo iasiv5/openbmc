@@ -5,37 +5,44 @@ with no specific configuration. This tool implements IPv4LL, "Dynamic Configurat
 IPv4 Link-Local Addresses" (IETF RFC3927), a protocol for automatic IP address \
 configuration from the link-local 169.254.0.0/16 range without the need for a central \
 server.'
-AUTHOR = "Lennart Poettering <lennart@poettering.net>"
 HOMEPAGE = "http://avahi.org"
-BUGTRACKER = "https://github.com/lathiat/avahi/issues"
+BUGTRACKER = "https://github.com/avahi/avahi/issues"
 SECTION = "network"
 
-# major part is under LGPLv2.1+, but several .dtd, .xsl, initscripts and
-# python scripts are under GPLv2+
-LICENSE = "GPLv2+ & LGPLv2.1+"
+# major part is under LGPL-2.1-or-later, but several .dtd, .xsl, initscripts and
+# python scripts are under GPL-2.0-or-later
+LICENSE = "GPL-2.0-or-later & LGPL-2.1-or-later"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=2d5025d4aa3495befef8f17206a5b0a1 \
                     file://avahi-common/address.h;endline=25;md5=b1d1d2cda1c07eb848ea7d6215712d9d \
                     file://avahi-core/dns.h;endline=23;md5=6fe82590b81aa0ddea5095b548e2fdcb \
                     file://avahi-daemon/main.c;endline=21;md5=9ee77368c5407af77caaef1b07285969 \
                     file://avahi-client/client.h;endline=23;md5=f4ac741a25c4f434039ba3e18c8674cf"
 
-SRC_URI = "https://github.com/lathiat/avahi/releases/download/v${PV}/avahi-${PV}.tar.gz \
+SRC_URI = "${GITHUB_BASE_URI}/download/v${PV}/avahi-${PV}.tar.gz \
            file://00avahi-autoipd \
            file://99avahi-autoipd \
            file://initscript.patch \
            file://0001-Fix-opening-etc-resolv.conf-error.patch \
            file://handle-hup.patch \
            file://local-ping.patch \
+           file://invalid-service.patch \
+           file://CVE-2023-1981.patch \
+           file://CVE-2023-38469-1.patch \
+           file://CVE-2023-38469-2.patch \
+           file://CVE-2023-38470-1.patch \
+           file://CVE-2023-38470-2.patch \
+           file://CVE-2023-38471-1.patch \
+           file://CVE-2023-38471-2.patch \
+           file://CVE-2023-38472.patch \
+           file://CVE-2023-38473.patch \
            "
 
-UPSTREAM_CHECK_URI = "https://github.com/lathiat/avahi/releases/"
-SRC_URI[md5sum] = "229c6aa30674fc43c202b22c5f8c2be7"
+GITHUB_BASE_URI = "https://github.com/avahi/avahi/releases/"
 SRC_URI[sha256sum] = "060309d7a333d38d951bc27598c677af1796934dbd98e1024e7ad8de798fedda"
 
-# Issue only affects Debian/SUSE, not us
-CVE_CHECK_WHITELIST += "CVE-2021-26720"
+CVE_STATUS[CVE-2021-26720] = "not-applicable-platform: Issue only affects Debian/SUSE"
 
-DEPENDS = "expat libcap libdaemon glib-2.0"
+DEPENDS = "expat libcap libdaemon glib-2.0 glib-2.0-native"
 
 # For gtk related PACKAGECONFIGs: gtk, gtk3
 AVAHI_GTK ?= ""
@@ -48,7 +55,7 @@ PACKAGECONFIG[libdns_sd] = "--enable-compat-libdns_sd --enable-dbus,,dbus"
 PACKAGECONFIG[libevent] = "--enable-libevent,--disable-libevent,libevent"
 PACKAGECONFIG[qt5] = "--enable-qt5,--disable-qt5,qtbase"
 
-inherit autotools pkgconfig gettext gobject-introspection
+inherit autotools pkgconfig gettext gobject-introspection github-releases
 
 EXTRA_OECONF = "--with-avahi-priv-access-group=adm \
              --disable-stack-protector \
@@ -78,12 +85,11 @@ do_compile:prepend() {
     export GIR_EXTRA_LIBS_PATH="${B}/avahi-gobject/.libs:${B}/avahi-common/.libs:${B}/avahi-client/.libs:${B}/avahi-glib/.libs"
 }
 
-RRECOMMENDS:${PN}:append:libc-glibc = " libnss-mdns"
+RRECOMMENDS:${PN}:append:libc-glibc = " avahi-libnss-mdns"
 
 do_install() {
 	autotools_do_install
 	rm -rf ${D}/run
-	rm -rf ${D}${datadir}/dbus-1/interfaces
 	test -d ${D}${datadir}/dbus-1 && rmdir --ignore-fail-on-non-empty ${D}${datadir}/dbus-1
 	rm -rf ${D}${libdir}/avahi
 
@@ -109,15 +115,15 @@ FILES:avahi-discover = "${datadir}/applications/avahi-discover.desktop \
                         ${bindir}/avahi-discover-standalone \
                         "
 
-LICENSE:libavahi-gobject = "LGPLv2.1+"
-LICENSE:avahi-daemon = "LGPLv2.1+"
-LICENSE:libavahi-common = "LGPLv2.1+"
-LICENSE:libavahi-core = "LGPLv2.1+"
-LICENSE:libavahi-client = "LGPLv2.1+"
-LICENSE:avahi-dnsconfd = "LGPLv2.1+"
-LICENSE:libavahi-glib = "LGPLv2.1+"
-LICENSE:avahi-autoipd = "LGPLv2.1+"
-LICENSE:avahi-utils = "LGPLv2.1+"
+LICENSE:libavahi-gobject = "LGPL-2.1-or-later"
+LICENSE:avahi-daemon = "LGPL-2.1-or-later"
+LICENSE:libavahi-common = "LGPL-2.1-or-later"
+LICENSE:libavahi-core = "LGPL-2.1-or-later"
+LICENSE:libavahi-client = "LGPL-2.1-or-later"
+LICENSE:avahi-dnsconfd = "LGPL-2.1-or-later"
+LICENSE:libavahi-glib = "LGPL-2.1-or-later"
+LICENSE:avahi-autoipd = "LGPL-2.1-or-later"
+LICENSE:avahi-utils = "LGPL-2.1-or-later"
 
 # As avahi doesn't put any files into PN, clear the files list to avoid problems
 # if extra libraries appear.
@@ -135,7 +141,7 @@ FILES:avahi-daemon = "${sbindir}/avahi-daemon \
                       ${sysconfdir}/avahi/services \
                       ${sysconfdir}/dbus-1 \
                       ${sysconfdir}/init.d/avahi-daemon \
-                      ${datadir}/avahi/introspection/*.introspect \
+                      ${datadir}/dbus-1/interfaces \
                       ${datadir}/avahi/avahi-service.dtd \
                       ${datadir}/avahi/service-types \
                       ${datadir}/dbus-1/system-services"
@@ -147,11 +153,11 @@ FILES:libavahi-glib = "${libdir}/libavahi-glib.so.*"
 FILES:libavahi-gobject = "${libdir}/libavahi-gobject.so.*  ${libdir}/girepository-1.0/Avahi*.typelib"
 FILES:avahi-utils = "${bindir}/avahi-* ${bindir}/b* ${datadir}/applications/b*"
 
-RDEPENDS:${PN}-dev = "avahi-daemon (= ${EXTENDPKGV}) libavahi-core (= ${EXTENDPKGV})"
-RDEPENDS:${PN}-dev += "${@["", " libavahi-client (= ${EXTENDPKGV})"][bb.utils.contains('PACKAGECONFIG', 'dbus', 1, 0, d)]}"
+DEV_PKG_DEPENDENCY = "avahi-daemon (= ${EXTENDPKGV}) libavahi-core (= ${EXTENDPKGV})"
+DEV_PKG_DEPENDENCY += "${@["", " libavahi-client (= ${EXTENDPKGV})"][bb.utils.contains('PACKAGECONFIG', 'dbus', 1, 0, d)]}"
 RDEPENDS:${PN}-dnsconfd = "${PN}-daemon"
 
-RRECOMMENDS:avahi-daemon:append:libc-glibc = " libnss-mdns"
+RRECOMMENDS:avahi-daemon:append:libc-glibc = " avahi-libnss-mdns"
 
 CONFFILES:avahi-daemon = "${sysconfdir}/avahi/avahi-daemon.conf"
 
@@ -178,8 +184,8 @@ SYSTEMD_SERVICE:${PN}-dnsconfd = "avahi-dnsconfd.service"
 
 do_install:append() {
 	install -d ${D}${sysconfdir}/udhcpc.d
-	install ${WORKDIR}/00avahi-autoipd ${D}${sysconfdir}/udhcpc.d
-	install ${WORKDIR}/99avahi-autoipd ${D}${sysconfdir}/udhcpc.d
+	install ${UNPACKDIR}/00avahi-autoipd ${D}${sysconfdir}/udhcpc.d
+	install ${UNPACKDIR}/99avahi-autoipd ${D}${sysconfdir}/udhcpc.d
 }
 
 # At the time the postinst runs, dbus might not be setup so only restart if running 

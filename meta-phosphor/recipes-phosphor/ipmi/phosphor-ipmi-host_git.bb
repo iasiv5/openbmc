@@ -6,13 +6,17 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
 RRECOMMENDS:${PN} += "packagegroup-obmc-ipmid-providers-libs"
+RPROVIDES:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'transport-null', '', 'virtual-obmc-host-ipmi-hw', d)}"
 
-inherit autotools pkgconfig
+inherit meson pkgconfig
 inherit obmc-phosphor-ipmiprovider-symlink
 inherit obmc-phosphor-sdbus-service
 inherit obmc-phosphor-systemd
 inherit phosphor-ipmi-host
 inherit python3native
+
+ERROR_QA:remove = "buildpaths"
+WARNING_QA:append = "buildpaths"
 
 def ipmi_whitelists(d):
     whitelists = d.getVar(
@@ -21,17 +25,51 @@ def ipmi_whitelists(d):
     whitelists = [ '{}-whitelist-native'.format(x) for x in whitelists ]
     return ' '.join(whitelists)
 
-PACKAGECONFIG ??= ""
-PACKAGECONFIG[dynamic-sensors] = "--enable-dynamic-sensors,--disable-dynamic-sensors"
-PACKAGECONFIG[hybrid-sensors] = "--enable-hybrid-sensors,--disable-hybrid-sensors"
+OBMC_ORG_IPMI_OEM_PROVIDERS ?= ""
+# Process OBMC_ORG_IPMI_OEM_PROVIDERS to create Meson config options.
+# ex. "example nvidia" -> -Doem-libraries="['example','nvidia']"
+def ipmi_oem_providers_config(d):
+    return '-Doem-libraries="[' + \
+        ','.join([f"'{x}'" for x in set(listvar_to_list(d, 'OBMC_ORG_IPMI_OEM_PROVIDERS'))]) + ']"'
 
-DEPENDS += "autoconf-archive-native"
+ipmi_oem_providers_config[vardeps] = "OBMC_ORG_IPMI_OEM_PROVIDERS"
+
+PACKAGECONFIG ??= " \
+    allowlist \
+    boot-flag-safe-mode \
+    entity-manager-decorators \
+    i2c-allowlist \
+    libuserlayer \
+    softoff \
+    ${@bb.utils.contains('OBMC_ORG_YAML_SUBDIRS', 'org/open_power', 'open-power', '', d)} \
+    transport-null \
+    oem-providers \
+    "
+PACKAGECONFIG[allowlist] = '-Dwhitelist-conf="${WHITELIST_CONF}" -Dipmi-whitelist=enabled,-Dipmi-whitelist=disabled'
+PACKAGECONFIG[arm-sbmr] = "-Darm-sbmr=enabled,-Darm-sbmr=disabled"
+PACKAGECONFIG[boot-flag-safe-mode] = "-Dboot-flag-safe-mode-support=enabled,-Dboot-flag-safe-mode-support=disabled"
+PACKAGECONFIG[dynamic-sensors] = "-Ddynamic-sensors=enabled,-Ddynamic-sensors=disabled"
+PACKAGECONFIG[dynamic-storages-only] = "-Ddynamic-storages-only=enabled,-Ddynamic-storages-only=disabled"
+PACKAGECONFIG[entity-manager-decorators] = "-Dentity-manager-decorators=enabled,-Dentity-manager-decorators=disabled"
+PACKAGECONFIG[hybrid-sensors] = "-Dhybrid-sensors=enabled,-Dhybrid-sensors=disabled"
+PACKAGECONFIG[i2c-allowlist] = "-Di2c-whitelist-check=enabled,-Di2c-whitelist-check=disabled"
+PACKAGECONFIG[libuserlayer] = "-Dlibuserlayer=enabled,-Dlibuserlayer=disabled"
+PACKAGECONFIG[open-power] = "-Dopen-power=enabled,-Dopen-power=disabled"
+PACKAGECONFIG[sensors-cache] = "-Dsensors-cache=enabled,-Dsensors-cache=disabled"
+PACKAGECONFIG[softoff] = "-Dsoftoff=enabled,-Dsoftoff=disabled"
+PACKAGECONFIG[transport-oem] = "-Dtransport-oem=enabled,-Dtransport-oem=disabled"
+PACKAGECONFIG[update-functional-on-fail] = "-Dupdate-functional-on-fail=enabled,-Dupdate-functional-on-fail=disabled"
+PACKAGECONFIG[transport-serial] = "-Dtransport-implementation=serial,,,,,transport-null"
+PACKAGECONFIG[transport-null] = "-Dtransport-implementation=null,,,,,transport-serial"
+PACKAGECONFIG[tests] = "-Dtests=enabled,-Dtests=disabled"
+PACKAGECONFIG[oem-providers] = "${@ipmi_oem_providers_config(d)},-Doem-libraries=[]"
+
 DEPENDS += "nlohmann-json"
+DEPENDS += "openssl"
 DEPENDS += "phosphor-state-manager"
 DEPENDS += "${@ipmi_whitelists(d)}"
 DEPENDS += "phosphor-dbus-interfaces"
 DEPENDS += "phosphor-logging"
-DEPENDS += "phosphor-mapper"
 DEPENDS += "sdbusplus"
 DEPENDS += "${PYTHON_PN}-sdbus++-native"
 DEPENDS += "virtual/phosphor-ipmi-inventory-sel"
@@ -45,16 +83,14 @@ DEPENDS += "${PYTHON_PN}-mako-native"
 
 VIRTUAL-RUNTIME_ipmi-config ?= "phosphor-ipmi-config"
 
-RDEPENDS:${PN}-dev += "phosphor-logging"
-RDEPENDS:${PN}-dev += "phosphor-mapper-dev"
 RDEPENDS:${PN} += "clear-once"
 RDEPENDS:${PN} += "phosphor-network"
 RDEPENDS:${PN} += "phosphor-time-manager"
 RDEPENDS:${PN} += "${VIRTUAL-RUNTIME_ipmi-config}"
-RDEPENDS:${PN} += "virtual/obmc-watchdog"
+RDEPENDS:${PN} += "phosphor-watchdog"
 RDEPENDS:${PN} += "${VIRTUAL-RUNTIME_obmc-bmc-state-manager}"
-RDEPENDS:${PN} += "${VIRTUAL-RUNTIME_obmc-bmc-version}"
-RDEPENDS:${PN} += "${VIRTUAL-RUNTIME_obmc-bmc-updater}"
+RDEPENDS:${PN} += "phosphor-software-manager-version"
+RDEPENDS:${PN} += "phosphor-software-manager-updater"
 
 inherit useradd
 
@@ -70,21 +106,17 @@ RRECOMMENDS:${PN} += "phosphor-settings-manager"
 require ${BPN}.inc
 
 # Setup IPMI Whitelist Conf files
-WHITELIST_CONF = " \
+WHITELIST_CONF ?= " \
         ${STAGING_DATADIR_NATIVE}/phosphor-ipmi-host/*.conf \
         ${S}/host-ipmid-whitelist.conf \
         "
-EXTRA_OECONF = " \
-        SENSOR_YAML_GEN=${STAGING_DIR_NATIVE}${sensor_datadir}/sensor.yaml \
-        INVSENSOR_YAML_GEN=${STAGING_DIR_NATIVE}${sensor_datadir}/invsensor.yaml \
-        FRU_YAML_GEN=${STAGING_DIR_NATIVE}${config_datadir}/fru_config.yaml \
-        "
-EXTRA_OECONF:append = " \
-        WHITELIST_CONF="${WHITELIST_CONF}" \
+EXTRA_OEMESON = " \
+        -Dsensor-yaml-gen=${STAGING_DIR_NATIVE}${sensor_datadir}/sensor.yaml \
+        -Dinvsensor-yaml-gen=${STAGING_DIR_NATIVE}${sensor_datadir}/invsensor.yaml \
+        -Dfru-yaml-gen=${STAGING_DIR_NATIVE}${config_datadir}/fru_config.yaml \
         "
 
 S = "${WORKDIR}/git"
-
 SRC_URI += "file://merge_yamls.py "
 
 HOSTIPMI_PROVIDER_LIBRARY += "libipmi20.so"
@@ -97,6 +129,7 @@ NETIPMI_PROVIDER_LIBRARY += "libusercmds.so"
 FILES:${PN}:append = " ${libdir}/host-ipmid/lib*${SOLIBS}"
 FILES:${PN}:append = " ${libdir}/ipmid-providers/lib*${SOLIBS}"
 FILES:${PN}:append = " ${libdir}/net-ipmid/lib*${SOLIBS}"
+FILES:${PN}:append = " ${systemd_system_unitdir}/phosphor-ipmi-host.service.d/*.conf"
 FILES:${PN}-dev:append = " ${libdir}/ipmid-providers/lib*${SOLIBSDEV} ${libdir}/ipmid-providers/*.la"
 
 # Soft Power Off
@@ -105,6 +138,7 @@ SOFT_SVC = "xyz.openbmc_project.Ipmi.Internal.SoftPowerOff.service"
 SOFT_TGTFMT = "obmc-host-shutdown@{0}.target"
 SOFT_FMT = "../${SOFT_SVC}:${SOFT_TGTFMT}.requires/${SOFT_SVC}"
 SYSTEMD_LINK:${PN} += "${@compose_list_zip(d, 'SOFT_FMT', 'OBMC_HOST_INSTANCES')}"
+SYSTEMD_LINK[vardeps] += "OBMC_HOST_INSTANCES"
 
 #Collect all hardcoded sensor yamls from different recipes and
 #merge all of them with sensor.yaml.
@@ -112,7 +146,7 @@ python do_merge_sensors () {
     import subprocess
 
     # TODO: Perform the merge in a temporary directory?
-    workdir = d.getVar('WORKDIR', True)
+    workdir = d.getVar('UNPACKDIR', True)
     nativedir = d.getVar('STAGING_DIR_NATIVE', True)
     sensorsdir = d.getVar('sensor_datadir', True)
     sensorsdir = sensorsdir[1:]
@@ -137,3 +171,36 @@ python do_merge_sensors () {
 
 # python-pyyaml-native is installed by do_configure, so put this task after
 addtask merge_sensors after do_configure before do_compile
+
+IPMI_HOST_NEEDED_SERVICES = "\
+    mapper-wait@-xyz-openbmc_project-control-host{}-boot.service \
+    mapper-wait@-xyz-openbmc_project-control-host{}-boot-one_time.service \
+    mapper-wait@-xyz-openbmc_project-control-host{}-power_restore_policy.service \
+    mapper-wait@-xyz-openbmc_project-control-host{}-restriction_mode.service \
+    "
+
+SERIAL_DEVICE ?= "ttyS0"
+FILES:${PN} += " ${systemd_system_unitdir}/serialbridge@.service"
+SYSTEMD_SERVICE:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'transport-serial', \
+                                               'serialbridge@${SERIAL_DEVICE}.service', \
+                                               '', d)}"
+
+do_install:append() {
+
+    # Create service override file.
+    override_dir=${D}${systemd_system_unitdir}/phosphor-ipmi-host.service.d
+    override_file=${override_dir}/10-override.conf
+    mkdir -p ${override_dir}
+    echo "[Unit]" > ${override_file}
+
+    # Insert host-instance based service dependencies.
+    for i in ${OBMC_HOST_INSTANCES};
+    do
+        for s in ${IPMI_HOST_NEEDED_SERVICES};
+        do
+            service=$(echo ${s} | sed "s/{}/${i}/g")
+            echo "Wants=${service}" >> ${override_file}
+            echo "After=${service}" >> ${override_file}
+        done
+    done
+}

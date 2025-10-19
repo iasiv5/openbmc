@@ -1,12 +1,12 @@
 SUMMARY = "Administration tool for arp packet filtering"
 SECTION = "net"
-LICENSE = "GPL-2.0"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6"
 SRCREV = "efae8949e31f8b2eb6290f377a28384cecaf105a"
-PV = "0.0.5+git${SRCPV}"
+PV = "0.0.5+git"
 
 SRC_URI = " \
-    git://git.netfilter.org/arptables \
+    git://git.netfilter.org/arptables;branch=master \
     file://0001-Use-ARPCFLAGS-for-package-specific-compiler-flags.patch \
     file://arptables-arpt-get-target-fix.patch \
     file://arptables.service \
@@ -25,7 +25,7 @@ do_install() {
     oe_runmake install DESTDIR=${D}
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         install -d ${D}${systemd_unitdir}/system
-        install -m 644 ${WORKDIR}/arptables.service ${D}${systemd_unitdir}/system
+        install -m 644 ${UNPACKDIR}/arptables.service ${D}${systemd_unitdir}/system
     fi
 }
 

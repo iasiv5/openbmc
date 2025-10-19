@@ -4,7 +4,7 @@ d-bus objects to represent various user settings."
 PR = "r1"
 PV = "1.0+git${SRCPV}"
 
-inherit autotools pkgconfig
+inherit meson pkgconfig
 inherit obmc-phosphor-dbus-service
 inherit python3native
 inherit phosphor-settings-manager
@@ -16,7 +16,6 @@ DBUS_SERVICE:${PN} = "xyz.openbmc_project.Settings.service"
 DEPENDS += "${PYTHON_PN}-pyyaml-native"
 DEPENDS += "${PYTHON_PN}-mako-native"
 DEPENDS += "${PYTHON_PN}-sdbus++-native"
-DEPENDS += "autoconf-archive-native"
 DEPENDS += "virtual/phosphor-settings-defaults"
 DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'obmc-mrw', 'phosphor-settings-read-settings-mrw-native', '', d)}"
 DEPENDS += "sdbusplus"
@@ -32,19 +31,19 @@ SRC_URI += "file://merge_settings.py"
 PACKAGECONFIG[boot_type] = ""
 SRC_URI += "${@bb.utils.contains('PACKAGECONFIG', 'boot_type', 'file://boot_type.override.yml', '', d)}"
 
-EXTRA_OECONF = " \
-             SETTINGS_YAML=${STAGING_DIR_NATIVE}${settings_datadir}/defaults.yaml \
-             "
+EXTRA_OEMESON = " \
+             -Dsettings_yaml=${STAGING_DIR_NATIVE}${settings_datadir}/defaults.yaml \
+              "
 
-# Collect files in SRC_URI that end in ".override.yml" and call a script that
-# writes their contents over that of settings.yaml, which is then updated to
+# Collect files in SRC_URI that end in ".override.yml" or ".remove.yml" and call a script that
+# writes/removes their contents from that of settings.yaml, which is then updated to
 # the merged data values.
 # This doesn't correctly handle globs in ".override.yml" entries in SRC_URI.
 python do_merge_settings () {
     import subprocess
 
     # TODO: Perform the merge in a temporary directory?
-    workdir = d.getVar('WORKDIR', True)
+    workdir = d.getVar('UNPACKDIR', True)
     nativedir = d.getVar('STAGING_DIR_NATIVE', True)
     settingsdir = d.getVar('settings_datadir', True)
     settingsdir = settingsdir[1:]
@@ -58,7 +57,7 @@ python do_merge_settings () {
         cmd.append(os.path.join(settingsdir, 'mrw-settings.override.yaml'))
 
     fetch = bb.fetch2.Fetch([], d)
-    override_urls = [url for url in fetch.urls if url.endswith('.override.yml')]
+    override_urls = [url for url in fetch.urls if url.endswith(('.override.yml', '.remove.yml'))]
     for url in override_urls:
         bb.debug(2, 'Overriding with source: ' + url)
         local_base = os.path.basename(fetch.localpath(url))

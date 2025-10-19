@@ -9,14 +9,20 @@ INHIBIT_DEFAULT_DEPS = "1"
 
 SRC_URI = "file://boot.cmd.in"
 
+BOOT_MEDIA ?= "mmc"
+
 do_compile() {
     sed -e 's/@@KERNEL_IMAGETYPE@@/${KERNEL_IMAGETYPE}/' \
         -e 's/@@KERNEL_BOOTCMD@@/${KERNEL_BOOTCMD}/' \
-        "${WORKDIR}/boot.cmd.in" > "${WORKDIR}/boot.cmd"
+        -e 's/@@BOOT_MEDIA@@/${BOOT_MEDIA}/' \
+        "${UNPACKDIR}/boot.cmd.in" > "${WORKDIR}/boot.cmd"
     mkimage -A ${UBOOT_ARCH} -T script -C none -n "Boot script" -d "${WORKDIR}/boot.cmd" boot.scr
 }
 
 inherit kernel-arch deploy nopackages
+
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 do_deploy() {
     install -d ${DEPLOYDIR}

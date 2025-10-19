@@ -1,17 +1,20 @@
 SUMMARY = "openbox Window Manager"
 SECTION = "x11/wm"
-DEPENDS = "glib-2.0 pango libxml2 virtual/libx11 libcroco librsvg gdk-pixbuf"
-LICENSE = "GPLv2+"
+DEPENDS = "glib-2.0 pango libxml2 virtual/libx11 librsvg gdk-pixbuf"
+LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=94d55d512a9ba36caa9b7df079bae19f"
 
 SRC_URI = " \
     http://icculus.org/openbox/releases/openbox-${PV}.tar.gz \
     file://0001-Makefile.am-avoid-race-when-creating-autostart-direc.patch \
     file://0001-openbox-xdg-autostart-convert-to-python3.patch \
+    file://0001-Fix-list-traversal-issue-in-client_calc_layer.patch \
 "
 
-SRC_URI[md5sum] = "b72794996c6a3ad94634727b95f9d204"
 SRC_URI[sha256sum] = "8b4ac0760018c77c0044fab06a4f0c510ba87eae934d9983b10878483bde7ef7"
+
+UPSTREAM_CHECK_URI = "https://github.com/Mikachu/openbox/tags"
+UPSTREAM_CHECK_REGEX = "(?P<pver>\d+(\.\d+)+)"
 
 inherit autotools gettext update-alternatives pkgconfig features_check
 # depends on virtual/libx11

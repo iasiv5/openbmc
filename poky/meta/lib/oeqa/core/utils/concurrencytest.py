@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
 # Modified for use in OE by Richard Purdie, 2018
@@ -57,6 +59,7 @@ class BBThreadsafeForwardingResult(ThreadsafeForwardingResult):
         self.outputbuf = output
         self.finalresult = finalresult
         self.finalresult.buffer = True
+        self.target = target
 
     def _add_result_with_semaphore(self, method, test, *args, **kwargs):
         self.semaphore.acquire()
@@ -65,13 +68,14 @@ class BBThreadsafeForwardingResult(ThreadsafeForwardingResult):
                 self.result.starttime[test.id()] = self._test_start.timestamp()
                 self.result.threadprogress[self.threadnum].append(test.id())
                 totalprogress = sum(len(x) for x in self.result.threadprogress.values())
-                self.result.progressinfo[test.id()] = "%s: %s/%s %s/%s (%ss) (%s)" % (
+                self.result.progressinfo[test.id()] = "%s: %s/%s %s/%s (%ss) (%s failed) (%s)" % (
                     self.threadnum,
                     len(self.result.threadprogress[self.threadnum]),
                     self.totalinprocess,
                     totalprogress,
                     self.totaltests,
                     "{0:.2f}".format(time.time()-self._test_start.timestamp()),
+                    self.target.failed_tests,
                     test.id())
         finally:
             self.semaphore.release()
@@ -189,11 +193,12 @@ class dummybuf(object):
 #
 class ConcurrentTestSuite(unittest.TestSuite):
 
-    def __init__(self, suite, processes, setupfunc, removefunc):
+    def __init__(self, suite, processes, setupfunc, removefunc, bb_vars):
         super(ConcurrentTestSuite, self).__init__([suite])
         self.processes = processes
         self.setupfunc = setupfunc
         self.removefunc = removefunc
+        self.bb_vars = bb_vars
 
     def run(self, result):
         testservers, totaltests = fork_for_tests(self.processes, self)
@@ -239,7 +244,7 @@ class ConcurrentTestSuite(unittest.TestSuite):
 def fork_for_tests(concurrency_num, suite):
     testservers = []
     if 'BUILDDIR' in os.environ:
-        selftestdir = get_test_layer()
+        selftestdir = get_test_layer(suite.bb_vars['BBLAYERS'])
 
     test_blocks = partition_tests(suite, concurrency_num)
     # Clear the tests from the original suite so it doesn't keep them alive
@@ -259,7 +264,7 @@ def fork_for_tests(concurrency_num, suite):
             ourpid = os.getpid()
             try:
                 newbuilddir = None
-                stream = os.fdopen(c2pwrite, 'wb', 1)
+                stream = os.fdopen(c2pwrite, 'wb')
                 os.close(c2pread)
 
                 (builddir, newbuilddir) = suite.setupfunc("-st-" + str(ourpid), selftestdir, process_suite)
@@ -304,7 +309,7 @@ def fork_for_tests(concurrency_num, suite):
             os._exit(0)
         else:
             os.close(c2pwrite)
-            stream = os.fdopen(c2pread, 'rb', 1)
+            stream = os.fdopen(c2pread, 'rb')
             # Collect stdout/stderr into an io buffer
             output = io.BytesIO()
             testserver = ProtocolTestCase(stream, passthrough=output)

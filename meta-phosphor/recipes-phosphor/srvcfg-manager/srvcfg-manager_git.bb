@@ -4,22 +4,23 @@ DESCRIPTION = "Applications must use service manager daemon to configure \
               instead of directly controlling the same using 'systemd' or \
               'iptables'."
 HOMEPAGE = "https://github.com/openbmc/service-config-manager"
-PR = "r1"
-PV = "1.0+git${SRCPV}"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=7becf906c8f8d03c237bad13bc3dac53"
-
-SRC_URI = "git://github.com/openbmc/service-config-manager"
-SRCREV = "fa5d5ca73024c6be6a011184edad79a6cf2c7630"
-
-inherit meson pkgconfig systemd
-
-S = "${WORKDIR}/git"
-SYSTEMD_SERVICE:${PN} = "srvcfg-manager.service"
-
 DEPENDS = " \
     boost \
     phosphor-logging \
     sdbusplus \
     systemd \
     "
+SRCREV = "51ce6e39d3f2769cbec9f56b6256c5df750a3011"
+PV = "1.0+git${SRCPV}"
+PR = "r1"
+
+SRC_URI = "git://github.com/openbmc/service-config-manager;branch=master;protocol=https"
+
+PACKAGECONFIG[persist-settings-to-file] = "-Dpersist-settings-to-file=enabled,-Dpersist-settings-to-file=disabled"
+
+S = "${WORKDIR}/git"
+SYSTEMD_SERVICE:${PN} = "srvcfg-manager.service"
+
+inherit meson pkgconfig systemd

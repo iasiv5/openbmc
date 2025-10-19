@@ -1,6 +1,9 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
-DEPS_CFG = "resetreason.conf"
-DEPS_TGT = "phosphor-discover-system-state@.service"
-SYSTEMD_OVERRIDE:${PN}-discover:append = "${DEPS_CFG}:${DEPS_TGT}.d/${DEPS_CFG}"
+PACKAGECONFIG:remove = "run-apr-on-software-reset"
+PACKAGECONFIG:append = " host-gpio check-fwupdate-before-do-transition"
+EXTRA_OEMESON:append = " \
+                         -Dboot-count-max-allowed=1 \
+                       "
 
+FILES:${PN} += "${systemd_system_unitdir}/*"

@@ -24,34 +24,39 @@ import bb
 from bb.fetch2 import Fetch
 from bb.fetch2 import FetchMethod
 from bb.fetch2 import ParameterError
+from bb.fetch2 import runfetchcmd
 from bb.fetch2 import URI
 from bb.fetch2.npm import npm_integrity
 from bb.fetch2.npm import npm_localfile
 from bb.fetch2.npm import npm_unpack
 from bb.utils import is_semver
+from bb.utils import lockfile
+from bb.utils import unlockfile
 
 def foreach_dependencies(shrinkwrap, callback=None, dev=False):
     """
         Run a callback for each dependencies of a shrinkwrap file.
         The callback is using the format:
-            callback(name, params, deptree)
+            callback(name, data, location)
         with:
             name = the package name (string)
-            params = the package parameters (dictionary)
-            deptree = the package dependency tree (array of strings)
+            data = the package data (dictionary)
+            location = the location of the package (string)
     """
-    def _walk_deps(deps, deptree):
-        for name in deps:
-            subtree = [*deptree, name]
-            _walk_deps(deps[name].get("dependencies", {}), subtree)
-            if callback is not None:
-                if deps[name].get("dev", False) and not dev:
-                    continue
-                elif deps[name].get("bundled", False):
-                    continue
-                callback(name, deps[name], subtree)
+    packages = shrinkwrap.get("packages")
+    if not packages:
+        raise FetchError("Invalid shrinkwrap file format")
 
-    _walk_deps(shrinkwrap.get("dependencies", {}), [])
+    for location, data in packages.items():
+        # Skip empty main and local link target packages
+        if not location.startswith('node_modules/'):
+            continue
+        elif not dev and data.get("dev", False):
+            continue
+        elif data.get("inBundle", False):
+            continue
+        name = location.split('node_modules/')[-1]
+        callback(name, data, location)
 
 class NpmShrinkWrap(FetchMethod):
     """Class to fetch all package from a shrinkwrap file"""
@@ -72,19 +77,28 @@ class NpmShrinkWrap(FetchMethod):
         # Resolve the dependencies
         ud.deps = []
 
-        def _resolve_dependency(name, params, deptree):
+        def _resolve_dependency(name, params, destsuffix):
             url = None
             localpath = None
             extrapaths = []
-            destsubdirs = [os.path.join("node_modules", dep) for dep in deptree]
-            destsuffix = os.path.join(*destsubdirs)
+            unpack = True
 
-            integrity = params.get("integrity", None)
-            resolved = params.get("resolved", None)
-            version = params.get("version", None)
+            integrity = params.get("integrity")
+            resolved = params.get("resolved")
+            version = params.get("version")
+            link = params.get("link", False)
+
+            # Handle link sources
+            if link:
+                localpath = resolved
+                unpack = False
 
             # Handle registry sources
-            if is_semver(version) and resolved and integrity:
+            elif version and is_semver(version) and integrity:
+                # Handle duplicate dependencies without url
+                if not resolved:
+                    return
+
                 localfile = npm_localfile(name, version)
 
                 uri = URI(resolved)
@@ -108,10 +122,10 @@ class NpmShrinkWrap(FetchMethod):
                 extrapaths.append(resolvefile)
 
             # Handle http tarball sources
-            elif version.startswith("http") and integrity:
-                localfile = os.path.join("npm2", os.path.basename(version))
+            elif resolved.startswith("http") and integrity:
+                localfile = npm_localfile(os.path.basename(resolved))
 
-                uri = URI(version)
+                uri = URI(resolved)
                 uri.params["downloadfilename"] = localfile
 
                 checksum_name, checksum_expected = npm_integrity(integrity)
@@ -121,8 +135,12 @@ class NpmShrinkWrap(FetchMethod):
 
                 localpath = os.path.join(d.getVar("DL_DIR"), localfile)
 
+            # Handle local tarball sources
+            elif resolved.startswith("file"):
+                localpath = resolved[5:]
+
             # Handle git sources
-            elif version.startswith("git"):
+            elif resolved.startswith("git"):
                 regex = re.compile(r"""
                     ^
                     git\+
@@ -134,29 +152,31 @@ class NpmShrinkWrap(FetchMethod):
                     $
                     """, re.VERBOSE)
 
-                match = regex.match(version)
-
+                match = regex.match(resolved)
                 if not match:
-                    raise ParameterError("Invalid git url: %s" % version, ud.url)
+                    raise ParameterError("Invalid git url: %s" % resolved, ud.url)
 
                 groups = match.groupdict()
 
                 uri = URI("git://" + str(groups["url"]))
                 uri.params["protocol"] = str(groups["protocol"])
                 uri.params["rev"] = str(groups["rev"])
+                uri.params["nobranch"] = "1"
                 uri.params["destsuffix"] = destsuffix
 
                 url = str(uri)
 
-            # local tarball sources and local link sources are unsupported
             else:
                 raise ParameterError("Unsupported dependency: %s" % name, ud.url)
 
+            # name is needed by unpack tracer for module mapping
             ud.deps.append({
+                "name": name,
                 "url": url,
                 "localpath": localpath,
                 "extrapaths": extrapaths,
                 "destsuffix": destsuffix,
+                "unpack": unpack,
             })
 
         try:
@@ -177,17 +197,23 @@ class NpmShrinkWrap(FetchMethod):
         # This fetcher resolves multiple URIs from a shrinkwrap file and then
         # forwards it to a proxy fetcher. The management of the donestamp file,
         # the lockfile and the checksums are forwarded to the proxy fetcher.
-        ud.proxy = Fetch([dep["url"] for dep in ud.deps], data)
+        shrinkwrap_urls = [dep["url"] for dep in ud.deps if dep["url"]]
+        if shrinkwrap_urls:
+            ud.proxy = Fetch(shrinkwrap_urls, data)
         ud.needdonestamp = False
 
     @staticmethod
     def _foreach_proxy_method(ud, handle):
         returns = []
-        for proxy_url in ud.proxy.urls:
-            proxy_ud = ud.proxy.ud[proxy_url]
-            proxy_d = ud.proxy.d
-            proxy_ud.setup_localpath(proxy_d)
-            returns.append(handle(proxy_ud.method, proxy_ud, proxy_d))
+        #Check if there are dependencies before try to fetch them
+        if len(ud.deps) > 0:
+            for proxy_url in ud.proxy.urls:
+                proxy_ud = ud.proxy.ud[proxy_url]
+                proxy_d = ud.proxy.d
+                proxy_ud.setup_localpath(proxy_d)
+                lf = lockfile(proxy_ud.lockfile)
+                returns.append(handle(proxy_ud.method, proxy_ud, proxy_d))
+                unlockfile(lf)
         return returns
 
     def verify_donestamp(self, ud, d):
@@ -220,10 +246,11 @@ class NpmShrinkWrap(FetchMethod):
 
     def unpack(self, ud, rootdir, d):
         """Unpack the downloaded dependencies"""
-        destdir = d.getVar("S")
+        destdir = rootdir
         destsuffix = ud.parm.get("destsuffix")
         if destsuffix:
             destdir = os.path.join(rootdir, destsuffix)
+        ud.unpack_tracer.unpack("npm-shrinkwrap", destdir)
 
         bb.utils.mkdirhier(destdir)
         bb.utils.copyfile(ud.shrinkwrap_file,
@@ -237,7 +264,16 @@ class NpmShrinkWrap(FetchMethod):
 
         for dep in manual:
             depdestdir = os.path.join(destdir, dep["destsuffix"])
-            npm_unpack(dep["localpath"], depdestdir, d)
+            if dep["url"]:
+                npm_unpack(dep["localpath"], depdestdir, d)
+            else:
+                depsrcdir= os.path.join(destdir, dep["localpath"])
+                if dep["unpack"]:
+                    npm_unpack(depsrcdir, depdestdir, d)
+                else:
+                    bb.utils.mkdirhier(depdestdir)
+                    cmd = 'cp -fpPRH "%s/." .' % (depsrcdir)
+                    runfetchcmd(cmd, d, workdir=depdestdir)
 
     def clean(self, ud, d):
         """Clean any existing full or partial download"""

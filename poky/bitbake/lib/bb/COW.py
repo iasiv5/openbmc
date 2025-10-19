@@ -3,6 +3,8 @@
 #
 # Copyright (C) 2006 Tim Ansell
 #
+# SPDX-License-Identifier: GPL-2.0-only
+#
 # Please Note:
 # Be careful when using mutable types (ie Dict and Lists) - operations involving these are SLOW.
 # Assign a file to __warn__ to get warnings about slow operations.
@@ -34,8 +36,9 @@ class COWDictMeta(COWMeta):
     __marker__ = tuple()
 
     def __str__(cls):
-        # FIXME: I have magic numbers!
-        return "<COWDict Level: %i Current Keys: %i>" % (cls.__count__, len(cls.__dict__) - 3)
+        ignored_keys = set(["__count__", "__doc__", "__module__", "__firstlineno__", "__static_attributes__"])
+        keys = set(cls.__dict__.keys()) - ignored_keys
+        return "<COWDict Level: %i Current Keys: %i>" % (cls.__count__, len(keys))
 
     __repr__ = __str__
 
@@ -159,8 +162,9 @@ class COWDictMeta(COWMeta):
 
 class COWSetMeta(COWDictMeta):
     def __str__(cls):
-        # FIXME: I have magic numbers!
-        return "<COWSet Level: %i Current Keys: %i>" % (cls.__count__, len(cls.__dict__) - 3)
+        ignored_keys = set(["__count__", "__doc__", "__module__", "__firstlineno__", "__static_attributes__"])
+        keys = set(cls.__dict__.keys()) - ignored_keys
+        return "<COWSet Level: %i Current Keys: %i>" % (cls.__count__, len(keys))
 
     __repr__ = __str__
 

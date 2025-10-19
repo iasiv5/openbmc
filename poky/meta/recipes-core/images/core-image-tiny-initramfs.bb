@@ -1,10 +1,14 @@
 # Simple initramfs image artifact generation for tiny images.
+SUMMARY = "Tiny image capable of booting a device."
 DESCRIPTION = "Tiny image capable of booting a device. The kernel includes \
 the Minimal RAM-based Initial Root Filesystem (initramfs), which finds the \
 first 'init' program more efficiently. core-image-tiny-initramfs doesn't \
 actually generate an image but rather generates boot and rootfs artifacts \
 that can subsequently be picked up by external image generation tools such as wic."
 
+# if distro does not override VIRTUAL-RUNTIME_dev_manager and default in different, busybox is compiled without mdev support
+# however this keeps the image small by not installing heavy-weight manager and in initramfs it may not even be necessary
+# override in distro if needed
 VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
 
 PACKAGE_INSTALL = "initramfs-live-boot-tiny packagegroup-core-boot dropbear ${VIRTUAL-RUNTIME_base-utils} ${VIRTUAL-RUNTIME_dev_manager} base-passwd ${ROOTFS_BOOTSTRAP_INSTALL}"
@@ -12,7 +16,6 @@ PACKAGE_INSTALL = "initramfs-live-boot-tiny packagegroup-core-boot dropbear ${VI
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""
 
-export IMAGE_BASENAME = "core-image-tiny-initramfs"
 IMAGE_NAME_SUFFIX ?= ""
 IMAGE_LINGUAS = ""
 
@@ -27,7 +30,7 @@ IMAGE_ROOTFS_SIZE = "8192"
 IMAGE_ROOTFS_EXTRA_SPACE = "0"
 
 # Use the same restriction as initramfs-live-install
-COMPATIBLE_HOST = "(i.86|x86_64|aarch64).*-linux"
+COMPATIBLE_HOST = "(i.86|x86_64|aarch64|arm).*-linux"
 
 python tinyinitrd () {
   # Modify our init file so the user knows we drop to shell prompt on purpose
@@ -39,6 +42,6 @@ python tinyinitrd () {
     init.write(newinit)
 }
 
-IMAGE_PREPROCESS_COMMAND += "tinyinitrd;"
+IMAGE_PREPROCESS_COMMAND += "tinyinitrd"
 
 QB_KERNEL_CMDLINE_APPEND += "debugshell=3 init=/bin/busybox sh init"

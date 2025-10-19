@@ -1,4 +1,6 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-only
 #
 # DESCRIPTION
@@ -14,7 +16,7 @@ import logging
 import os
 import re
 
-from glob import glob
+from oe.bootfiles import get_boot_files
 
 from wic import WicError
 from wic.engine import get_custom_config
@@ -30,6 +32,7 @@ class BootimgPartitionPlugin(SourcePlugin):
     """
 
     name = 'bootimg-partition'
+    image_boot_files_var_name = 'IMAGE_BOOT_FILES'
 
     @classmethod
     def do_configure_partition(cls, part, source_params, cr, cr_workdir,
@@ -54,51 +57,16 @@ class BootimgPartitionPlugin(SourcePlugin):
             else:
                 var = ""
 
-            boot_files = get_bitbake_var("IMAGE_BOOT_FILES" + var)
+            boot_files = get_bitbake_var(cls.image_boot_files_var_name + var)
             if boot_files is not None:
                 break
 
         if boot_files is None:
-            raise WicError('No boot files defined, IMAGE_BOOT_FILES unset for entry #%d' % part.lineno)
+            raise WicError('No boot files defined, %s unset for entry #%d' % (cls.image_boot_files_var_name, part.lineno))
 
         logger.debug('Boot files: %s', boot_files)
 
-        # list of tuples (src_name, dst_name)
-        deploy_files = []
-        for src_entry in re.findall(r'[\w;\-\./\*]+', boot_files):
-            if ';' in src_entry:
-                dst_entry = tuple(src_entry.split(';'))
-                if not dst_entry[0] or not dst_entry[1]:
-                    raise WicError('Malformed boot file entry: %s' % src_entry)
-            else:
-                dst_entry = (src_entry, src_entry)
-
-            logger.debug('Destination entry: %r', dst_entry)
-            deploy_files.append(dst_entry)
-
-        cls.install_task = [];
-        for deploy_entry in deploy_files:
-            src, dst = deploy_entry
-            if '*' in src:
-                # by default install files under their basename
-                entry_name_fn = os.path.basename
-                if dst != src:
-                    # unless a target name was given, then treat name
-                    # as a directory and append a basename
-                    entry_name_fn = lambda name: \
-                                    os.path.join(dst,
-                                                 os.path.basename(name))
-
-                srcs = glob(os.path.join(kernel_dir, src))
-
-                logger.debug('Globbed sources: %s', ', '.join(srcs))
-                for entry in srcs:
-                    src = os.path.relpath(entry, kernel_dir)
-                    entry_dst_name = entry_name_fn(entry)
-                    cls.install_task.append((src, entry_dst_name))
-            else:
-                cls.install_task.append((src, dst))
-
+        cls.install_task = get_boot_files(kernel_dir, boot_files)
         if source_params.get('loader') != "u-boot":
             return
 
@@ -110,7 +78,7 @@ class BootimgPartitionPlugin(SourcePlugin):
                 # Use a custom configuration for extlinux.conf
                 extlinux_conf = custom_cfg
                 logger.debug("Using custom configuration file "
-                             "%s for extlinux.cfg", configfile)
+                             "%s for extlinux.conf", configfile)
             else:
                 raise WicError("configfile is specified but failed to "
                                "get it from %s." % configfile)

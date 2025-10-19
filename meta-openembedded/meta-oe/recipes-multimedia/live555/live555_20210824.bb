@@ -4,7 +4,7 @@
 
 DESCRIPTION = "LIVE555 Streaming Media libraries"
 HOMEPAGE = "http://live.com/"
-LICENSE = "LGPLv3"
+LICENSE = "LGPL-3.0-only"
 SECTION = "devel"
 
 DEPENDS = "openssl"
@@ -27,7 +27,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504 \
 TARGET_CC_ARCH += "${LDFLAGS}"
 
 do_configure() {
-    cp ${WORKDIR}/config.linux-cross .
+    cp ${UNPACKDIR}/config.linux-cross .
     echo "COMPILE_OPTS+=" -fPIC -DXLOCALE_NOT_USED"" >> config.linux-cross
     ./genMakefiles linux-cross
 }
@@ -55,6 +55,7 @@ do_install() {
     install -m 0755 ${S}/mediaServer/live555MediaServer ${D}${bindir}/
 }
 
+RDEPENDS:${PN}-dev = ""
 PACKAGES =+ "live555-openrtsp live555-playsip live555-mediaserver live555-examples"
 FILES:live555-openrtsp = "${bindir}/openRTSP"
 FILES:live555-playsip = "${bindir}/playSIP"

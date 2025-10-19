@@ -1,30 +1,19 @@
 SUMMARY = "Chassis Power Control service for Intel based platforms"
 DESCRIPTION = "Chassis Power Control service for Intel based platforms"
-
-SRC_URI = "git://github.com/openbmc/x86-power-control.git;protocol=https"
-SRCREV = "c46ebb493f0e0cc1ccc5525d5484465bba69551f"
-
-PV = "1.0+git${SRCPV}"
-
-S = "${WORKDIR}/git"
-
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
+SRCREV = "4d684117da08fd48c61655bb9afbc0510be42917"
+PV = "1.0+git${SRCPV}"
+
+SRC_URI = "git://github.com/openbmc/x86-power-control.git;protocol=https;branch=master"
+
+S = "${WORKDIR}/git"
 
 inherit meson systemd pkgconfig
 inherit obmc-phosphor-dbus-service
 
-def get_service(d):
-    if(d.getVar('OBMC_HOST_INSTANCES') == '0'):
-      return "xyz.openbmc_project.Chassis.Control.Power@0.service"
-    else:
-      return " ".join(["xyz.openbmc_project.Chassis.Control.Power@{}.service".format(x) for x in d.getVar('OBMC_HOST_INSTANCES').split()])
-
-SYSTEMD_SERVICE:${PN} = "${@get_service(d)}"
-
 SYSTEMD_SERVICE:${PN} += "chassis-system-reset.service \
                          chassis-system-reset.target"
-
 DEPENDS += " \
     boost \
     i2c-tools \
@@ -34,3 +23,21 @@ DEPENDS += " \
     phosphor-logging \
   "
 FILES:${PN}  += "${systemd_system_unitdir}/xyz.openbmc_project.Chassis.Control.Power@.service"
+
+pkg_postinst:${PN}:append() {
+    mkdir -p $D$systemd_system_unitdir/sysinit.target.wants
+    for i in ${OBMC_HOST_INSTANCES};
+    do
+        LINK="$D$systemd_system_unitdir/sysinit.target.wants/xyz.openbmc_project.Chassis.Control.Power@${i}.service"
+        TARGET="../xyz.openbmc_project.Chassis.Control.Power@.service"
+        ln -s $TARGET $LINK
+    done
+}
+
+pkg_prerm:${PN}:append() {
+    for i in ${OBMC_HOST_INSTANCES};
+    do
+        LINK="$D$systemd_system_unitdir/sysinit.target.requires/xyz.openbmc_project.Chassis.Control.Power@${i}.service"
+        rm $LINK
+    done
+}

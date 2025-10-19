@@ -8,11 +8,8 @@
 # This module is mainly used by scripts/oe-selftest and modules under meta/oeqa/selftest
 # It provides a class and methods for running commands on the host in a convienent way for tests.
 
-
-
 import os
 import sys
-import signal
 import subprocess
 import threading
 import time
@@ -21,6 +18,7 @@ from oeqa.utils import CommandError
 from oeqa.utils import ftools
 import re
 import contextlib
+import errno
 # Export test doesn't require bb
 try:
     import bb
@@ -85,7 +83,7 @@ class Command(object):
             except OSError as ex:
                 # It's not an error when the command does not consume all
                 # of our data. subprocess.communicate() also ignores that.
-                if ex.errno != EPIPE:
+                if ex.errno != errno.EPIPE:
                     raise
 
         # We write in a separate thread because then we can read
@@ -117,7 +115,7 @@ class Command(object):
             else:
                 deadline = time.time() + self.timeout
                 for thread in self.threads:
-                    timeout = deadline - time.time() 
+                    timeout = deadline - time.time()
                     if timeout < 0:
                         timeout = 0
                     thread.join(timeout)
@@ -168,15 +166,22 @@ class Result(object):
 
 
 def runCmd(command, ignore_status=False, timeout=None, assert_error=True, sync=True,
-          native_sysroot=None, limit_exc_output=0, output_log=None, **options):
+          native_sysroot=None, target_sys=None, limit_exc_output=0, output_log=None, **options):
     result = Result()
 
     if native_sysroot:
-        extra_paths = "%s/sbin:%s/usr/sbin:%s/usr/bin" % \
-                      (native_sysroot, native_sysroot, native_sysroot)
-        nenv = dict(options.get('env', os.environ))
-        nenv['PATH'] = extra_paths + ':' + nenv.get('PATH', '')
-        options['env'] = nenv
+        new_env = dict(options.get('env', os.environ))
+        paths = new_env["PATH"].split(":")
+        paths = [
+            os.path.join(native_sysroot, "bin"),
+            os.path.join(native_sysroot, "sbin"),
+            os.path.join(native_sysroot, "usr", "bin"),
+            os.path.join(native_sysroot, "usr", "sbin"),
+        ] + paths
+        if target_sys:
+            paths = [os.path.join(native_sysroot, "usr", "bin", target_sys)] + paths
+        new_env["PATH"] = ":".join(paths)
+        options['env'] = new_env
 
     cmd = Command(command, timeout=timeout, output_log=output_log, **options)
     cmd.run()
@@ -198,6 +203,8 @@ def runCmd(command, ignore_status=False, timeout=None, assert_error=True, sync=T
 
     if result.status and not ignore_status:
         exc_output = result.output
+        if result.error:
+            exc_output = exc_output + result.error
         if limit_exc_output > 0:
             split = result.output.splitlines()
             if len(split) > limit_exc_output:
@@ -280,8 +287,10 @@ def get_bb_vars(variables=None, target=None, postconfig=None):
 def get_bb_var(var, target=None, postconfig=None):
     return get_bb_vars([var], target, postconfig)[var]
 
-def get_test_layer():
-    layers = get_bb_var("BBLAYERS").split()
+def get_test_layer(bblayers=None):
+    if bblayers is None:
+        bblayers = get_bb_var("BBLAYERS")
+    layers = bblayers.split()
     testlayer = None
     for l in layers:
         if '~' in l:
@@ -293,6 +302,7 @@ def get_test_layer():
 
 def create_temp_layer(templayerdir, templayername, priority=999, recipepathspec='recipes-*/*'):
     os.makedirs(os.path.join(templayerdir, 'conf'))
+    corenames = get_bb_var('LAYERSERIES_CORENAMES')
     with open(os.path.join(templayerdir, 'conf', 'layer.conf'), 'w') as f:
         f.write('BBPATH .= ":${LAYERDIR}"\n')
         f.write('BBFILES += "${LAYERDIR}/%s/*.bb \\' % recipepathspec)
@@ -301,12 +311,29 @@ def create_temp_layer(templayerdir, templayername, priority=999, recipepathspec=
         f.write('BBFILE_PATTERN_%s = "^${LAYERDIR}/"\n' % templayername)
         f.write('BBFILE_PRIORITY_%s = "%d"\n' % (templayername, priority))
         f.write('BBFILE_PATTERN_IGNORE_EMPTY_%s = "1"\n' % templayername)
-        f.write('LAYERSERIES_COMPAT_%s = "${LAYERSERIES_COMPAT_core}"\n' % templayername)
+        f.write('LAYERSERIES_COMPAT_%s = "%s"\n' % (templayername, corenames))
 
 @contextlib.contextmanager
-def runqemu(pn, ssh=True, runqemuparams='', image_fstype=None, launch_cmd=None, qemuparams=None, overrides={}, discard_writes=True):
+def runqemu(pn, ssh=True, runqemuparams='', image_fstype=None, launch_cmd=None, qemuparams=None, overrides={}, boot_patterns = {}, discard_writes=True):
     """
-    launch_cmd means directly run the command, don't need set rootfs or env vars.
+    Starts a context manager for a 'oeqa.targetcontrol.QemuTarget' resource.
+    The underlying Qemu will be booted into a shell when the generator yields
+    and stopped when the 'with' block exits.
+
+    Usage:
+
+        with runqemu('core-image-minimal') as qemu:
+            qemu.run_serial('cat /proc/cpuinfo')
+
+    Args:
+        pn (str): (image) recipe to run on
+        ssh (boolean): whether or not to enable SSH (network access)
+        runqemuparams (str): space-separated list of params to pass to 'runqemu' script (like 'nographics', 'ovmf', etc.)
+        image_fstype (str): IMAGE_FSTYPE to use
+        launch_cmd (str): directly run this command and bypass automatic runqemu parameter generation
+        overrides (dict): dict of "'<bitbake-variable>': value" pairs that allows overriding bitbake variables
+        boot_patterns (dict): dict of "'<pattern-name>': value" pairs to override default boot patterns, e.g. when not booting Linux
+        discard_writes (boolean): enables qemu -snapshot feature to prevent modifying original image
     """
 
     import bb.tinfoil
@@ -337,7 +364,7 @@ def runqemu(pn, ssh=True, runqemuparams='', image_fstype=None, launch_cmd=None, 
 
         logdir = recipedata.getVar("TEST_LOG_DIR")
 
-        qemu = oeqa.targetcontrol.QemuTarget(recipedata, targetlogger, image_fstype)
+        qemu = oeqa.targetcontrol.QemuTarget(recipedata, targetlogger, image_fstype, boot_patterns=boot_patterns)
     finally:
         # We need to shut down tinfoil early here in case we actually want
         # to run tinfoil-using utilities with the running QEMU instance.

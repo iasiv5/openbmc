@@ -1,10 +1,12 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
-SRC_URI += "file://bios-update.sh"
 
-PACKAGECONFIG:append = " flash_bios"
-RDEPENDS:${PN} += "bash"
+PACKAGECONFIG:append = " \
+    cpld-software-update \
+    i2cvr-software-update \
+    eepromdevice-software-update \
+    tpm-software-update \
+"
 
-do_install:append() {
-    install -d ${D}/${sbindir}
-    install -m 0755 ${WORKDIR}/bios-update.sh ${D}/${sbindir}/
-}
+PACKAGECONFIG:append:fb-compute-singlehost = " \
+    bios-software-update \
+"

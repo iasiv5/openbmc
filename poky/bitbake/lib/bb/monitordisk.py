@@ -76,7 +76,12 @@ def getDiskData(BBDirs):
             return None
 
         action = pathSpaceInodeRe.group(1)
-        if action not in ("ABORT", "STOPTASKS", "WARN"):
+        if action == "ABORT":
+            # Emit a deprecation warning
+            logger.warnonce("The BB_DISKMON_DIRS \"ABORT\" action has been renamed to \"HALT\", update configuration")
+            action = "HALT"
+
+        if action not in ("HALT", "STOPTASKS", "WARN"):
             printErr("Unknown disk space monitor action: %s" % action)
             return None
 
@@ -177,7 +182,7 @@ class diskMonitor:
                     # use them to avoid printing too many warning messages
                     self.preFreeS = {}
                     self.preFreeI = {}
-                    # This is for STOPTASKS and ABORT, to avoid printing the message
+                    # This is for STOPTASKS and HALT, to avoid printing the message
                     # repeatedly while waiting for the tasks to finish
                     self.checked = {}
                     for k in self.devDict:
@@ -219,8 +224,8 @@ class diskMonitor:
                         self.checked[k] = True
                         rq.finish_runqueue(False)
                         bb.event.fire(bb.event.DiskFull(dev, 'disk', freeSpace, path), self.configuration)
-                    elif action == "ABORT" and not self.checked[k]:
-                        logger.error("Immediately abort since the disk space monitor action is \"ABORT\"!")
+                    elif action == "HALT" and not self.checked[k]:
+                        logger.error("Immediately halt since the disk space monitor action is \"HALT\"!")
                         self.checked[k] = True
                         rq.finish_runqueue(True)
                         bb.event.fire(bb.event.DiskFull(dev, 'disk', freeSpace, path), self.configuration)
@@ -229,9 +234,10 @@ class diskMonitor:
                 freeInode = st.f_favail
 
                 if minInode and freeInode < minInode:
-                    # Some filesystems use dynamic inodes so can't run out
-                    # (e.g. btrfs). This is reported by the inode count being 0.
-                    if st.f_files == 0:
+                    # Some filesystems use dynamic inodes so can't run out.
+                    # This is reported by the inode count being 0 (btrfs) or the free
+                    # inode count being -1 (cephfs).
+                    if st.f_files == 0 or st.f_favail == -1:
                         self.devDict[k][2] = None
                         continue
                     # Always show warning, the self.checked would always be False if the action is WARN
@@ -245,8 +251,8 @@ class diskMonitor:
                         self.checked[k] = True
                         rq.finish_runqueue(False)
                         bb.event.fire(bb.event.DiskFull(dev, 'inode', freeInode, path), self.configuration)
-                    elif action  == "ABORT" and not self.checked[k]:
-                        logger.error("Immediately abort since the disk space monitor action is \"ABORT\"!")
+                    elif action  == "HALT" and not self.checked[k]:
+                        logger.error("Immediately halt since the disk space monitor action is \"HALT\"!")
                         self.checked[k] = True
                         rq.finish_runqueue(True)
                         bb.event.fire(bb.event.DiskFull(dev, 'inode', freeInode, path), self.configuration)

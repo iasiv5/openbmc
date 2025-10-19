@@ -19,13 +19,13 @@ Why it matters
 ==============
 
 The project aligns with the `Reproducible Builds project
-<https://reproducible-builds.org/>`_, which shares information about why
+<https://reproducible-builds.org/>`__, which shares information about why
 reproducibility matters. The primary focus of the project is the ability to
 detect security issues being introduced. However, from a Yocto Project
 perspective, it is also hugely important that our builds are deterministic. When
 you build a given input set of metadata, we expect you to get consistent output.
-This has always been a key focus but, :yocto_docs:`since release 3.1 ("dunfell")
-</ref-manual/migration-3.1.html#reproducible-builds-now-enabled-by-default>`,
+This has always been a key focus but, :ref:`since release 3.1 ("dunfell")
+<migration-guides/migration-3.1:reproducible builds now enabled by default>`,
 it is now true down to the binary level including timestamps.
 
 For example, at some point in the future life of a product, you find that you
@@ -33,10 +33,10 @@ need to rebuild to add a security fix. If this happens, only the components that
 have been modified should change at the binary level. This would lead to much
 easier and clearer bounds on where validation is needed.
 
-This also gives an additional benefit to the project builds themselves, our hash
-equivalence for :ref:`Shared State <overview-manual/concepts:Shared State>`
-object reuse works much more effectively when the binary output remains the
-same.
+This also gives an additional benefit to the project builds themselves, our
+:ref:`overview-manual/concepts:Hash Equivalence` for
+:ref:`overview-manual/concepts:Shared State` object reuse works much more
+effectively when the binary output remains the same.
 
 .. note::
 
@@ -53,7 +53,7 @@ things we do within the build system to ensure reproducibility include:
 
 -  Adding mappings to the compiler options to ensure debug filepaths are mapped
    to consistent target compatible paths. This is done through the
-   ``DEBUG_PREFIX_MAP`` variable which sets the ``-fmacro-prefix-map`` and
+   :term:`DEBUG_PREFIX_MAP` variable which sets the ``-fmacro-prefix-map`` and
    ``-fdebug-prefix-map`` compiler options correctly to map to target paths.
 -  Being explicit about recipe dependencies and their configuration (no floating
    configure options or host dependencies creeping in). In particular this means
@@ -67,17 +67,6 @@ things we do within the build system to ensure reproducibility include:
    depends upon.
 -  Filtering the tools available from the host's ``PATH`` to only a specific set
    of tools, set using the :term:`HOSTTOOLS` variable.
-
-.. note::
-
-   Because of an open bug in GCC, using ``DISTRO_FEATURES:append = " lto"`` or
-   adding ``-flto`` (Link Time Optimization) to ``CFLAGS`` makes the resulting
-   binary non-reproducible, in that it depends on the full absolute build path
-   to ``recipe-sysroot-native``, so installing the Yocto Project in a different
-   directory results in a different binary.
-
-   This issue is addressed by
-   :yocto_bugs:`bug 14481 -  Programs built with -flto are not reproducible</show_bug.cgi?id=14481>`.
 
 =========================================
 Can we prove the project is reproducible?
@@ -102,11 +91,21 @@ run::
 
    oe-selftest -r reproducible.ReproducibleTests.test_reproducible_builds
 
-This defaults to including a ``world`` build so, if other layers are added, it would
-also run the tests for recipes in the additional layers. The first build will be
-run using :ref:`Shared State <overview-manual/concepts:Shared State>` if
-available, the second build explicitly disables
-:ref:`Shared State <overview-manual/concepts:Shared State>` and builds on the
+This defaults to including a ``world`` build so, if other layers are added, it
+would also run the tests for recipes in the additional layers. Different build
+targets can be defined using the :term:`OEQA_REPRODUCIBLE_TEST_TARGET` variable
+in ``local.conf``. For example, running reproducibility tests for only the
+``python3-numpy`` recipe can be done by setting::
+
+   OEQA_REPRODUCIBLE_TEST_TARGET = "python3-numpy"
+
+in local.conf before running the ``oe-selftest`` command shown above.
+
+Reproducibility builds the target list twice. The first build will be run using
+:ref:`Shared State <overview-manual/concepts:Shared State>` if available, the
+second build explicitly disables :ref:`Shared State
+<overview-manual/concepts:Shared State>` except for recipes defined in the
+:term:`OEQA_REPRODUCIBLE_TEST_SSTATE_TARGETS` variable, and builds on the
 specific host the build is running on. This means we can test reproducibility
 builds between different host distributions over time on the Autobuilder.
 
@@ -120,22 +119,24 @@ https://autobuilder.yocto.io/pub/repro-fail/ in the form ``oe-reproducible +
 The project's current reproducibility status can be seen at
 :yocto_home:`/reproducible-build-results/`
 
-You can also check the reproducibility status on supported host distributions:
+You can also check the reproducibility status on the Autobuilder:
+:yocto_ab:`/valkyrie/#/builders/reproducible`.
 
--  CentOS: :yocto_ab:`/typhoon/#/builders/reproducible-centos`
--  Debian: :yocto_ab:`/typhoon/#/builders/reproducible-debian`
--  Fedora: :yocto_ab:`/typhoon/#/builders/reproducible-fedora`
--  Ubuntu: :yocto_ab:`/typhoon/#/builders/reproducible-ubuntu`
+===================================
+How can I test my layer or recipes?
+===================================
 
-===============================
-Can I test my layer or recipes?
-===============================
+With world build
+~~~~~~~~~~~~~~~~
 
 Once again, you can run a ``world`` test using the
 :ref:`oe-selftest <ref-manual/release-process:Testing and Quality Assurance>`
 command provided above. This functionality is implemented
 in :oe_git:`meta/lib/oeqa/selftest/cases/reproducible.py
 </openembedded-core/tree/meta/lib/oeqa/selftest/cases/reproducible.py>`.
+
+Subclassing the test
+~~~~~~~~~~~~~~~~~~~~
 
 You could subclass the test and change ``targets`` to a different target.
 
@@ -144,3 +145,23 @@ set of recipes before the test, meaning they are excluded from reproducibility
 testing. As a practical example, you could set ``sstate_targets`` to
 ``core-image-sato``, then setting ``targets`` to ``core-image-sato-sdk`` would
 run reproducibility tests only on the targets belonging only to ``core-image-sato-sdk``.
+
+Using :term:`OEQA_REPRODUCIBLE_TEST_* <OEQA_REPRODUCIBLE_TEST_LEAF_TARGETS>` variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to test the reproducibility of a set of recipes, you can define
+:term:`OEQA_REPRODUCIBLE_TEST_LEAF_TARGETS`, in your local.conf::
+
+   OEQA_REPRODUCIBLE_TEST_LEAF_TARGETS = "my-recipe"
+
+This will test the reproducibility of ``my-recipe`` but will use the
+:ref:`Shared State <overview-manual/concepts:Shared State>` for most its
+dependencies (i.e. the ones explicitly listed in DEPENDS, which may not be all
+dependencies, c.f. [depends] varflags, PACKAGE_DEPENDS and other
+implementations).
+
+You can have finer control on the test with:
+
+- :term:`OEQA_REPRODUCIBLE_TEST_TARGET`: lists recipes to be built,
+- :term:`OEQA_REPRODUCIBLE_TEST_SSTATE_TARGETS`: lists recipes that will
+  be built using :ref:`Shared State <overview-manual/concepts:Shared State>`.

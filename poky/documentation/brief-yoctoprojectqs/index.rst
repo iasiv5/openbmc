@@ -25,18 +25,11 @@ build a reference embedded OS called Poky.
       in the Yocto Project Development Tasks Manual for more
       information.
 
-   -  You may use Windows Subsystem For Linux v2 to set up a build host
-      using Windows 10.
-
-      .. note::
-
-         The Yocto Project is not compatible with WSLv1, it is
-         compatible but not officially supported nor validated with
-         WSLv2, if you still decide to use WSL please upgrade to WSLv2.
-
-      See the :ref:`dev-manual/start:setting up to use windows
-      subsystem for linux (wslv2)` section in the Yocto Project Development
-      Tasks Manual for more information.
+   -  You may use version 2 of Windows Subsystem For Linux (WSL 2) to set
+      up a build host using Windows 10 or later, Windows Server 2019 or later.
+      See the :ref:`dev-manual/start:setting up to use windows subsystem for
+      linux (wsl 2)` section in the Yocto Project Development Tasks Manual
+      for more information.
 
 If you want more conceptual or background information on the Yocto
 Project, see the :doc:`/overview-manual/index`.
@@ -47,7 +40,13 @@ Compatible Linux Distribution
 Make sure your :term:`Build Host` meets the
 following requirements:
 
--  50 Gbytes of free disk space
+-  At least &MIN_DISK_SPACE; Gbytes of free disk space, though
+   much more will help to run multiple builds and increase
+   performance by reusing build artifacts.
+
+-  At least &MIN_RAM; Gbytes of RAM, though a modern build host with as
+   much RAM and as many CPU cores as possible is strongly recommended to
+   maximize build performance.
 
 -  Runs a supported Linux distribution (i.e. recent releases of Fedora,
    openSUSE, CentOS, Debian, or Ubuntu). For a list of Linux
@@ -64,11 +63,12 @@ following requirements:
    -  tar &MIN_TAR_VERSION; or greater
    -  Python &MIN_PYTHON_VERSION; or greater.
    -  gcc &MIN_GCC_VERSION; or greater.
+   -  GNU make &MIN_MAKE_VERSION; or greater
 
 If your build host does not meet any of these three listed version
 requirements, you can take steps to prepare the system so that you
 can still use the Yocto Project. See the
-:ref:`ref-manual/system-requirements:required git, tar, python and gcc versions`
+:ref:`ref-manual/system-requirements:required git, tar, python, make and gcc versions`
 section in the Yocto Project Reference Manual for information.
 
 Build Host Packages
@@ -78,9 +78,8 @@ You must install essential host packages on your build host. The
 following command installs the host packages based on an Ubuntu
 distribution:
 
-.. code-block:: shell
-
-  $ sudo apt-get install &UBUNTU_HOST_PACKAGES_ESSENTIAL;
+.. literalinclude:: ../tools/host_packages_scripts/ubuntu_essential.sh
+   :language: shell
 
 .. note::
 
@@ -184,7 +183,7 @@ an entire Linux distribution, including the toolchain, from source.
       page of the Yocto Project Wiki.
 
 #. **Initialize the Build Environment:** From within the ``poky``
-   directory, run the :ref:`ref-manual/structure:\`\`oe-init-build-env\`\``
+   directory, run the :ref:`ref-manual/structure:``oe-init-build-env```
    environment
    setup script to define Yocto Project's build environment on your
    build host.
@@ -230,13 +229,13 @@ an entire Linux distribution, including the toolchain, from source.
 
    Among other things, the script creates the :term:`Build Directory`, which is
    ``build`` in this case and is located in the :term:`Source Directory`.  After
-   the script runs, your current working directory is set to the Build
-   Directory. Later, when the build completes, the Build Directory contains all the
-   files created during the build.
+   the script runs, your current working directory is set to the
+   :term:`Build Directory`. Later, when the build completes, the
+   :term:`Build Directory` contains all the files created during the build.
 
 #. **Examine Your Local Configuration File:** When you set up the build
    environment, a local configuration file named ``local.conf`` becomes
-   available in a ``conf`` subdirectory of the Build Directory. For this
+   available in a ``conf`` subdirectory of the :term:`Build Directory`. For this
    example, the defaults are set to build for a ``qemux86`` target,
    which is suitable for emulation. The package manager used is set to
    the RPM package manager.
@@ -244,19 +243,25 @@ an entire Linux distribution, including the toolchain, from source.
    .. tip::
 
       You can significantly speed up your build and guard against fetcher
-      failures by using mirrors. To use mirrors, add these lines to your
-      local.conf file in the Build directory::
+      failures by using :ref:`overview-manual/concepts:shared state cache`
+      mirrors and enabling :ref:`overview-manual/concepts:hash equivalence`.
+      This way, you can use pre-built artifacts rather than building them.
+      This is relevant only when your network and the server that you use
+      can download these artifacts faster than you would be able to build them.
 
-         SSTATE_MIRRORS = "\
-         file://.* http://sstate.yoctoproject.org/dev/PATH;downloadfilename=PATH \n \
-         file://.* http://sstate.yoctoproject.org/&YOCTO_DOC_VERSION_MINUS_ONE;/PATH;downloadfilename=PATH \n \
-         file://.* http://sstate.yoctoproject.org/&YOCTO_DOC_VERSION;/PATH;downloadfilename=PATH \n \
-         "
+      To use such mirrors, uncomment the below lines in your ``conf/local.conf``
+      file in the :term:`Build Directory`::
 
+         BB_HASHSERVE_UPSTREAM = "wss://hashserv.yoctoproject.org/ws"
+         SSTATE_MIRRORS ?= "file://.* http://sstate.yoctoproject.org/all/PATH;downloadfilename=PATH"
+         BB_HASHSERVE = "auto"
+         BB_SIGNATURE_HANDLER = "OEEquivHash"
 
-      The previous examples showed how to add sstate paths for Yocto Project
-      &YOCTO_DOC_VERSION_MINUS_ONE;, &YOCTO_DOC_VERSION;, and a development
-      area. For a complete index of sstate locations, see http://sstate.yoctoproject.org/.
+      The hash equivalence server needs the websockets python module version 9.1
+      or later. Debian GNU/Linux 12 (Bookworm) and later, Fedora, CentOS Stream
+      9 and later, and Ubuntu 22.04 (LTS) and later, all have a recent enough
+      package. Other supported distributions need to get the module some other
+      place than their package feed, e.g. via ``pip``.
 
 #. **Start the Build:** Continue with the following command to build an OS
    image for the target, which is ``core-image-sato`` in this example:
@@ -268,7 +273,7 @@ an entire Linux distribution, including the toolchain, from source.
    For information on using the ``bitbake`` command, see the
    :ref:`overview-manual/concepts:bitbake` section in the Yocto Project Overview and
    Concepts Manual, or see
-   :ref:`bitbake:bitbake-user-manual/bitbake-user-manual-intro:the bitbake command`
+   :ref:`bitbake-user-manual/bitbake-user-manual-intro:the bitbake command`
    in the BitBake User Manual.
 
 #. **Simulate Your Image Using QEMU:** Once this particular image is
@@ -351,9 +356,7 @@ Follow these steps to add a hardware layer:
 
 #. **Add Your Layer to the Layer Configuration File:** Before you can use
    a layer during a build, you must add it to your ``bblayers.conf``
-   file, which is found in the
-   :term:`Build Directory` ``conf``
-   directory.
+   file, which is found in the :term:`Build Directory` ``conf`` directory.
 
    Use the ``bitbake-layers add-layer`` command to add the layer to the
    configuration file:
@@ -369,7 +372,7 @@ Follow these steps to add a hardware layer:
 
    You can find
    more information on adding layers in the
-   :ref:`dev-manual/common-tasks:adding a layer using the \`\`bitbake-layers\`\` script`
+   :ref:`dev-manual/layers:adding a layer using the \`\`bitbake-layers\`\` script`
    section.
 
 Completing these steps has added the ``meta-altera`` layer to your Yocto
@@ -404,7 +407,7 @@ The following commands run the tool to create a layer named
 
 For more information
 on layers and how to create them, see the
-:ref:`dev-manual/common-tasks:creating a general layer using the \`\`bitbake-layers\`\` script`
+:ref:`dev-manual/layers:creating a general layer using the \`\`bitbake-layers\`\` script`
 section in the Yocto Project Development Tasks Manual.
 
 Where To Go Next
@@ -419,12 +422,12 @@ information including the website, wiki pages, and user manuals:
    development documentation, and access to a rich Yocto Project
    Development Community into which you can tap.
 
--  **Developer Screencast:** The `Getting Started with the Yocto Project -
-   New Developer Screencast Tutorial <https://vimeo.com/36450321>`__
-   provides a 30-minute video created for users unfamiliar with the
-   Yocto Project but familiar with Linux build hosts. While this
-   screencast is somewhat dated, the introductory and fundamental
-   concepts are useful for the beginner.
+-  **Video Seminar:** The `Introduction to the Yocto Project and BitBake, Part 1
+   <https://youtu.be/yuE7my3KOpo>`__ and
+   `Introduction to the Yocto Project and BitBake, Part 2
+   <https://youtu.be/iZ05TTyzGHk>`__ videos offer a video seminar
+   introducing you to the most important aspects of developing a
+   custom embedded Linux distribution with the Yocto Project.
 
 -  **Yocto Project Overview and Concepts Manual:** The
    :doc:`/overview-manual/index` is a great

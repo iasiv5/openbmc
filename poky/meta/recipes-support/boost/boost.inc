@@ -16,6 +16,7 @@ do_configure[cleandirs] = "${B}"
 
 BOOST_LIBS = "\
 	atomic \
+	charconv \
 	chrono \
 	container \
 	context \
@@ -28,8 +29,10 @@ BOOST_LIBS = "\
 	graph \
 	headers \
 	iostreams \
+	json \
 	log \
 	math \
+	process \
 	program_options \
 	random \
 	regex \
@@ -39,7 +42,11 @@ BOOST_LIBS = "\
 	thread \
 	timer \
 	type_erasure \
+	url \
 	wave \
+	${@bb.utils.filter('PACKAGECONFIG', 'locale python', d)} \
+	${@bb.utils.contains('PACKAGECONFIG', 'graph_parallel', 'graph_parallel mpi', \
+			     bb.utils.filter('PACKAGECONFIG', 'mpi', d), d)} \
 	"
 
 # optional libraries
@@ -48,12 +55,6 @@ PACKAGECONFIG[locale] = ",,icu"
 PACKAGECONFIG[graph_parallel] = ",,,boost-mpi mpich"
 PACKAGECONFIG[mpi] = ",,mpich"
 PACKAGECONFIG[python] = ",,python3"
-
-BOOST_LIBS += "\
-    ${@bb.utils.filter('PACKAGECONFIG', 'locale python', d)} \
-    ${@bb.utils.contains('PACKAGECONFIG', 'graph_parallel', 'graph_parallel mpi', \
-                         bb.utils.filter('PACKAGECONFIG', 'mpi', d), d)} \
-"
 
 inherit python3-dir
 PYTHON_ROOT = "${STAGING_DIR_HOST}/${prefix}"
@@ -67,14 +68,12 @@ python __anonymous () {
     mlprefix = d.getVar("MLPREFIX")
     for lib in d.getVar('BOOST_LIBS').split():
         extras.append("--with-%s" % lib)
-        pkg = "boost-%s" % (lib.replace("_", "-"))
+        pkg = "%s-%s" % (d.getVar("BPN"), lib.replace("_", "-"))
         if "-native" in pn:
             pkg = pkg + "-native"
         packages.append(mlprefix + pkg)
-        if not d.getVar("FILES:%s" % pkg):
+        if not d.getVar("FILES:%s%s" % (mlprefix, pkg)):
                 d.setVar("FILES:%s%s" % (mlprefix, pkg), "${libdir}/libboost_%s*.so.*" % lib)
-        else:
-                d.setVar("FILES:%s%s" % (mlprefix, pkg), d.getVar("FILES:%s" % pkg))
 
     d.setVar("BOOST_PACKAGES", " ".join(packages))
     d.setVar("BJAM_EXTRA", " ".join(extras))
@@ -84,9 +83,9 @@ python __anonymous () {
 FILES:${PN}-graph_parallel = "${libdir}/libboost_graph_parallel.so.*"
 FILES:${PN}-locale = "${libdir}/libboost_locale.so.*"
 FILES:${PN}-mpi = "${libdir}/mpi.so ${libdir}/libboost_mpi*.so.*"
-FILES:boost-serialization = "${libdir}/libboost_serialization*.so.* \
+FILES:${PN}-serialization = "${libdir}/libboost_serialization*.so.* \
 	${libdir}/libboost_wserialization*.so.*"
-FILES:boost-test = "${libdir}/libboost_prg_exec_monitor*.so.* \
+FILES:${PN}-test = "${libdir}/libboost_prg_exec_monitor*.so.* \
 	${libdir}/libboost_unit_test_framework*.so.*"
 
 # -dev last to pick up the remaining stuff
@@ -150,6 +149,7 @@ BOOST_PARALLEL_MAKE = "${@oe.utils.parallel_make_argument(d, '-j%d')}"
 BJAM_OPTS    = '${BOOST_PARALLEL_MAKE} -d+2 -q \
 		${BJAM_TOOLS} \
 		-sBOOST_BUILD_USER_CONFIG=${WORKDIR}/user-config.jam \
+		-sICU_PATH=${STAGING_EXECPREFIXDIR} \
 		--build-dir=${B} \
 		--disable-icu \
 		${BJAM_EXTRA}'

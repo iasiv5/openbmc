@@ -31,7 +31,7 @@ class BBUIHelper:
 
         if isinstance(event, bb.build.TaskStarted):
             tid = event._fn + ":" + event._task
-            if event._mc != "default":
+            if event._mc != "":
                 self.running_tasks[tid] = { 'title' : "mc:%s:%s %s" % (event._mc, event._package, event._task), 'starttime' : time.time(), 'pid' : event.pid }
             else:
                 self.running_tasks[tid] = { 'title' : "%s %s" % (event._package, event._task), 'starttime' : time.time(), 'pid' : event.pid }
@@ -50,8 +50,10 @@ class BBUIHelper:
             removetid(event.pid, tid)
             self.failed_tasks.append( { 'title' : "%s %s" % (event._package, event._task)})
         elif isinstance(event, bb.runqueue.runQueueTaskStarted) or isinstance(event, bb.runqueue.sceneQueueTaskStarted):
-            self.tasknumber_current = event.stats.completed + event.stats.active + event.stats.failed + event.stats.setscene_active + 1
+            self.tasknumber_current = event.stats.completed + event.stats.active + event.stats.failed
             self.tasknumber_total = event.stats.total
+            self.setscene_current = event.stats.setscene_active + event.stats.setscene_covered + event.stats.setscene_notcovered
+            self.setscene_total = event.stats.setscene_total
             self.needUpdate = True
         elif isinstance(event, bb.build.TaskProgress):
             if event.pid > 0 and event.pid in self.pidmap:

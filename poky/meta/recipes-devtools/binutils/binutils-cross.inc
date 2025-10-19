@@ -1,5 +1,4 @@
 inherit cross
-PROVIDES = "virtual/${TARGET_PREFIX}binutils"
 
 PN = "binutils-cross-${TARGET_ARCH}"
 BPN = "binutils"
@@ -16,6 +15,7 @@ SRC_URI += "file://0002-binutils-cross-Do-not-generate-linker-script-directo.pat
 # and mean the linker scripts have to be relocated.
 EXTRA_OECONF += "--with-sysroot=${STAGING_DIR_TARGET} \
                 --disable-install-libbfd \
+                --disable-gprofng \
                 --enable-poison-system-directories \
                 --with-lib-path==${target_base_libdir}:=${target_libdir} \
                 "

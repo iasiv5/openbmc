@@ -1,10 +1,10 @@
 DESCRIPTION = "Linux kernel for the FSP2 system on a chip"
 SECTION = "kernel"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 
 KCONFIG_MODE="--alldefconfig"
 
-KSRC ?= "git://github.com/openbmc/linux;protocol=git;branch=dev-4.17"
+KSRC ?= "git://github.com/openbmc/linux;protocol=https;branch=dev-4.17"
 SRC_URI = "${KSRC}"
 
 LINUX_VERSION_EXTENSION ?= "-${SRCREV}"
@@ -18,8 +18,8 @@ KERNEL_IMAGETYPE ?= "uImage"
 do_patch:append() {
     for DTB in "${KERNEL_DEVICETREE}"; do
         DT=`basename ${DTB} .dtb`
-        if [ -r "${WORKDIR}/${DT}.dts" ]; then
-            cp ${WORKDIR}/${DT}.dts \
+        if [ -r "${UNPACKDIR}/${DT}.dts" ]; then
+            cp ${UNPACKDIR}/${DT}.dts \
                 ${STAGING_KERNEL_DIR}/arch/${ARCH}/boot/dts
         fi
     done

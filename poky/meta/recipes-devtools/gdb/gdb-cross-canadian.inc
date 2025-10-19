@@ -6,21 +6,17 @@ SUMMARY = "GNU debugger (cross-canadian gdb for ${TARGET_ARCH} target)"
 PN = "gdb-cross-canadian-${TRANSLATED_TARGET_ARCH}"
 BPN = "gdb"
 
-DEPENDS = "nativesdk-ncurses nativesdk-expat nativesdk-gettext \
-           virtual/${HOST_PREFIX}gcc-crosssdk virtual/${HOST_PREFIX}binutils-crosssdk virtual/nativesdk-libc"
+DEPENDS = "nativesdk-ncurses nativesdk-expat nativesdk-gettext nativesdk-gmp nativesdk-mpfr \
+           virtual/nativesdk-cross-cc virtual/nativesdk-cross-binutils virtual/nativesdk-libc"
 
 GDBPROPREFIX = "--program-prefix='${TARGET_PREFIX}'"
 
 # Overrides PACKAGECONFIG variables in gdb-common.inc
-PACKAGECONFIG ??= "python readline ${@bb.utils.filter('DISTRO_FEATURES', 'debuginfod', d)}"
 PACKAGECONFIG[python] = "--with-python=${WORKDIR}/python,--without-python,nativesdk-python3, \
                          nativesdk-python3-core \
-                         nativesdk-python3-codecs nativesdk-python3-netclient \
-                         "
-PACKAGECONFIG[readline] = "--with-system-readline,--without-system-readline,nativesdk-readline"
-PACKAGECONFIG[debuginfod] = "--with-debuginfod, --without-debuginfod, nativesdk-elfutils"
+                         nativesdk-python3-codecs nativesdk-python3-netclient"
 
-SSTATE_DUPWHITELIST += "${STAGING_DATADIR}/gdb"
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DATADIR}/gdb"
 
 do_configure:prepend() {
 cat > ${WORKDIR}/python << EOF

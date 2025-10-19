@@ -4,7 +4,10 @@
 
 SUMMARY = "Clutter package groups"
 
-PR = "r6"
+
+# clutter-1.0 gets debian renamed to libclutter-1.0-0
+# clutter-gtk-1.0 gets debian renamed to libclutter-gtk-1.0-0
+PACKAGE_ARCH = "${TUNE_PKGARCH}"
 
 inherit packagegroup features_check
 # rdepends on clutter-*

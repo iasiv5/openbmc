@@ -4,13 +4,14 @@ DESCRIPTION = "Mobile Broadband Service Provider Database stores service provide
 SECTION = "network"
 LICENSE = "PD"
 LIC_FILES_CHKSUM = "file://COPYING;md5=87964579b2a8ece4bc6744d2dc9a8b04"
-SRCREV = "11f2247eccd3c161b8fd9b41143862e9fb81193c"
-PV = "20210805"
+
+SRCREV = "55ba955d53305df96123534488fd160ea882b4dd"
+PV = "20240407"
 PE = "1"
 
-SRC_URI = "git://gitlab.gnome.org/GNOME/mobile-broadband-provider-info.git;protocol=https"
+SRC_URI = "git://gitlab.gnome.org/GNOME/mobile-broadband-provider-info.git;protocol=https;branch=main"
 S = "${WORKDIR}/git"
 
-inherit autotools
+inherit meson
 
 DEPENDS += "libxslt-native"

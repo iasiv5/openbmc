@@ -2,7 +2,7 @@ SUMMARY = "The New Curses library"
 DESCRIPTION = "SVr4 and XSI-Curses compatible curses library and terminfo tools including tic, infocmp, captoinfo. Supports color, multiple highlights, forms-drawing characters, and automatic recognition of keypad and function-key sequences. Extensions include resizable windows and mouse support on both xterm and Linux console using the gpm library."
 HOMEPAGE = "http://www.gnu.org/software/ncurses/ncurses.html"
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://ncurses/base/version.c;beginline=1;endline=27;md5=5526f2f3a29edc95538b368a4771edda"
+LIC_FILES_CHKSUM = "file://COPYING;md5=6f291ee54551d9d8d992ecd623fe4bc7;endline=27"
 SECTION = "libs"
 DEPENDS = "ncurses-native"
 DEPENDS:class-native = ""
@@ -13,23 +13,23 @@ BINCONFIG = "${bindir}/ncurses5-config ${bindir}/ncursesw5-config \
 inherit autotools binconfig-disabled multilib_header pkgconfig
 
 # Upstream has useful patches at times at ftp://invisible-island.net/ncurses/
-SRC_URI = "git://salsa.debian.org/debian/ncurses.git;protocol=https"
+SRC_URI = "git://github.com/ThomasDickey/ncurses-snapshots.git;protocol=https;branch=master"
 
 EXTRA_AUTORECONF = "-I m4"
 
 CACHED_CONFIGUREVARS = "cf_cv_func_nanosleep=yes"
-
-EXTRASITECONFIG = "CFLAGS='${CFLAGS} -I${SYSROOT_DESTDIR}${includedir}'"
+CACHED_CONFIGUREVARS:append:linux = " cf_cv_working_poll=yes"
 
 # Whether to enable separate widec libraries; must be 'true' or 'false'
 #
 # TODO: remove this variable when widec is supported in every setup?
 ENABLE_WIDEC ?= "true"
 
-# _GNU_SOURCE is required for widec stuff and is detected automatically
-# for target objects.  But it must be set manually for native and sdk
-# builds.
-BUILD_CPPFLAGS += "-D_GNU_SOURCE"
+# _GNU_SOURCE is required for widec stuff and is not detected automatically
+CPPFLAGS += "-D_GNU_SOURCE"
+
+# Check if we still need it when next release (6.6) happens
+CFLAGS += "-std=gnu17"
 
 # natives don't generally look in base_libdir
 base_libdir:class-native = "${libdir}"
@@ -73,6 +73,7 @@ ncurses_configure() {
 	        --without-debug \
 	        --without-ada \
 	        --without-gpm \
+		--with-xterm-kbs=del \
 	        --enable-hard-tabs \
 	        --enable-xmc-glitch \
 	        --enable-colorfgbg \
@@ -98,10 +99,6 @@ ncurses_configure() {
 # patched autoconf213 to generate the configure script. This autoconf
 # is not available so that the shipped script will be used.
 do_configure() {
-        # check does not work with cross-compiling and is generally
-        # broken because it requires stdin to be pollable (which is
-        # not the case for /dev/null redirections)
-        export cf_cv_working_poll=yes
 	#Remove ${includedir} from CPPFLAGS, need for cross compile
 	sed -i 's#-I${cf_includedir}##g' ${S}/configure || die "sed CPPFLAGS"
 
@@ -186,7 +183,7 @@ do_install() {
 
         # include some basic terminfo files
         # stolen ;) from gentoo and modified a bit
-        for x in ansi console dumb linux rxvt screen screen-256color sun vt52 vt100 vt102 vt200 vt220 xterm-color xterm-xfree86 xterm-256color
+        for x in alacritty ansi console dumb linux rxvt screen screen-256color sun vt52 vt100 vt102 vt200 vt220 xterm-color xterm-xfree86 xterm-256color
         do
                 local termfile="$(find "${D}${datadir}/terminfo/" -name "${x}" 2>/dev/null)"
                 local basedir="$(basename $(dirname "${termfile}"))"
@@ -242,10 +239,9 @@ do_install() {
             mv ${D}${libdir}/libtinfo.so.* ${D}${base_libdir}
             rm ${D}${libdir}/libtinfo.so
 
-            # Use lnr to ensure this is a relative link despite absolute paths
+            # Use ln -rs to ensure this is a relative link despite absolute paths
             # (as we can't know the relationship between base_libdir and libdir).
-            # At some point we can rely on coreutils 8.16 which has ln -r.
-            lnr ${D}${base_libdir}/libtinfo.so.5 ${D}${libdir}/libtinfo.so
+            ln -rs ${D}${base_libdir}/libtinfo.so.5 ${D}${libdir}/libtinfo.so
         fi
         if [ -d "${D}${includedir}/ncurses" ]; then
             for f in `find ${D}${includedir}/ncurses -name "*.h"`

@@ -4,20 +4,18 @@ track of the changes each patch makes. Patches can be applied, un-applied,\
 refreshed, etc."
 HOMEPAGE = "http://savannah.nongnu.org/projects/quilt/"
 SECTION = "devel"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=94d55d512a9ba36caa9b7df079bae19f"
 
 SRC_URI = "${SAVANNAH_GNU_MIRROR}/quilt/quilt-${PV}.tar.gz \
         file://run-ptest \
-        file://Makefile \
         file://test.sh \
         file://0001-tests-Allow-different-output-from-mv.patch \
 "
 
 SRC_URI:append:class-target = " file://gnu_patch_test_fix_target.patch"
 
-SRC_URI[md5sum] = "6800c2404a2c0598ab2eff92a636ba70"
-SRC_URI[sha256sum] = "314b319a6feb13bf9d0f9ffa7ce6683b06919e734a41275087ea457cc9dc6e07"
+SRC_URI[sha256sum] = "fe8c09de03c106e85b3737c8f03ade147c956b79ed7af485a1c8a3858db38426"
 
 inherit autotools-brokensep ptest
 
@@ -26,8 +24,9 @@ PATCHTOOL:class-native = "patch"
 
 CLEANBROKEN = "1"
 
-EXTRA_OECONF = "--with-perl='${USRBINPATH}/env perl' --with-patch=patch"
+EXTRA_OECONF = "--with-perl='${USRBINPATH}/env perl' --with-patch=patch --without-sendmail"
 EXTRA_OECONF:append:class-native = " --disable-nls"
+
 EXTRA_AUTORECONF += "--exclude=aclocal"
 
 CACHED_CONFIGUREVARS += "ac_cv_path_BASH=/bin/bash ac_cv_path_COLUMN=column"
@@ -60,17 +59,24 @@ do_install:append:class-native () {
     touch ${D}${sysconfdir}/quiltrc
 }
 
-do_compile_ptest() {
-	oe_runmake bin/patch-wrapper test/.depend
-}
+# The tests need to run as a non-root user, so pull in the ptest user
+DEPENDS:append:class-target = "${@bb.utils.contains('PTEST_ENABLED', '1', ' ptest-runner', '', d)}"
+PACKAGE_WRITE_DEPS += "${@bb.utils.contains('PTEST_ENABLED', '1', 'ptest-runner', '', d)}"
 
 do_install_ptest() {
-	tar -c --exclude=\*.in bin/ | ( cd ${D}${PTEST_PATH} && tar -xf - )
-	tar -c --exclude=\*.in compat/ | ( cd ${D}${PTEST_PATH} && tar -xf - )
-	tar -c --exclude=\*.in quilt/ | ( cd ${D}${PTEST_PATH} && tar -xf - )
-	tar -c --exclude=mail.test --exclude=delete.test test/ | ( cd ${D}${PTEST_PATH} && tar -xf - && chmod 777 test)
-	cp ${WORKDIR}/Makefile ${D}${PTEST_PATH}
-	cp ${WORKDIR}/test.sh ${D}${PTEST_PATH}
+	install ${UNPACKDIR}/test.sh ${D}${PTEST_PATH}
+    mkdir ${D}${PTEST_PATH}/test
+    install ${S}/test/* ${D}${PTEST_PATH}/test
+    # mail needs a MTA, and the patch-wrapper is disabled
+    rm -f ${D}${PTEST_PATH}/test/mail.test ${D}${PTEST_PATH}/test/patch-wrapper.test
+}
+
+# ptest.bbclass currently chowns the ptest directory explicitly, so we need to
+# change permission after that has happened so the ptest user can write a
+# temporary directory.
+do_install_ptest_base:append() {
+    chgrp ptest ${D}${PTEST_PATH}/test
+    chmod g+w ${D}${PTEST_PATH}/test
 }
 
 PACKAGES += "guards guards-doc"
@@ -84,9 +90,9 @@ FILES:guards-doc = "${mandir}/man1/guards.1"
 RDEPENDS:${PN} = "bash patch diffstat bzip2 util-linux less"
 RDEPENDS:${PN}:class-native = "diffstat-native patch-native bzip2-native"
 
-RDEPENDS:${PN}-ptest = "make file sed gawk diffutils findutils ed perl \
-                        perl-module-filehandle perl-module-getopt-std \
-                        perl-module-posix perl-module-file-temp \
-                        perl-module-text-parsewords perl-module-overloading \
-                        bash util-linux-getopt patch \
-                       "
+RDEPENDS:${PN}-ptest += "file sed gawk diffutils findutils ed perl \
+                         perl-module-filehandle perl-module-getopt-std \
+                         perl-module-posix perl-module-file-temp \
+                         perl-module-text-parsewords perl-module-overloading \
+                         bash util-linux-getopt ptest-runner coreutils \
+                        "

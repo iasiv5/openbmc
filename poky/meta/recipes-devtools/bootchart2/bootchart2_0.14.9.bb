@@ -83,21 +83,24 @@
 
 SUMMARY = "Booting sequence and CPU,I/O usage monitor"
 DESCRIPTION = "Monitors where the system spends its time at start, creating a graph of all processes, disk utilization, and wait time."
-AUTHOR = "Wonhong Kwon <wonhong.kwon@lge.com>"
 HOMEPAGE = "https://github.com/mmeeks/bootchart"
-LICENSE = "GPL-3.0"
+LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=44ac4678311254db62edf8fd39cb8124"
 
 UPSTREAM_CHECK_GITTAGREGEX = "(?P<pver>\d+\.\d+(\.\d+)*)"
 
-SRC_URI = "git://github.com/xrmx/bootchart.git \
+SRC_URI = "git://github.com/xrmx/bootchart.git;branch=master;protocol=https \
            file://bootchartd_stop.sh \
            file://0001-collector-Allocate-space-on-heap-for-chunks.patch \
-           file://0001-bootchart2-support-usrmerge.patch \
+           file://0001-bootchartd.in-make-sure-only-one-bootchartd-process.patch \
+           file://0001-Do-not-include-linux-fs.h.patch \
+           file://0001-Makefile-Let-bootchartd.conf-use-EARLY_.patch \
+           file://0002-Makefile-Add-n-to-gzip.patch \
           "
 
 S = "${WORKDIR}/git"
 SRCREV = "868a2afab9da34f32c007d773b77253c93104636"
+
 
 inherit systemd update-rc.d python3native update-alternatives
 
@@ -114,12 +117,11 @@ UPDATERCPN = "bootchartd-stop-initscript"
 INITSCRIPT_NAME = "bootchartd_stop.sh"
 INITSCRIPT_PARAMS = "start 99 2 3 4 5 ."
 
-EXTRA_OEMAKE = 'BASE_SBINDIR="${base_sbindir}"'
-
 do_compile:prepend () {
     export PY_LIBDIR="${libdir}/${PYTHON_DIR}"
     export BINDIR="${bindir}"
-    export LIBDIR="${base_libdir}"
+    export LIBDIR="/${baselib}"
+    export EARLY_PREFIX="${root_prefix}"
 }
 
 do_install () {
@@ -127,26 +129,29 @@ do_install () {
     export PY_LIBDIR="${libdir}/${PYTHON_DIR}"
     export BINDIR="${bindir}"
     export DESTDIR="${D}"
-    export LIBDIR="${base_libdir}"
-    export PKGLIBDIR="${base_libdir}/bootchart"
-    export SYSTEMD_UNIT_DIR="${systemd_system_unitdir}"
+    export LIBDIR="/${baselib}"
+    export EARLY_PREFIX="${root_prefix}"
+    export MANDIR="${mandir}/man1"
+    export DOCDIR="${docdir}"
 
-    oe_runmake install
+    oe_runmake install NO_PYTHON_COMPILE=1
     install -d ${D}${sysconfdir}/init.d
-    install -m 0755 ${WORKDIR}/bootchartd_stop.sh ${D}${sysconfdir}/init.d
+    install -m 0755 ${UNPACKDIR}/bootchartd_stop.sh ${D}${sysconfdir}/init.d
+
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', 'true', 'false', d)}; then
+        mv ${D}${EARLY_PREFIX}${sysconfdir}/bootchartd.conf ${D}${sysconfdir}/bootchartd.conf
+        rmdir ${D}${EARLY_PREFIX}${sysconfdir}
+    fi
 
     echo 'EXIT_PROC="$EXIT_PROC matchbox-window-manager"' >> ${D}${sysconfdir}/bootchartd.conf
 
    # Use python 3 instead of python 2
    sed -i -e '1s,#!.*python.*,#!${USRBINPATH}/env python3,' ${D}${bindir}/pybootchartgui
-
-    # The timestamps embedded in compressed man pages is not reproducible
-    gzip -d ${D}${mandir}/man1/*.gz
 }
 
 PACKAGES =+ "pybootchartgui"
 FILES:pybootchartgui += "${PYTHON_SITEPACKAGES_DIR}/pybootchartgui ${bindir}/pybootchartgui"
-RDEPENDS:pybootchartgui = "python3-pycairo python3-compression python3-image python3-shell python3-compression python3-codecs"
+RDEPENDS:pybootchartgui = "python3-pycairo python3-compression python3-image python3-math python3-shell python3-compression python3-codecs"
 RDEPENDS:${PN}:class-target += "${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'sysvinit-pidof', 'procps', d)}"
 RDEPENDS:${PN}:class-target += "lsb-release"
 DEPENDS:append:class-native = " python3-pycairo-native"

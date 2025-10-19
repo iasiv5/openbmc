@@ -1,16 +1,15 @@
 SUMMARY = "Just-In-Time Compiler for Lua"
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://COPYRIGHT;md5=abe9020de9c00909317d02d5c803810e"
+LIC_FILES_CHKSUM = "file://COPYRIGHT;md5=d421a5e2a24207f5e260537399a9a38b"
 HOMEPAGE = "http://luajit.org"
 
 SRC_URI = "git://luajit.org/git/luajit-2.0.git;protocol=http;branch=v2.1 \
            file://0001-Do-not-strip-automatically-this-leaves-the-stripping.patch \
-           file://clang.patch \
+           file://0001-Use-builtin-for-clear_cache.patch \
            "
 
-# Set PV to a version tag and date (YYMMDD) associated with SRCREV if it is later.
-PV = "2.1.0~beta3-210112"
-SRCREV = "ec6edc5c39c25e4eb3fca51b753f9995e97215da"
+PV = "2.1"
+SRCREV = "538a82133ad6fddfd0ca64de167c4aca3bc1a2da"
 
 S = "${WORKDIR}/git"
 
@@ -22,7 +21,7 @@ BBCLASSEXTEND = "native"
 # Host luajit needs to be compiled with the same pointer size
 # If you want to cross-compile to any 32 bit target on an x64 OS,
 # you need to install the multilib development package (e.g.
-# libc6-dev-i386 on Debian/Ubuntu) and build a 32 bit host part
+# libc6-dev:i386 on Debian/Ubuntu) and build a 32 bit host part
 # (HOST_CC="gcc -m32").
 BUILD_CC_ARCH:append = " ${@['-m32',''][d.getVar('SITEINFO_BITS') != '32']}"
 
@@ -92,10 +91,7 @@ FILES:${PN}-dev += "${libdir}/libluajit-5.1.a \
 "
 FILES:luajit-common = "${datadir}/${BPN}-${PV}"
 
-# mips64/ppc/ppc64/riscv64 is not supported in this release
-COMPATIBLE_HOST:mipsarchn32 = "null"
-COMPATIBLE_HOST:mipsarchn64 = "null"
-COMPATIBLE_HOST:powerpc = "null"
+# ppc64/riscv64/riscv32 is not supported in this release
 COMPATIBLE_HOST:powerpc64 = "null"
 COMPATIBLE_HOST:powerpc64le = "null"
 COMPATIBLE_HOST:riscv64 = "null"

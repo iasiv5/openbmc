@@ -8,19 +8,11 @@ S = "${WORKDIR}/git"
 
 DEPENDS = "boost phosphor-ipmi-host phosphor-logging systemd libgpiod"
 
-inherit cmake obmc-phosphor-ipmiprovider-symlink
+inherit meson pkgconfig
 
-EXTRA_OECMAKE="-DENABLE_TEST=0 -DYOCTO=1"
+SRC_URI = "git://github.com/openbmc/foxconn-ipmi-oem.git;branch=master;protocol=https"
+SRCREV = "fd126c88989a42baed1f0fe8c9eb6ae7bdff8271"
 
-LIBRARY_NAMES = "libfiioemcmds.so"
-
-SRC_URI = "git://github.com/openbmc/foxconn-ipmi-oem.git"
-SRCREV = "da2cf0d2b0f4cd56bc93575a435a5ee1c848f7b0"
-
-HOSTIPMI_PROVIDER_LIBRARY += "${LIBRARY_NAMES}"
-NETIPMI_PROVIDER_LIBRARY += "${LIBRARY_NAMES}"
-
-FILES:${PN}:append = " ${libdir}/ipmid-providers/lib*${SOLIBS}"
-FILES:${PN}:append = " ${libdir}/host-ipmid/lib*${SOLIBS}"
-FILES:${PN}:append = " ${libdir}/net-ipmid/lib*${SOLIBS}"
-FILES:${PN}-dev:append = " ${libdir}/ipmid-providers/lib*${SOLIBSDEV}"
+FILES:${PN}:append = " ${libdir}/ipmid-providers"
+FILES:${PN}:append = " ${libdir}/host-ipmid"
+FILES:${PN}:append = " ${libdir}/net-ipmid"

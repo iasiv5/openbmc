@@ -4,22 +4,17 @@
 
 SUMMARY = "Profiling tools"
 
-PR = "r3"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit packagegroup
 
-PROFILE_TOOLS_X = ""
 # sysprof doesn't support aarch64 and nios2
-PROFILE_TOOLS_X:aarch64 = ""
-PROFILE_TOOLS_X:nios2 = ""
 PROFILE_TOOLS_SYSTEMD = "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd-analyze', '', d)}"
 
 RRECOMMENDS:${PN} = "\
     ${PERF} \
     blktrace \
-    ${PROFILE_TOOLS_X} \
     ${PROFILE_TOOLS_SYSTEMD} \
     "
 
@@ -35,7 +30,6 @@ PERF:riscv32 = ""
 SYSTEMTAP = "systemtap"
 SYSTEMTAP:libc-musl = ""
 SYSTEMTAP:nios2 = ""
-SYSTEMTAP:riscv64 = ""
 SYSTEMTAP:riscv32 = ""
 
 LTTNGTOOLS = "lttng-tools"
@@ -56,12 +50,12 @@ VALGRIND:armv4 = ""
 VALGRIND:armv5 = ""
 VALGRIND:armv6 = ""
 VALGRIND:armeb = ""
-VALGRIND:aarch64 = ""
 VALGRIND:riscv64 = ""
 VALGRIND:riscv32 = ""
 VALGRIND:powerpc = "${@bb.utils.contains('TARGET_FPU', 'soft', '', 'valgrind', d)}"
 VALGRIND:linux-gnux32 = ""
 VALGRIND:linux-gnun32 = ""
+VALGRIND:loongarch64 = ""
 
 RDEPENDS:${PN} = "\
     ${PROFILETOOLS} \

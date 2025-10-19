@@ -6,12 +6,11 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/Apache-2.0;md5
 inherit allarch
 
 SRC_URI:append:ibm-ac-server = " file://ucd90160.yaml"
-SRC_URI:append:p10bmc = " file://ucd90160.yaml"
 
 FILES:${PN}:append:ibm-ac-server = " ${datadir}/power-sequencer/ucd90160.yaml"
-FILES:${PN}:append:p10bmc = " ${datadir}/power-sequencer/ucd90160.yaml"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 do_install:append:ibm-ac-server() {
     DEST=${D}${datadir}/power-sequencer
@@ -19,8 +18,3 @@ do_install:append:ibm-ac-server() {
     install -D ucd90160.yaml ${DEST}/ucd90160.yaml
 }
 
-do_install:append:p10bmc() {
-    DEST=${D}${datadir}/power-sequencer
-
-    install -D ucd90160.yaml ${DEST}/ucd90160.yaml
-}

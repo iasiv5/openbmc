@@ -3,15 +3,14 @@ HOMEPAGE = "http://wiki.eclipse.org/TCF"
 DESCRIPTION = "TCF is a vendor-neutral, lightweight, extensible network protocol mainly for communicating with embedded systems (targets)."
 BUGTRACKER = "https://bugs.eclipse.org/bugs/"
 
-LICENSE = "EPL-1.0 | EDL-1.0"
+LICENSE = "EPL-1.0 | BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://edl-v10.html;md5=522a390a83dc186513f0500543ad3679"
 
-SRCREV = "2735e3d6b7eccb05ab232825c618c837d27a5010"
-PV = "1.7.0+git${SRCPV}"
+SRCREV = "1f11747e83ebf4f53e8d17f430136f92ec378709"
+PV = "1.8.0+git"
 
 UPSTREAM_CHECK_GITTAGREGEX = "(?P<pver>(\d+(\.\d+)+))"
-SRC_URI = "git://git.eclipse.org/r/tcf/org.eclipse.tcf.agent.git;protocol=https \
-           file://fix_ranlib.patch \
+SRC_URI = "git://gitlab.eclipse.org/eclipse/tcf/tcf.agent.git;protocol=https;branch=master \
            file://ldflags.patch \
            file://tcf-agent.init \
            file://tcf-agent.service \
@@ -50,13 +49,14 @@ CFLAGS:append:powerpc64 = " ${LCL_STOP_SERVICES}"
 CFLAGS:append:powerpc64le = " ${LCL_STOP_SERVICES}"
 CFLAGS:append:riscv64 = " ${LCL_STOP_SERVICES}"
 CFLAGS:append:riscv32 = " ${LCL_STOP_SERVICES}"
+CFLAGS:append:loongarch64 = " ${LCL_STOP_SERVICES}"
 
 do_install() {
 	oe_runmake install INSTALLROOT=${D}
 	install -d ${D}${sysconfdir}/init.d/
-	install -m 0755 ${WORKDIR}/tcf-agent.init ${D}${sysconfdir}/init.d/tcf-agent
+	install -m 0755 ${UNPACKDIR}/tcf-agent.init ${D}${sysconfdir}/init.d/tcf-agent
 	install -d ${D}${systemd_system_unitdir}
-	install -m 0644 ${WORKDIR}/tcf-agent.service ${D}${systemd_system_unitdir}
+	install -m 0644 ${UNPACKDIR}/tcf-agent.service ${D}${systemd_system_unitdir}
 	sed -i -e 's,@SBINDIR@,${sbindir},g' ${D}${systemd_system_unitdir}/tcf-agent.service
 }
 

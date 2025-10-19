@@ -26,7 +26,6 @@ from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
 from   bb.fetch2 import runfetchcmd
-from   bb.utils import export_proxies
 from   bs4 import BeautifulSoup
 from   bs4 import SoupStrainer
 
@@ -54,11 +53,6 @@ class WgetProgressHandler(bb.progress.LineFilterProgressHandler):
 class Wget(FetchMethod):
     """Class to fetch urls via 'wget'"""
 
-    # CDNs like CloudFlare may do a 'browser integrity test' which can fail
-    # with the standard wget/urllib User-Agent, so pretend to be a modern
-    # browser.
-    user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"
-
     def check_certs(self, d):
         """
         Should certificates be checked?
@@ -84,11 +78,14 @@ class Wget(FetchMethod):
         else:
             ud.basename = os.path.basename(ud.path)
 
-        ud.localfile = d.expand(urllib.parse.unquote(ud.basename))
+        ud.localfile = ud.basename
         if not ud.localfile:
-            ud.localfile = d.expand(urllib.parse.unquote(ud.host + ud.path).replace("/", "."))
+            ud.localfile = ud.host + ud.path.replace("/", ".")
 
-        self.basecmd = d.getVar("FETCHCMD_wget") or "/usr/bin/env wget -t 2 -T 30 --passive-ftp"
+        self.basecmd = d.getVar("FETCHCMD_wget") or "/usr/bin/env wget --tries=2 --timeout=100"
+
+        if ud.type == 'ftp' or ud.type == 'ftps':
+            self.basecmd += " --passive-ftp"
 
         if not self.check_certs(d):
             self.basecmd += " --no-check-certificate"
@@ -99,38 +96,52 @@ class Wget(FetchMethod):
 
         logger.debug2("Fetching %s using command '%s'" % (ud.url, command))
         bb.fetch2.check_network_access(d, command, ud.url)
-        runfetchcmd(command + ' --progress=dot -v', d, quiet, log=progresshandler, workdir=workdir)
+        runfetchcmd(command + ' --progress=dot --verbose', d, quiet, log=progresshandler, workdir=workdir)
 
     def download(self, ud, d):
         """Fetch urls"""
 
         fetchcmd = self.basecmd
 
-        if 'downloadfilename' in ud.parm:
-            localpath = os.path.join(d.getVar("DL_DIR"), ud.localfile)
-            bb.utils.mkdirhier(os.path.dirname(localpath))
-            fetchcmd += " -O %s" % shlex.quote(localpath)
+        dldir = os.path.realpath(d.getVar("DL_DIR"))
+        localpath = os.path.join(dldir, ud.localfile) + ".tmp"
+        bb.utils.mkdirhier(os.path.dirname(localpath))
+        fetchcmd += " --output-document=%s" % shlex.quote(localpath)
 
         if ud.user and ud.pswd:
-            fetchcmd += " --user=%s --password=%s --auth-no-challenge" % (ud.user, ud.pswd)
+            fetchcmd += " --auth-no-challenge"
+            if ud.parm.get("redirectauth", "1") == "1":
+                # An undocumented feature of wget is that if the
+                # username/password are specified on the URI, wget will only
+                # send the Authorization header to the first host and not to
+                # any hosts that it is redirected to.  With the increasing
+                # usage of temporary AWS URLs, this difference now matters as
+                # AWS will reject any request that has authentication both in
+                # the query parameters (from the redirect) and in the
+                # Authorization header.
+                fetchcmd += " --user=%s --password=%s" % (ud.user, ud.pswd)
 
         uri = ud.url.split(";")[0]
-        if os.path.exists(ud.localpath):
-            # file exists, but we didnt complete it.. trying again..
-            fetchcmd += d.expand(" -c -P ${DL_DIR} '%s'" % uri)
-        else:
-            fetchcmd += d.expand(" -P ${DL_DIR} '%s'" % uri)
-
+        fetchcmd += " --continue --directory-prefix=%s '%s'" % (dldir, uri)
         self._runwget(ud, d, fetchcmd, False)
 
         # Sanity check since wget can pretend it succeed when it didn't
         # Also, this used to happen if sourceforge sent us to the mirror page
-        if not os.path.exists(ud.localpath):
-            raise FetchError("The fetch command returned success for url %s but %s doesn't exist?!" % (uri, ud.localpath), uri)
+        if not os.path.exists(localpath):
+            raise FetchError("The fetch command returned success for url %s but %s doesn't exist?!" % (uri, localpath), uri)
 
-        if os.path.getsize(ud.localpath) == 0:
-            os.remove(ud.localpath)
+        if os.path.getsize(localpath) == 0:
+            os.remove(localpath)
             raise FetchError("The fetch of %s resulted in a zero size file?! Deleting and failing since this isn't right." % (uri), uri)
+
+        # Try and verify any checksum now, meaning if it isn't correct, we don't remove the
+        # original file, which might be a race (imagine two recipes referencing the same
+        # source, one with an incorrect checksum)
+        bb.fetch2.verify_checksum(ud, d, localpath=localpath, fatal_nochecksum=False)
+
+        # Remove the ".tmp" and move the file into position atomically
+        # Our lock prevents multiple writers but mirroring code may grab incomplete files
+        os.rename(localpath, localpath[:-4])
 
         return True
 
@@ -218,12 +229,17 @@ class Wget(FetchMethod):
                         # We let the request fail and expect it to be
                         # tried once more ("try_again" in check_status()),
                         # with the dead connection removed from the cache.
-                        # If it still fails, we give up, which can happend for bad
+                        # If it still fails, we give up, which can happen for bad
                         # HTTP proxy settings.
                         fetch.connection_cache.remove_connection(h.host, h.port)
                     raise urllib.error.URLError(err)
                 else:
-                    r = h.getresponse()
+                    try:
+                        r = h.getresponse()
+                    except TimeoutError as e:
+                        if fetch.connection_cache:
+                            fetch.connection_cache.remove_connection(h.host, h.port)
+                        raise TimeoutError(e)
 
                 # Pick apart the HTTPResponse object to get the addinfourl
                 # object initialized properly.
@@ -284,13 +300,45 @@ class Wget(FetchMethod):
 
         class FixedHTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             """
-            urllib2.HTTPRedirectHandler resets the method to GET on redirect,
-            when we want to follow redirects using the original method.
+            urllib2.HTTPRedirectHandler before 3.13 has two flaws:
+            
+            It resets the method to GET on redirect when we want to follow
+            redirects using the original method (typically HEAD). This was fixed
+            in 759e8e7.
+
+            It also doesn't handle 308 (Permanent Redirect). This was fixed in
+            c379bc5.
+
+            Until we depend on Python 3.13 onwards, copy the redirect_request
+            method to fix these issues.
             """
             def redirect_request(self, req, fp, code, msg, headers, newurl):
-                newreq = urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
-                newreq.get_method = req.get_method
-                return newreq
+                m = req.get_method()
+                if (not (code in (301, 302, 303, 307, 308) and m in ("GET", "HEAD")
+                    or code in (301, 302, 303) and m == "POST")):
+                    raise urllib.HTTPError(req.full_url, code, msg, headers, fp)
+
+                # Strictly (according to RFC 2616), 301 or 302 in response to
+                # a POST MUST NOT cause a redirection without confirmation
+                # from the user (of urllib.request, in this case).  In practice,
+                # essentially all clients do redirect in this case, so we do
+                # the same.
+
+                # Be conciliant with URIs containing a space.  This is mainly
+                # redundant with the more complete encoding done in http_error_302(),
+                # but it is kept for compatibility with other callers.
+                newurl = newurl.replace(' ', '%20')
+
+                CONTENT_HEADERS = ("content-length", "content-type")
+                newheaders = {k: v for k, v in req.headers.items()
+                            if k.lower() not in CONTENT_HEADERS}
+                return urllib.request.Request(newurl,
+                            method="HEAD" if m == "HEAD" else "GET",
+                            headers=newheaders,
+                            origin_req_host=req.origin_req_host,
+                            unverifiable=True)
+
+            http_error_308 = urllib.request.HTTPRedirectHandler.http_error_302
 
         # We need to update the environment here as both the proxy and HTTPS
         # handlers need variables set. The proxy needs http_proxy and friends to
@@ -305,15 +353,7 @@ class Wget(FetchMethod):
         # Avoid tramping the environment too much by using bb.utils.environment
         # to scope the changes to the build_opener request, which is when the
         # environment lookups happen.
-        newenv = {}
-        for name in bb.fetch2.FETCH_EXPORT_VARS:
-            value = d.getVar(name)
-            if not value:
-                origenv = d.getVar("BB_ORIGENV")
-                if origenv:
-                    value = origenv.getVar(name)
-            if value:
-                newenv[name] = value
+        newenv = bb.fetch2.get_fetcher_environment(d)
 
         with bb.utils.environment(**newenv):
             import ssl
@@ -331,13 +371,14 @@ class Wget(FetchMethod):
             opener = urllib.request.build_opener(*handlers)
 
             try:
-                uri = ud.url.split(";")[0]
+                parts = urllib.parse.urlparse(ud.url.split(";")[0])
+                uri = "{}://{}{}".format(parts.scheme, parts.netloc, parts.path)
                 r = urllib.request.Request(uri)
                 r.get_method = lambda: "HEAD"
                 # Some servers (FusionForge, as used on Alioth) require that the
                 # optional Accept header is set.
                 r.add_header("Accept", "*/*")
-                r.add_header("User-Agent", self.user_agent)
+                r.add_header("User-Agent", "bitbake/{}".format(bb.__version__))
                 def add_basic_auth(login_str, request):
                     '''Adds Basic auth to http request, pass in login:password as string'''
                     import base64
@@ -350,29 +391,22 @@ class Wget(FetchMethod):
 
                 try:
                     import netrc
-                    n = netrc.netrc()
-                    login, unused, password = n.authenticators(urllib.parse.urlparse(uri).hostname)
-                    add_basic_auth("%s:%s" % (login, password), r)
-                except (TypeError, ImportError, IOError, netrc.NetrcParseError):
+                    auth_data = netrc.netrc().authenticators(urllib.parse.urlparse(uri).hostname)
+                    if auth_data:
+                        login, _, password = auth_data
+                        add_basic_auth("%s:%s" % (login, password), r)
+                except (FileNotFoundError, netrc.NetrcParseError):
                     pass
 
-                with opener.open(r) as response:
+                with opener.open(r, timeout=100) as response:
                     pass
-            except urllib.error.URLError as e:
+            except (urllib.error.URLError, ConnectionResetError, TimeoutError) as e:
                 if try_again:
                     logger.debug2("checkstatus: trying again")
                     return self.checkstatus(fetch, ud, d, False)
                 else:
                     # debug for now to avoid spamming the logs in e.g. remote sstate searches
-                    logger.debug2("checkstatus() urlopen failed: %s" % e)
-                    return False
-            except ConnectionResetError as e:
-                if try_again:
-                    logger.debug2("checkstatus: trying again")
-                    return self.checkstatus(fetch, ud, d, False)
-                else:
-                    # debug for now to avoid spamming the logs in e.g. remote sstate searches
-                    logger.debug2("checkstatus() urlopen failed: %s" % e)
+                    logger.debug2("checkstatus() urlopen failed for %s: %s" % (uri,e))
                     return False
 
         return True
@@ -451,7 +485,7 @@ class Wget(FetchMethod):
         f = tempfile.NamedTemporaryFile()
         with tempfile.TemporaryDirectory(prefix="wget-index-") as workdir, tempfile.NamedTemporaryFile(dir=workdir, prefix="wget-listing-") as f:
             fetchcmd = self.basecmd
-            fetchcmd += " -O " + f.name + " --user-agent='" + self.user_agent + "' '" + uri + "'"
+            fetchcmd += " --output-document=%s '%s'" % (f.name, uri)
             try:
                 self._runwget(ud, d, fetchcmd, True, workdir=workdir)
                 fetchresult = f.read()
@@ -583,7 +617,7 @@ class Wget(FetchMethod):
 
         # src.rpm extension was added only for rpm package. Can be removed if the rpm
         # packaged will always be considered as having to be manually upgraded
-        psuffix_regex = r"(tar\.gz|tgz|tar\.bz2|zip|xz|tar\.lz|rpm|bz2|orig\.tar\.gz|tar\.xz|src\.tar\.gz|src\.tgz|svnr\d+\.tar\.bz2|stable\.tar\.gz|src\.rpm)"
+        psuffix_regex = r"(tar\.\w+|tgz|zip|xz|rpm|bz2|orig\.tar\.\w+|src\.tar\.\w+|src\.tgz|svnr\d+\.tar\.\w+|stable\.tar\.\w+|src\.rpm)"
 
         # match name, version and archive type of a package
         package_regex_comp = re.compile(r"(?P<name>%s?\.?v?)(?P<pver>%s)(?P<arch>%s)?[\.-](?P<type>%s$)"
@@ -611,13 +645,17 @@ class Wget(FetchMethod):
 
         sanity check to ensure same name and type.
         """
-        package = ud.path.split("/")[-1]
+        if 'downloadfilename' in ud.parm:
+            package = ud.parm['downloadfilename']
+        else:
+            package = ud.path.split("/")[-1]
         current_version = ['', d.getVar('PV'), '']
 
         """possible to have no version in pkg name, such as spectrum-fw"""
         if not re.search(r"\d+", package):
             current_version[1] = re.sub('_', '.', current_version[1])
             current_version[1] = re.sub('-', '.', current_version[1])
+            bb.debug(3, "latest_versionstring: no version found in %s" % package)
             return (current_version[1], '')
 
         package_regex = self._init_regexes(package, ud, d)
@@ -634,10 +672,10 @@ class Wget(FetchMethod):
             # search for version matches on folders inside the path, like:
             # "5.7" in http://download.gnome.org/sources/${PN}/5.7/${PN}-${PV}.tar.gz
             dirver_regex = re.compile(r"(?P<dirver>[^/]*(\d+\.)*\d+([-_]r\d+)*)/")
-            m = dirver_regex.search(path)
+            m = dirver_regex.findall(path)
             if m:
                 pn = d.getVar('PN')
-                dirver = m.group('dirver')
+                dirver = m[-1][0]
 
                 dirver_pn_regex = re.compile(r"%s\d?" % (re.escape(pn)))
                 if not dirver_pn_regex.search(dirver):

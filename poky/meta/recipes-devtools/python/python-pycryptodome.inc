@@ -3,17 +3,19 @@ DESCRIPTION = "PyCryptodome is a self-contained Python package of low-level\
  cryptographic primitives."
 HOMEPAGE = "http://www.pycryptodome.org"
 LICENSE = "PD & BSD-2-Clause"
-LIC_FILES_CHKSUM = "file://LICENSE.rst;md5=accfa6aeaceb3ba96676edf18e78302c"
+LIC_FILES_CHKSUM = "file://LICENSE.rst;md5=29242a70410a4eeff488a28164e7ab93"
 
 inherit pypi
 
 RDEPENDS:${PN} += " \
-    ${PYTHON_PN}-io \
-    ${PYTHON_PN}-math \
+    python3-cffi \
+    python3-ctypes \
+    python3-io \
+    python3-math \
 "
 
 RDEPENDS:${PN}-tests += " \
-    ${PYTHON_PN}-unittest \
+    python3-unittest \
 "
 
 PACKAGES =+ "${PN}-tests"

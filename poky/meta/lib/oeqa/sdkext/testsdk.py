@@ -16,6 +16,7 @@ class TestSDKExt(TestSDKBase):
         from bb.utils import export_proxies
         from oeqa.utils import avoid_paths_in_environ, make_logger_bitbake_compatible, subprocesstweak
         from oeqa.sdkext.context import OESDKExtTestContext, OESDKExtTestContextExecutor
+        from oeqa.utils import get_json_result_dir
 
         pn = d.getVar("PN")
         logger = make_logger_bitbake_compatible(logging.getLogger("BitBake"))
@@ -67,10 +68,10 @@ class TestSDKExt(TestSDKBase):
             # and we don't spend hours downloading kernels for the kernel module test
             # Abuse auto.conf since local.conf would be overwritten by the SDK
             with open(os.path.join(sdk_dir, 'conf', 'auto.conf'), 'a+') as f:
-                f.write('SSTATE_MIRRORS += " \\n file://.* file://%s/PATH"\n' % test_data.get('SSTATE_DIR'))
+                f.write('SSTATE_MIRRORS += "file://.* file://%s/PATH"\n' % test_data.get('SSTATE_DIR'))
                 f.write('SOURCE_MIRROR_URL = "file://%s"\n' % test_data.get('DL_DIR'))
                 f.write('INHERIT += "own-mirrors"\n')
-                f.write('PREMIRRORS:prepend = " git://git.yoctoproject.org/.* git://%s/git2/git.yoctoproject.org.BASENAME \\n "\n' % test_data.get('DL_DIR'))
+                f.write('PREMIRRORS:prepend = "git://git.yoctoproject.org/.* git://%s/git2/git.yoctoproject.org.BASENAME "\n' % test_data.get('DL_DIR'))
 
             # We need to do this in case we have a minimal SDK
             subprocess.check_output(". %s > /dev/null; devtool sdk-install meta-extsdk-toolchain" % \
@@ -81,7 +82,8 @@ class TestSDKExt(TestSDKBase):
                 host_pkg_manifest=host_pkg_manifest)
 
             try:
-                tc.loadTests(OESDKExtTestContextExecutor.default_cases)
+                modules = (d.getVar("TESTSDK_SUITES") or "").split()
+                tc.loadTests(OESDKExtTestContextExecutor.default_cases, modules)
             except Exception as e:
                 import traceback
                 bb.fatal("Loading tests failed:\n%s" % traceback.format_exc())
@@ -91,7 +93,7 @@ class TestSDKExt(TestSDKBase):
             component = "%s %s" % (pn, OESDKExtTestContextExecutor.name)
             context_msg = "%s:%s" % (os.path.basename(tcname), os.path.basename(sdk_env))
             configuration = self.get_sdk_configuration(d, 'sdkext')
-            result.logDetails(self.get_sdk_json_result_dir(d),
+            result.logDetails(get_json_result_dir(d),
                             configuration,
                             self.get_sdk_result_id(configuration))
             result.logSummary(component, context_msg)

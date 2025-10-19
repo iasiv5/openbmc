@@ -14,8 +14,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 PR = "r1"
 PV = "0.1+git${SRCPV}"
 
-SRC_URI = "git://github.com/openbmc/openpower-hw-diags"
-SRCREV = "15527a43fe309d3599d146d5a48607b14b426a37"
+SRC_URI = "git://github.com/openbmc/openpower-hw-diags;branch=master;protocol=https"
+SRCREV = "0487ac11b4ee1abd186b73b9fe37f374ba43d101"
 
 S = "${WORKDIR}/git"
 
@@ -24,7 +24,7 @@ inherit pkgconfig meson systemd
 SYSTEMD_SERVICE:${PN} = "attn_handler.service"
 
 DEPENDS = "boost libgpiod pdbg phosphor-logging sdbusplus openpower-libhei \
-           nlohmann-json valijson"
+           nlohmann-json valijson fmt"
 
 # This is required so that libhei is installed with the chip data files.
 RDEPENDS:${PN} += "openpower-libhei"
@@ -33,3 +33,17 @@ RDEPENDS:${PN} += "openpower-libhei"
 PACKAGECONFIG ??= "${@bb.utils.filter('MACHINE_FEATURES', 'phal', d)}"
 PACKAGECONFIG[phal] = "-Dphal=enabled, -Dphal=disabled, ipl pdata"
 
+# Don't build CI tests
+EXTRA_OEMESON = "-Dtests=disabled"
+
+pkg_postinst:${PN}() {
+    mkdir -p $D$systemd_system_unitdir/obmc-host-startmin@0.target.wants
+    LINK="$D$systemd_system_unitdir/obmc-host-startmin@0.target.wants/attn_handler.service"
+    TARGET="../attn_handler.service"
+    ln -s $TARGET $LINK
+}
+
+pkg_prerm:${PN}() {
+    LINK="$D$systemd_system_unitdir/obmc-host-startmin@0.target.wants/attn_handler.service"
+    rm $LINK
+}

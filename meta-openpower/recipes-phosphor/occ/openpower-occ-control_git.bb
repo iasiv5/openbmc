@@ -12,13 +12,6 @@ inherit meson \
 
 require ${BPN}.inc
 
-SRC_URI += "file://occ-active.sh"
-do_install:append() {
-        install -d ${D}${bindir}
-        install -m 0755 ${WORKDIR}/occ-active.sh \
-            ${D}${bindir}/occ-active.sh
-}
-
 DBUS_SERVICE:${PN} += "org.open_power.OCC.Control.service"
 SYSTEMD_SERVICE:${PN} += "op-occ-enable@.service"
 SYSTEMD_SERVICE:${PN} += "op-occ-disable@.service"
@@ -29,12 +22,13 @@ DEPENDS += " \
         ${PYTHON_PN}-sdbus++-native \
         phosphor-logging \
         phosphor-dbus-interfaces \
-        autoconf-archive-native \
         systemd \
+        libpldm \
         ${PYTHON_PN}-native \
         ${PYTHON_PN}-pyyaml-native \
         ${PYTHON_PN}-setuptools-native \
         ${PYTHON_PN}-mako-native \
+        nlohmann-json \
         "
 
 RDEPENDS:${PN} += "phosphor-state-manager-obmc-targets"
@@ -42,8 +36,8 @@ RDEPENDS:${PN} += "phosphor-state-manager-obmc-targets"
 EXTRA_OEMESON = " \
              -Dyamldir=${STAGING_DATADIR_NATIVE}/${PN} \
              -Dps-derating-factor=${POWER_SUPPLY_DERATING_FACTOR} \
+             -Dtests=disabled \
              "
-EXTRA_OEMESON:append = "${@bb.utils.contains('MACHINE_FEATURES', 'i2c-occ', ' -Di2c-occ=enabled', '', d)}"
 
 OCC_ENABLE = "enable"
 OCC_DISABLE = "disable"
@@ -77,7 +71,7 @@ DEPENDS:remove:class-native = " \
         sdbusplus \
         virtual/${PN}-config-native \
         "
-RDEPENDS:${PN}:remove:class-native += "phosphor-state-manager-obmc-targets"
+RDEPENDS:${PN}:remove:class-native = "phosphor-state-manager-obmc-targets"
 
 # Remove packages not required for native SDK build
 DEPENDS:remove:class-nativesdk = " \
@@ -86,21 +80,6 @@ DEPENDS:remove:class-nativesdk = " \
         sdbusplus \
         virtual/${PN}-config-native \
         "
-RDEPENDS:${PN}:remove:class-nativesdk += "phosphor-state-manager-obmc-targets"
-
-# Provide a means to enable/disable install_error_yaml feature
-PACKAGECONFIG ??= "install_error_yaml"
-PACKAGECONFIG[install_error_yaml] = "\
-        -Dinstall-error-yaml=enabled,\
-        -Dinstall-error-yaml=disabled,\
-        ,\
-        "
-
-# Enable install_error_yaml during native and native SDK build
-PACKAGECONFIG:add:class-native = "install_error_yaml"
-PACKAGECONFIG:add:class-nativesdk = "install_error_yaml"
-
-# Disable install_error_yaml during target build
-PACKAGECONFIG:remove:class-target = "install_error_yaml"
+RDEPENDS:${PN}:remove:class-nativesdk = "phosphor-state-manager-obmc-targets"
 
 BBCLASSEXTEND += "native nativesdk"

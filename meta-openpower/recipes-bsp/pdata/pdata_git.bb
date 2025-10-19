@@ -12,14 +12,15 @@ S = "${WORKDIR}/git"
 inherit autotools \
         perlnative
 
-SRC_URI = "git://git@github.com/open-power/pdata;branch="main""
-SRCREV = "b2c92eff169e96a67db516f3ea29a4e9d601d89d"
+SRC_URI = "git://git@github.com/open-power/pdata;branch="main";protocol=https"
+SRCREV = "1c25e47b7d6ef2aa40c93c038a4360bf00d78086"
 
 DEPENDS = "pdbg \
            libxml-simple-perl-native \
            libxml-libxml-perl-native \
            ekb-native \
-           autoconf-archive"
+           autoconf-archive \
+           dtc-native"
 
 PDATA_CONFARG = "CHIP=p10"
 EXTRA_OECONF = "--enable-gen_attrsinfo ${PDATA_CONFARG}"

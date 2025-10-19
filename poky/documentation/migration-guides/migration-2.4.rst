@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: CC-BY-SA-2.0-UK
+
 Release 2.4 (rocko)
 ===================
 
@@ -54,7 +56,7 @@ occurred:
       when "pam" is in :term:`DISTRO_FEATURES`.
 
    -  The ``switch_root`` program is now packaged in a separate
-      "util-linux-switch-root" package for small initramfs images that
+      "util-linux-switch-root" package for small :term:`Initramfs` images that
       do not need the whole ``util-linux`` package or the busybox
       binary, which are both much larger than ``switch_root``. The main
       ``util-linux`` package has a recommended runtime dependency (i.e.
@@ -88,8 +90,6 @@ occurred:
 
 Removed Recipes
 ---------------
-
-The following recipes have been removed:
 
 -  ``acpitests``: This recipe is not maintained.
 
@@ -195,12 +195,10 @@ Kernel Device Tree Move
 -----------------------
 
 Kernel Device Tree support is now easier to enable in a kernel recipe.
-The Device Tree code has moved to a
-:ref:`kernel-devicetree <ref-classes-kernel-devicetree>` class.
+The Device Tree code has moved to a :ref:`ref-classes-kernel-devicetree` class.
 Functionality is automatically enabled for any recipe that inherits the
-:ref:`kernel <ref-classes-kernel>` class and sets the
-:term:`KERNEL_DEVICETREE` variable. The
-previous mechanism for doing this,
+:ref:`kernel <ref-classes-kernel>` class and sets the :term:`KERNEL_DEVICETREE`
+variable. The previous mechanism for doing this,
 ``meta/recipes-kernel/linux/linux-dtb.inc``, is still available to avoid
 breakage, but triggers a deprecation warning. Future releases of the
 Yocto Project will remove ``meta/recipes-kernel/linux/linux-dtb.inc``.
@@ -212,8 +210,6 @@ recipes you might have. This will avoid breakage in post 2.4 releases.
 
 Package QA Changes
 ------------------
-
-The following package QA changes took place:
 
 -  The "unsafe-references-in-scripts" QA check has been removed.
 
@@ -229,8 +225,6 @@ The following package QA changes took place:
 ``README`` File Changes
 -----------------------
 
-The following are changes to ``README`` files:
-
 -  The main Poky ``README`` file has been moved to the ``meta-poky``
    layer and has been renamed ``README.poky``. A symlink has been
    created so that references to the old location work.
@@ -245,8 +239,6 @@ The following are changes to ``README`` files:
 
 Miscellaneous Changes
 ---------------------
-
-The following are additional changes:
 
 -  The ``ROOTFS_PKGMANAGE_BOOTSTRAP`` variable and any references to it
    have been removed. You should remove this variable from any custom
@@ -269,11 +261,11 @@ The following are additional changes:
    from ``meta-poky`` to OE-Core (i.e. from
    ``meta-poky/conf/distro/include`` to ``meta/conf/distro/include``).
 
--  The :ref:`buildhistory <ref-classes-buildhistory>` class now makes
+-  The :ref:`ref-classes-buildhistory` class now makes
    a single commit per build rather than one commit per subdirectory in
    the repository. This behavior assumes the commits are enabled with
    :term:`BUILDHISTORY_COMMIT` = "1", which
-   is typical. Previously, the ``buildhistory`` class made one commit
+   is typical. Previously, the :ref:`ref-classes-buildhistory` class made one commit
    per subdirectory in the repository in order to make it easier to see
    the changes for a particular subdirectory. To view a particular
    change, specify that subdirectory as the last parameter on the
@@ -286,7 +278,7 @@ The following are additional changes:
 
 -  BitBake fires multiple "BuildStarted" events when multiconfig is
    enabled (one per configuration). For more information, see the
-   ":ref:`bitbake:bitbake-user-manual/bitbake-user-manual-metadata:events`"
+   ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:events`"
    section in the BitBake User Manual.
 
 -  By default, the ``security_flags.inc`` file sets a
@@ -301,7 +293,7 @@ The following are additional changes:
    likely be removed in the next Yocto Project release.
 
 -  The ``vmdk``, ``vdi``, and ``qcow2`` image file types are now used in
-   conjunction with the "wic" image type through ``CONVERSION_CMD``.
+   conjunction with the "wic" image type through :term:`CONVERSION_CMD`.
    Consequently, the equivalent image types are now ``wic.vmdk``,
    ``wic.vdi``, and ``wic.qcow2``, respectively.
 

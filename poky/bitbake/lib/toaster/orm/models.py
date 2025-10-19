@@ -58,7 +58,6 @@ if 'sqlite' in settings.DATABASES['default']['ENGINE']:
             return _base_insert(self, *args, **kwargs)
     QuerySet._insert = _insert
 
-    from django.utils import six
     def _create_object_from_params(self, lookup, params):
         """
         Tries to create an object using passed params.
@@ -80,7 +79,6 @@ if 'sqlite' in settings.DATABASES['default']['ENGINE']:
     # end of HACK
 
 class GitURLValidator(validators.URLValidator):
-    import re
     regex = re.compile(
         r'^(?:ssh|git|http|ftp)s?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -108,7 +106,7 @@ class ToasterSetting(models.Model):
 
 
 class ProjectManager(models.Manager):
-    def create_project(self, name, release, existing_project=None):
+    def create_project(self, name, release, existing_project=None, imported=False):
         if existing_project and (release is not None):
             prj = existing_project
             prj.bitbake_version = release.bitbake_version
@@ -135,19 +133,19 @@ class ProjectManager(models.Manager):
 
         if release is None:
             return prj
+        if not imported:
+            for rdl in release.releasedefaultlayer_set.all():
+                lv = Layer_Version.objects.filter(
+                    layer__name=rdl.layer_name,
+                    release=release).first()
 
-        for rdl in release.releasedefaultlayer_set.all():
-            lv = Layer_Version.objects.filter(
-                layer__name=rdl.layer_name,
-                release=release).first()
-
-            if lv:
-                ProjectLayer.objects.create(project=prj,
-                                            layercommit=lv,
-                                            optional=False)
-            else:
-                logger.warning("Default project layer %s not found" %
-                               rdl.layer_name)
+                if lv:
+                    ProjectLayer.objects.create(project=prj,
+                                                layercommit=lv,
+                                                optional=False)
+                else:
+                    logger.warning("Default project layer %s not found" %
+                                rdl.layer_name)
 
         return prj
 
@@ -1390,9 +1388,6 @@ class Machine(models.Model):
         return "Machine " + self.name + "(" + self.description + ")"
 
 
-
-
-
 class BitbakeVersion(models.Model):
 
     name = models.CharField(max_length=32, unique = True)
@@ -1504,7 +1499,7 @@ class Layer_Version(models.Model):
     # code lifted, with adaptations, from the layerindex-web application
     # https://git.yoctoproject.org/cgit/cgit.cgi/layerindex-web/
     def _handle_url_path(self, base_url, path):
-        import re, posixpath
+        import posixpath
         if base_url:
             if self.dirpath:
                 if path:
@@ -1717,7 +1712,7 @@ class CustomImageRecipe(Recipe):
 
     def generate_recipe_file_contents(self):
         """Generate the contents for the recipe file."""
-        # If we have no excluded packages we only need to _append
+        # If we have no excluded packages we only need to :append
         if self.excludes_set.count() == 0:
             packages_conf = "IMAGE_INSTALL:append = \" "
 
@@ -1734,7 +1729,7 @@ class CustomImageRecipe(Recipe):
         packages_conf += "\""
 
         base_recipe_path = self.get_base_recipe_file()
-        if base_recipe_path:
+        if base_recipe_path and os.path.isfile(base_recipe_path):
             base_recipe = open(base_recipe_path, 'r').read()
         else:
             # Pass back None to trigger error message to user
@@ -1854,6 +1849,8 @@ def signal_runbuilds():
             os.kill(int(pidf.read()), SIGUSR1)
     except FileNotFoundError:
         logger.info("Stopping existing runbuilds: no current process found")
+    except ProcessLookupError:
+        logger.warning("Stopping existing runbuilds: process lookup not found")
 
 class Distro(models.Model):
     search_allowed_fields = ["name", "description", "layer_version__layer__name"]
@@ -1869,6 +1866,15 @@ class Distro(models.Model):
 
     def __unicode__(self):
         return "Distro " + self.name + "(" + self.description + ")"
+
+class EventLogsImports(models.Model):
+    name = models.CharField(max_length=255)
+    imported = models.BooleanField(default=False)
+    build_id = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
 
 django.db.models.signals.post_save.connect(invalidate_cache)
 django.db.models.signals.post_delete.connect(invalidate_cache)

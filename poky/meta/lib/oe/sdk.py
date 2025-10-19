@@ -1,4 +1,6 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
@@ -68,7 +70,7 @@ class Sdk(object, metaclass=ABCMeta):
         #FIXME: using umbrella exc catching because bb.utils method raises it
         except Exception as e:
             bb.debug(1, "printing the stack trace\n %s" %traceback.format_exc())
-            bb.error("unable to place %s in final SDK location" % sourcefile)
+            bb.fatal("unable to place %s in final SDK location" % sourcefile)
 
     def mkdirhier(self, dirpath):
         try:
@@ -115,6 +117,10 @@ def sdk_list_installed_packages(d, target, rootfs_dir=None):
 
         rootfs_dir = [sdk_output, os.path.join(sdk_output, target_path)][target is True]
 
+    if target is False:
+        ipkgconf_sdk_target = d.getVar("IPKGCONF_SDK")
+        d.setVar("IPKGCONF_TARGET", ipkgconf_sdk_target)
+
     img_type = d.getVar('IMAGE_PKGTYPE')
     import importlib
     cls = importlib.import_module('oe.package_manager.' + img_type)
@@ -142,13 +148,11 @@ def get_extra_sdkinfo(sstate_dir):
     extra_info['filesizes'] = {}
     for root, _, files in os.walk(sstate_dir):
         for fn in files:
-            if fn.endswith('.tgz'):
+            # Note that this makes an assumption about the sstate filenames
+            if '.tar.' in fn and not fn.endswith('.siginfo'):
                 fsize = int(math.ceil(float(os.path.getsize(os.path.join(root, fn))) / 1024))
                 task = fn.rsplit(':',1)[1].split('_',1)[1].split(',')[0]
                 origtotal = extra_info['tasksizes'].get(task, 0)
                 extra_info['tasksizes'][task] = origtotal + fsize
                 extra_info['filesizes'][fn] = fsize
     return extra_info
-
-if __name__ == "__main__":
-    pass

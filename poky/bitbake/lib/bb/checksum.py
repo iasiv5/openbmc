@@ -11,9 +11,12 @@ import os
 import stat
 import bb.utils
 import logging
+import re
 from bb.cache import MultiProcessCache
 
 logger = logging.getLogger("BitBake.Cache")
+
+filelist_regex = re.compile(r'(?:(?<=:True)|(?<=:False))\s+')
 
 # mtime cache (non-persistent)
 # based upon the assumption that files do not change during bitbake run
@@ -50,6 +53,7 @@ class FileChecksumCache(MultiProcessCache):
         MultiProcessCache.__init__(self)
 
     def get_checksum(self, f):
+        f = os.path.normpath(f)
         entry = self.cachedata[0].get(f)
         cmtime = self.mtime_cache.cached_mtime(f)
         if entry:
@@ -84,22 +88,36 @@ class FileChecksumCache(MultiProcessCache):
                 return None
             return checksum
 
+        #
+        # Changing the format of file-checksums is problematic as both OE and Bitbake have
+        # knowledge of them. We need to encode a new piece of data, the portion of the path
+        # we care about from a checksum perspective. This means that files that change subdirectory
+        # are tracked by the task hashes. To do this, we do something horrible and put a "/./" into
+        # the path. The filesystem handles it but it gives us a marker to know which subsection
+        # of the path to cache.
+        #
         def checksum_dir(pth):
             # Handle directories recursively
             if pth == "/":
                 bb.fatal("Refusing to checksum /")
+            pth = pth.rstrip("/")
             dirchecksums = []
             for root, dirs, files in os.walk(pth, topdown=True):
                 [dirs.remove(d) for d in list(dirs) if d in localdirsexclude]
                 for name in files:
-                    fullpth = os.path.join(root, name)
+                    fullpth = os.path.join(root, name).replace(pth, os.path.join(pth, "."))
                     checksum = checksum_file(fullpth)
                     if checksum:
                         dirchecksums.append((fullpth, checksum))
             return dirchecksums
 
         checksums = []
-        for pth in filelist.split():
+        for pth in filelist_regex.split(filelist):
+            if not pth:
+                continue
+            pth = pth.strip()
+            if not pth:
+                continue
             exist = pth.split(":")[1]
             if exist == "False":
                 continue
@@ -124,3 +142,28 @@ class FileChecksumCache(MultiProcessCache):
 
         checksums.sort(key=operator.itemgetter(1))
         return checksums
+
+class RevisionsCache(MultiProcessCache):
+    cache_file_name = "local_srcrevisions.dat"
+    CACHE_VERSION = 1
+
+    def __init__(self):
+        MultiProcessCache.__init__(self)
+
+    def get_revs(self):
+        return self.cachedata[0]
+
+    def get_rev(self, k):
+        if k in self.cachedata_extras[0]:
+            return self.cachedata_extras[0][k]
+        if k in self.cachedata[0]:
+            return self.cachedata[0][k]
+        return None
+
+    def set_rev(self, k, v):
+        self.cachedata[0][k] = v
+        self.cachedata_extras[0][k] = v
+
+    def merge_data(self, source, dest):
+        for h in source[0]:
+            dest[0][h] = source[0][h]

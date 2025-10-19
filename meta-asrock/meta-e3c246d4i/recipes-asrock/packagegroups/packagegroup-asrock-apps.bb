@@ -17,17 +17,12 @@ RPROVIDES:${PN}-system += "virtual-obmc-system-mgmt"
 
 SUMMARY:${PN}-flash = "ASRock Flash"
 RDEPENDS:${PN}-flash = " \
-	obmc-control-bmc \
 	phosphor-ipmi-flash \
 	"
 
 SUMMARY:${PN}-system = "ASRock System"
 RDEPENDS:${PN}-system = " \
-	bmcweb \
-	entity-manager \
-	dbus-sensors \
-	webui-vue \
 	phosphor-host-postd \
-	phosphor-ipmi-kcs \
 	phosphor-post-code-manager \
+	phosphor-software-manager \
 	"

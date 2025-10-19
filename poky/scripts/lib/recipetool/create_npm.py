@@ -6,16 +6,19 @@
 """Recipe creation tool - npm module support plugin"""
 
 import json
+import logging
 import os
 import re
 import sys
 import tempfile
 import bb
 from bb.fetch2.npm import NpmEnvironment
+from bb.fetch2.npm import npm_package
 from bb.fetch2.npmsw import foreach_dependencies
 from recipetool.create import RecipeHandler
-from recipetool.create import guess_license
+from recipetool.create import match_licenses, find_license_files, generate_common_licenses_chksums
 from recipetool.create import split_pkg_licenses
+logger = logging.getLogger('recipetool')
 
 TINFOIL = None
 
@@ -26,15 +29,6 @@ def tinfoil_init(instance):
 
 class NpmRecipeHandler(RecipeHandler):
     """Class to handle the npm recipe creation"""
-
-    @staticmethod
-    def _npm_name(name):
-        """Generate a Yocto friendly npm name"""
-        name = re.sub("/", "-", name)
-        name = name.lower()
-        name = re.sub(r"[^\-a-z0-9]", "", name)
-        name = name.strip("-")
-        return name
 
     @staticmethod
     def _get_registry(lines):
@@ -117,31 +111,71 @@ class NpmRecipeHandler(RecipeHandler):
         """Return the extra license files and the list of packages"""
         licfiles = []
         packages = {}
+        # Licenses from package.json will point to COMMON_LICENSE_DIR so we need
+        # to associate them explicitely to packages for split_pkg_licenses()
+        fallback_licenses = dict()
 
-        def _licfiles_append(licfile):
-            """Append 'licfile' to the license files list"""
-            licfilepath = os.path.join(srctree, licfile)
-            licmd5 = bb.utils.md5_file(licfilepath)
-            licfiles.append("file://%s;md5=%s" % (licfile, licmd5))
+        def _find_package_licenses(destdir):
+            """Either find license files, or use package.json metadata"""
+            def _get_licenses_from_package_json(package_json):
+                with open(os.path.join(srctree, package_json), "r") as f:
+                    data = json.load(f)
+                    if "license" in data:
+                        licenses = data["license"].split(" ")
+                        licenses = [license.strip("()") for license in licenses if license != "OR" and license != "AND"]
+                        return [], licenses
+                    else:
+                        return [package_json], None
 
-        # Handle the parent package
-        _licfiles_append("package.json")
-        packages["${PN}"] = ""
+            basedir = os.path.join(srctree, destdir)
+            licfiles = find_license_files(basedir)
+            if len(licfiles) > 0:
+                return licfiles, None
+            else:
+                # A license wasn't found in the package directory, so we'll use the package.json metadata
+                pkg_json = os.path.join(basedir, "package.json")
+                return _get_licenses_from_package_json(pkg_json)
+
+        def _get_package_licenses(destdir, package):
+            (package_licfiles, package_licenses) = _find_package_licenses(destdir)
+            if package_licfiles:
+                licfiles.extend(package_licfiles)
+            else:
+                fallback_licenses[package] = package_licenses
 
         # Handle the dependencies
-        def _handle_dependency(name, params, deptree):
-            suffix = "-".join([self._npm_name(dep) for dep in deptree])
-            destdirs = [os.path.join("node_modules", dep) for dep in deptree]
-            destdir = os.path.join(*destdirs)
-            _licfiles_append(os.path.join(destdir, "package.json"))
-            packages["${PN}-" + suffix] = destdir
+        def _handle_dependency(name, params, destdir):
+            deptree = destdir.split('node_modules/')
+            suffix = "-".join([npm_package(dep) for dep in deptree])
+            packages["${PN}" + suffix] = destdir
+            _get_package_licenses(destdir, "${PN}" + suffix)
 
         with open(shrinkwrap_file, "r") as f:
             shrinkwrap = json.load(f)
-
         foreach_dependencies(shrinkwrap, _handle_dependency, dev)
 
-        return licfiles, packages
+        # Handle the parent package
+        packages["${PN}"] = ""
+        _get_package_licenses(srctree, "${PN}")
+
+        return licfiles, packages, fallback_licenses
+    
+    # Handle the peer dependencies   
+    def _handle_peer_dependency(self, shrinkwrap_file):
+        """Check if package has peer dependencies and show warning if it is the case"""
+        with open(shrinkwrap_file, "r") as f:
+            shrinkwrap = json.load(f)
+        
+        packages = shrinkwrap.get("packages", {})
+        peer_deps = packages.get("", {}).get("peerDependencies", {})
+        
+        for peer_dep in peer_deps:
+            peer_dep_yocto_name = npm_package(peer_dep)
+            bb.warn(peer_dep + " is a peer dependencie of the actual package. " + 
+            "Please add this peer dependencie to the RDEPENDS variable as %s and generate its recipe with devtool"
+            % peer_dep_yocto_name)
+
+
 
     def process(self, srctree, classes, lines_before, lines_after, handled, extravalues):
         """Handle the npm recipe creation"""
@@ -160,7 +194,7 @@ class NpmRecipeHandler(RecipeHandler):
         if "name" not in data or "version" not in data:
             return False
 
-        extravalues["PN"] = self._npm_name(data["name"])
+        extravalues["PN"] = npm_package(data["name"])
         extravalues["PV"] = data["version"]
 
         if "description" in data:
@@ -229,7 +263,7 @@ class NpmRecipeHandler(RecipeHandler):
             value = origvalue.replace("version=" + data["version"], "version=${PV}")
             value = value.replace("version=latest", "version=${PV}")
             values = [line.strip() for line in value.strip('\n').splitlines()]
-            if "dependencies" in shrinkwrap:
+            if "dependencies" in shrinkwrap.get("packages", {}).get("", {}):
                 values.append(url_recipe)
             return values, None, 4, False
 
@@ -245,12 +279,18 @@ class NpmRecipeHandler(RecipeHandler):
         fetcher.unpack(srctree)
 
         bb.note("Handling licences ...")
-        (licfiles, packages) = self._handle_licenses(srctree, shrinkwrap_file, dev)
-        extravalues["LIC_FILES_CHKSUM"] = licfiles
-        split_pkg_licenses(guess_license(srctree, d), packages, lines_after, [])
+        (licfiles, packages, fallback_licenses) = self._handle_licenses(srctree, shrinkwrap_file, dev)
+        licvalues = match_licenses(licfiles, srctree, d)
+        split_pkg_licenses(licvalues, packages, lines_after, fallback_licenses)
+        fallback_licenses_flat = [license for sublist in fallback_licenses.values() for license in sublist]
+        extravalues["LIC_FILES_CHKSUM"] = generate_common_licenses_chksums(fallback_licenses_flat, d)
+        extravalues["LICENSE"] = fallback_licenses_flat
 
         classes.append("npm")
         handled.append("buildsystem")
+
+        # Check if package has peer dependencies and inform the user
+        self._handle_peer_dependency(shrinkwrap_file)
 
         return True
 

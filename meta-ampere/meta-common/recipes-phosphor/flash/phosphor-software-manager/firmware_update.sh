@@ -1,23 +1,4 @@
 #!/bin/bash
-#
-# Copyright (c) 2021 Ampere Computing LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#	http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# This script updates the EDKII / SCP firmware.
-# Author : Chanh Nguyen (chnguyen@amperecomputing.com)
-# Date : Sep 7, 2021
-# Modified:
 
 usage () {
 	echo "Usage:"
@@ -63,21 +44,40 @@ case ${EXTENDED_VERSION} in
 		CMD="/usr/sbin/ampere_flash_bios.sh $IMAGE 2"
 		;;
 
-	"scp-primary")
-		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.img" -o -name "*.slim" -o -name "*.rom" \))
-		CMD="/usr/sbin/ampere_firmware_upgrade.sh smpmpro $IMAGE 1"
+	"eeprom" | "eeprom-primary" | "scp-primary")
+		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.img" -o -name "*.slim" -o -name "*.rom" -o -name "*.bin" \))
+		CMD="/usr/sbin/ampere_firmware_upgrade.sh eeprom $IMAGE 1"
 		;;
 
-	"scp-secondary")
-		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.img" -o -name "*.slim" -o -name "*.rom" \))
-		CMD="/usr/sbin/ampere_firmware_upgrade.sh smpmpro $IMAGE 2"
+	"eeprom-secondary" | "scp-secondary")
+		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.img" -o -name "*.slim" -o -name "*.rom" -o -name "*.bin" \))
+		CMD="/usr/sbin/ampere_firmware_upgrade.sh eeprom $IMAGE 2"
 		;;
 
-	"fru")
+	"fru" | "mbfru")
 		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.bin" \))
-		CMD="/usr/sbin/ampere_firmware_upgrade.sh fru $IMAGE"
+		CMD="/usr/sbin/ampere_firmware_upgrade.sh fru $IMAGE 1"
 		;;
 
+
+	"bmcfru")
+		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.bin" \))
+		CMD="/usr/sbin/ampere_firmware_upgrade.sh fru $IMAGE 2"
+		;;
+
+	"mbcpld")
+		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.jed" -o -name "*.bin" \))
+		CMD="/usr/sbin/ampere_firmware_upgrade.sh mb_cpld $IMAGE"
+		;;
+	"bmccpld")
+		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.jed" -o -name "*.bin" \))
+		CMD="/usr/sbin/ampere_firmware_upgrade.sh bmc_cpld $IMAGE"
+		;;
+	"bpcpld"*)
+		IMAGE=$(find "${IMG_PATH}" -type f \( -name "*.jed" -o -name "*.bin" \))
+		TARGET="${EXTENDED_VERSION:6}"
+		CMD="/usr/sbin/ampere_firmware_upgrade.sh bp_cpld $IMAGE $TARGET"
+		;;
 	*)
 		echo "Invalid ExtendedVersion: ${EXTENDED_VERSION}. Please check MANIFEST file!"
 		exit 1
@@ -93,6 +93,6 @@ fi
 
 if ! eval "$CMD";
 then
-	echo "ERROR: The firmware update not successfull"
+	echo "ERROR: The firmware update not successful"
 	exit 1
 fi

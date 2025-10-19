@@ -19,11 +19,14 @@ S = "${WORKDIR}/go"
 B = "${S}"
 UPSTREAM_CHECK_REGEX = "(?P<pver>\d+(\.\d+)+)\.src\.tar"
 
+# all recipe variants are created from the same product
+CVE_PRODUCT = "golang:go"
+
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 SSTATE_SCAN_CMD = "true"
 
 export GOROOT_OVERRIDE = "1"
-export GOTMPDIR ?= "${WORKDIR}/go-tmp"
+export GOTMPDIR ?= "${WORKDIR}/build-tmp"
 GOTMPDIR[vardepvalue] = ""
 export CGO_ENABLED = "1"
 
@@ -35,7 +38,8 @@ export GOARCH ?= "${TARGET_GOARCH}"
 export GOARM ?= "${TARGET_GOARM}"
 export GO386 ?= "${TARGET_GO386}"
 export GOMIPS ?= "${TARGET_GOMIPS}"
-export GOROOT_FINAL ?= "${libdir}/go"
+
+export GODEBUG = "gocachehash=1"
 
 do_compile:prepend() {
 	BUILD_CC=${BUILD_CC}

@@ -6,10 +6,12 @@ The program supports recursive retrieval of web-authoring pages as well as \
 FTP sites"
 HOMEPAGE = "https://www.gnu.org/software/wget/"
 SECTION = "console/network"
-LICENSE = "GPLv3"
-LIC_FILES_CHKSUM = "file://COPYING;md5=c678957b0c8e964aa6c70fd77641a71e"
+LICENSE = "GPL-3.0-only"
+LIC_FILES_CHKSUM = "file://COPYING;md5=6f65012d1daf98cb09b386cfb68df26b"
 
 inherit autotools gettext texinfo update-alternatives pkgconfig
+
+DEPENDS += "autoconf-archive-native"
 
 EXTRA_OECONF = "--without-libgnutls-prefix --without-libssl-prefix \
                 --disable-rpath"
@@ -25,7 +27,7 @@ RRECOMMENDS:${PN} += "ca-certificates"
 
 BBCLASSEXTEND = "nativesdk"
 
-PACKAGECONFIG ??= "gnutls pcre zlib \
+PACKAGECONFIG ??= "gnutls pcre2 zlib \
                    ${@bb.utils.filter('DISTRO_FEATURES', 'ipv6', d)}"
 PACKAGECONFIG[ares] = "--with-cares,--without-cares,c-ares"
 PACKAGECONFIG[gnutls] = "--with-ssl=gnutls,,gnutls"
@@ -35,9 +37,5 @@ PACKAGECONFIG[libpsl] = "--with-libpsl,--without-libpsl,libpsl"
 PACKAGECONFIG[libuuid] = "--with-libuuid,--without-libuuid,util-linux"
 PACKAGECONFIG[openssl] = "--with-ssl=openssl,,openssl"
 PACKAGECONFIG[pcre] = "--enable-pcre,--disable-pcre,libpcre"
+PACKAGECONFIG[pcre2] = "--enable-pcre2,--disable-pcre2,libpcre2"
 PACKAGECONFIG[zlib] = "--with-zlib,--without-zlib,zlib"
-
-# Let aclocal use the relative path for the m4 file rather than
-# absolute, otherwise there might be an "Argument list too long" error
-# when it is built in a long/deep directory.
-acpaths = "-I ./m4"

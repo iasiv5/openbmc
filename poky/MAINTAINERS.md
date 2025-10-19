@@ -41,6 +41,7 @@ Component/Subsystem Maintainers
 * devtool: Saul Wold
 * eSDK: Saul Wold
 * overlayfs: Vyacheslav Yurkov
+* Patchtest: Trevor Gamblin
 
 Maintainers needed
 ------------------
@@ -52,8 +53,6 @@ Maintainers needed
 * error reporting system/web UI
 * wic
 * Patchwork
-* Patchtest
-* Prelink-cross
 * Matchbox
 * Sato
 * Autobuilder
@@ -68,5 +67,3 @@ Shadow maintainers/development needed
 
 * toaster
 * bitbake
-
-

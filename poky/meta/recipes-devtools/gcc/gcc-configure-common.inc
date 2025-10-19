@@ -6,7 +6,7 @@ require gcc-shared-source.inc
 # These can be overridden by the version specific .inc file.
 
 # gcc 3.x expects 'f77', 4.0 expects 'f95', 4.1 and 4.2 expect 'fortran'
-FORTRAN ?= ",f77"
+FORTRAN ?= ",fortran"
 LANGUAGES ?= "c,c++${FORTRAN}"
 
 EXTRA_OECONF_BASE ?= ""
@@ -40,7 +40,6 @@ EXTRA_OECONF = "\
     ${@get_gcc_mips_plt_setting(bb, d)} \
     ${@get_gcc_ppc_plt_settings(bb, d)} \
     ${@get_gcc_multiarch_setting(bb, d)} \
-	--enable-standard-branch-protection \
 "
 
 # glibc version is a minimum controlling whether features are enabled. 
@@ -120,4 +119,3 @@ do_configure () {
 
 	oe_runconf
 }
-

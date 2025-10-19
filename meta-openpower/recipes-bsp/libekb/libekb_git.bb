@@ -11,16 +11,16 @@ S = "${WORKDIR}/git"
 
 require recipes-bsp/ekb/ekb.inc
 
-inherit autotools \
-        python3native \
-        perlnative
+inherit autotools
+inherit python3native
+inherit perlnative
 
 SRCREV_FORMAT = "libekb_ekb"
 
-SRCREV_libekb = "9a8b5a419f2058e7e1d4bb97a1f91bd2d343f86a"
+SRCREV_libekb = "bc2b16f059bbc78de71c7c3b82197d65a2f532fb"
 SRCREV_ekb = "${EKB_REV}"
 
-SRC_URI = "git://git@github.com/open-power/libekb_p10;branch="main";name=libekb \
+SRC_URI = "git://git@github.com/open-power/libekb_p10;branch=main;name=libekb;protocol=https \
            ${EKB_URI};name=ekb;destsuffix=git/ekb \
            "
 

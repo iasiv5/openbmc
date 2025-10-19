@@ -19,10 +19,10 @@ import os
 import tempfile
 import json
 import subprocess
+import shutil
 import re
 
 from collections import namedtuple, OrderedDict
-from distutils.spawn import find_executable
 
 from wic import WicError
 from wic.filemap import sparse_copy
@@ -232,6 +232,16 @@ class Disk:
         self._psector_size = None
         self._ptable_format = None
 
+        # define sector size
+        sector_size_str = get_bitbake_var('WIC_SECTOR_SIZE')
+        if sector_size_str is not None:
+            try:
+                self.sector_size = int(sector_size_str)
+            except ValueError:
+                self.sector_size = None
+        else:
+            self.sector_size = None
+
         # find parted
         # read paths from $PATH environment variable
         # if it fails, use hardcoded paths
@@ -245,7 +255,7 @@ class Disk:
             for path in pathlist.split(':'):
                 self.paths = "%s%s:%s" % (native_sysroot, path, self.paths)
 
-        self.parted = find_executable("parted", self.paths)
+        self.parted = shutil.which("parted", path=self.paths)
         if not self.parted:
             raise WicError("Can't find executable parted")
 
@@ -258,7 +268,13 @@ class Disk:
     def get_partitions(self):
         if self._partitions is None:
             self._partitions = OrderedDict()
-            out = exec_cmd("%s -sm %s unit B print" % (self.parted, self.imagepath))
+
+            if self.sector_size is not None:
+                out = exec_cmd("export PARTED_SECTOR_SIZE=%d; %s -sm %s unit B print" % \
+                           (self.sector_size, self.parted, self.imagepath), True)
+            else:
+                out = exec_cmd("%s -sm %s unit B print" % (self.parted, self.imagepath))
+
             parttype = namedtuple("Part", "pnum start end size fstype")
             splitted = out.splitlines()
             # skip over possible errors in exec_cmd output
@@ -283,7 +299,7 @@ class Disk:
                     "resize2fs", "mkswap", "mkdosfs", "debugfs","blkid"):
             aname = "_%s" % name
             if aname not in self.__dict__:
-                setattr(self, aname, find_executable(name, self.paths))
+                setattr(self, aname, shutil.which(name, path=self.paths))
                 if aname not in self.__dict__ or self.__dict__[aname] is None:
                     raise WicError("Can't find executable '{}'".format(name))
             return self.__dict__[aname]
@@ -359,7 +375,7 @@ class Disk:
         Remove files/dirs and their contents from the partition.
         This only applies to ext* partition.
         """
-        abs_path = re.sub('\/\/+', '/', path)
+        abs_path = re.sub(r'\/\/+', '/', path)
         cmd = "{} {} -wR 'rm \"{}\"'".format(self.debugfs,
                                             self._get_part_image(pnum),
                                             abs_path)

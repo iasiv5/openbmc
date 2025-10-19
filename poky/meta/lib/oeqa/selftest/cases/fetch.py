@@ -1,4 +1,6 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: MIT
 #
 
@@ -34,6 +36,7 @@ PREMIRRORS:forcevariable = ""
         # No mirrors and broken git, should fail
         features = """
 DL_DIR = "%s"
+SRC_URI:pn-dbus-wait = "git://git.yoctoproject.org/dbus-wait;branch=master;protocol=git"
 GIT_PROXY_COMMAND = "false"
 MIRRORS:forcevariable = ""
 PREMIRRORS:forcevariable = ""
@@ -46,6 +49,7 @@ PREMIRRORS:forcevariable = ""
         # Broken git but a specific mirror
         features = """
 DL_DIR = "%s"
+SRC_URI:pn-dbus-wait = "git://git.yoctoproject.org/dbus-wait;branch=master;protocol=git"
 GIT_PROXY_COMMAND = "false"
 MIRRORS:forcevariable = "git://.*/.* http://downloads.yoctoproject.org/mirror/sources/"
 """ % dldir
@@ -70,8 +74,8 @@ class Dependencies(OESelftestTestCase):
             tinfoil.prepare(config_only=False, quiet=2)
 
             r = """
-            LICENSE="CLOSED"
-            SRC_URI="http://example.com/tarball.zip"
+            LICENSE = "CLOSED"
+            SRC_URI = "http://example.com/tarball.zip"
             """
             f = self.write_recipe(textwrap.dedent(r), tempdir)
             d = tinfoil.parse_recipe_file(f)
@@ -80,8 +84,8 @@ class Dependencies(OESelftestTestCase):
 
             # Verify that the downloadfilename overrides the URI
             r = """
-            LICENSE="CLOSED"
-            SRC_URI="https://example.com/tarball;downloadfilename=something.zip"
+            LICENSE = "CLOSED"
+            SRC_URI = "https://example.com/tarball;downloadfilename=something.zip"
             """
             f = self.write_recipe(textwrap.dedent(r), tempdir)
             d = tinfoil.parse_recipe_file(f)
@@ -89,8 +93,8 @@ class Dependencies(OESelftestTestCase):
             self.assertIn("unzip-native", d.getVarFlag("do_unpack", "depends") or "")
 
             r = """
-            LICENSE="CLOSED"
-            SRC_URI="ftp://example.com/tarball.lz"
+            LICENSE = "CLOSED"
+            SRC_URI = "ftp://example.com/tarball.lz"
             """
             f = self.write_recipe(textwrap.dedent(r), tempdir)
             d = tinfoil.parse_recipe_file(f)
@@ -98,8 +102,8 @@ class Dependencies(OESelftestTestCase):
             self.assertIn("lzip-native", d.getVarFlag("do_unpack", "depends"))
 
             r = """
-            LICENSE="CLOSED"
-            SRC_URI="git://example.com/repo"
+            LICENSE = "CLOSED"
+            SRC_URI = "git://example.com/repo;branch=master;rev=ffffffffffffffffffffffffffffffffffffffff"
             """
             f = self.write_recipe(textwrap.dedent(r), tempdir)
             d = tinfoil.parse_recipe_file(f)

@@ -840,8 +840,8 @@ DESCRIPTION
     meanings. The commands are based on the Fedora kickstart
     documentation but with modifications to reflect wic capabilities.
 
-      http://fedoraproject.org/wiki/Anaconda/Kickstart#part_or_partition
-      http://fedoraproject.org/wiki/Anaconda/Kickstart#bootloader
+      https://pykickstart.readthedocs.io/en/latest/kickstart-docs.html#part-or-partition
+      https://pykickstart.readthedocs.io/en/latest/kickstart-docs.html#bootloader
 
   Commands
 
@@ -916,6 +916,10 @@ DESCRIPTION
                    will create empty partition. --size parameter has
                    to be used to specify size of empty partition.
 
+         --sourceparams: This option is specific to wic. Supply additional
+                         parameters to the source plugin in
+                         key1=value1,key2 format.
+
          --ondisk or --ondrive: Forces the partition to be created on
                                 a particular disk.
 
@@ -932,6 +936,7 @@ DESCRIPTION
              squashfs
              erofs
              swap
+             none
 
          --fsoptions: Specifies a free-form string of options to be
                       used when mounting the filesystem. This string
@@ -939,6 +944,12 @@ DESCRIPTION
                       installed system and should be enclosed in
                       quotes.  If not specified, the default string is
                       "defaults".
+
+         --fspassno: Specifies the order in which filesystem checks are done
+                     at boot time by fsck.  See fs_passno parameter of
+                     fstab(5).  This parameter will be copied into the
+                     /etc/fstab file of the installed system.  If not
+                     specified the default value of "0" will be used.
 
          --label label: Specifies the label to give to the filesystem
                         to be made on the partition. If the given
@@ -958,6 +969,14 @@ DESCRIPTION
          --align (in KBytes): This option is specific to wic and says
                               to start a partition on an x KBytes
                               boundary.
+
+         --offset: This option is specific to wic that says to place a partition
+                   at exactly the specified offset. If the partition cannot be
+                   placed at the specified offset, the image build will fail.
+                   Specify as an integer value optionally followed by one of the
+                   units s/S for 512 byte sector, k/K for kibibyte, M for
+                   mebibyte and G for gibibyte. The default unit if none is
+                   given is k.
 
          --no-table: This option is specific to wic. Space will be
                      reserved for the partition and it will be
@@ -1039,6 +1058,18 @@ DESCRIPTION
                            not take effect when --mkfs-extraopts is used. This should be taken into
                            account when using --mkfs-extraopts.
 
+         --type: This option is specific to wic. Valid values are 'primary',
+                 'logical'. For msdos partition tables, this option specifies
+                 the partition type.
+
+         --hidden: This option is specific to wic. This option sets the
+                   RequiredPartition bit (bit 0) on GPT partitions.
+
+         --mbr: This option is specific to wic. This option is used with the
+                gpt-hybrid partition type that uses both a GPT partition and
+                an MBR header. Partitions with this flag will be included in
+                this MBR header.
+
     * bootloader
 
       This command allows the user to specify various bootloader
@@ -1056,6 +1087,13 @@ DESCRIPTION
                       canned-wks folder or could be the full path to the
                       file. Using this option will override any other
                       bootloader option.
+
+        --ptable: Specifies the partition table format. Valid values are
+                  'msdos', 'gpt', 'gpt-hybrid'.
+
+        --source: Specifies the source plugin. If not specified, the
+                  --source value will be copied from the partition that has
+                  /boot as mountpoint.
 
       Note that bootloader functionality and boot partitions are
       implemented by the various --source plugins that implement
@@ -1112,7 +1150,7 @@ COMMAND:
 TOPIC:
     overview  - Presents an overall overview of Wic
     plugins   - Presents an overview and API for Wic plugins
-    kickstart - Presents a Wic kicstart file reference
+    kickstart - Presents a Wic kickstart file reference
 
 
 Examples:

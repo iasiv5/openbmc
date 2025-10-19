@@ -6,7 +6,10 @@ form a standalone SDK."
 HOMEPAGE = "https://www.yoctoproject.org/"
 
 IMAGE_FEATURES += "dev-pkgs tools-sdk \
-	tools-debug eclipse-debug tools-profile tools-testapps debug-tweaks ssh-server-openssh"
+	tools-debug eclipse-debug tools-profile tools-testapps ssh-server-openssh"
 
 IMAGE_INSTALL += "kernel-devsrc"
 
+# Compiling stuff, specifically SystemTap probes, can require lots of memory
+# See https://bugzilla.yoctoproject.org/show_bug.cgi?id=14673
+QB_MEM = "-m 768"

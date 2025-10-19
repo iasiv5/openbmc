@@ -38,10 +38,10 @@ BASE_DEFAULT_DEPS:append:class-target = " ${NEWLIB_EXTENDED}"
 TARGET_OS = "elf"
 TARGET_OS:arm = "eabi"
 
-TOOLCHAIN_HOST_TASK ?= "packagegroup-cross-canadian-${MACHINE} nativesdk-qemu"
+TOOLCHAIN_HOST_TASK ?= "packagegroup-cross-canadian-${MACHINE} nativesdk-qemu nativesdk-sdk-provides-dummy"
 TOOLCHAIN_TARGET_TASK ?= "${LIBC_DEPENDENCIES}"
 TOOLCHAIN_NEED_CONFIGSITE_CACHE:remove = "zlib ncurses"
 
-# disable pie security flags by default
-SECURITY_CFLAGS:libc-newlib = "${SECURITY_NOPIE_CFLAGS}"
-SECURITY_LDFLAGS:libc-newlib = ""
+# disable pie security flags by default since RISCV linker doesnt support them
+SECURITY_CFLAGS:libc-newlib:qemuriscv32 = "${SECURITY_NOPIE_CFLAGS}"
+SECURITY_CFLAGS:libc-newlib:qemuriscv64 = "${SECURITY_NOPIE_CFLAGS}"

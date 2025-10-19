@@ -1,4 +1,6 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-only
 #
 from abc import ABCMeta, abstractmethod
@@ -104,7 +106,7 @@ class Rootfs(object, metaclass=ABCMeta):
     def _cleanup(self):
         pass
 
-    def _setup_dbg_rootfs(self, dirs):
+    def _setup_dbg_rootfs(self, package_paths):
         gen_debugfs = self.d.getVar('IMAGE_GEN_DEBUGFS') or '0'
         if gen_debugfs != '1':
            return
@@ -120,11 +122,12 @@ class Rootfs(object, metaclass=ABCMeta):
         bb.utils.mkdirhier(self.image_rootfs)
 
         bb.note("  Copying back package database...")
-        for dir in dirs:
-            if not os.path.isdir(self.image_rootfs + '-orig' + dir):
-                continue
-            bb.utils.mkdirhier(self.image_rootfs + os.path.dirname(dir))
-            shutil.copytree(self.image_rootfs + '-orig' + dir, self.image_rootfs + dir, symlinks=True)
+        for path in package_paths:
+            bb.utils.mkdirhier(self.image_rootfs + os.path.dirname(path))
+            if os.path.isdir(self.image_rootfs + '-orig' + path):
+                shutil.copytree(self.image_rootfs + '-orig' + path, self.image_rootfs + path, symlinks=True)
+            elif os.path.isfile(self.image_rootfs + '-orig' + path):
+                shutil.copyfile(self.image_rootfs + '-orig' + path, self.image_rootfs + path)
 
         # Copy files located in /usr/lib/debug or /usr/src/debug
         for dir in ["/usr/lib/debug", "/usr/src/debug"]:
@@ -160,6 +163,13 @@ class Rootfs(object, metaclass=ABCMeta):
             bb.note("  Install extra debug packages...")
             self.pm.install(extra_debug_pkgs.split(), True)
 
+        bb.note("  Removing package database...")
+        for path in package_paths:
+            if os.path.isdir(self.image_rootfs + path):
+                shutil.rmtree(self.image_rootfs + path)
+            elif os.path.isfile(self.image_rootfs + path):
+                os.remove(self.image_rootfs + path)
+
         bb.note("  Rename debug rootfs...")
         try:
             shutil.rmtree(self.image_rootfs + '-dbg')
@@ -171,14 +181,8 @@ class Rootfs(object, metaclass=ABCMeta):
         bb.utils.rename(self.image_rootfs + '-orig', self.image_rootfs)
 
     def _exec_shell_cmd(self, cmd):
-        fakerootcmd = self.d.getVar('FAKEROOT')
-        if fakerootcmd is not None:
-            exec_cmd = [fakerootcmd, cmd]
-        else:
-            exec_cmd = cmd
-
         try:
-            subprocess.check_output(exec_cmd, stderr=subprocess.STDOUT)
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             return("Command '%s' returned %d:\n%s" % (e.cmd, e.returncode, e.output))
 
@@ -190,9 +194,17 @@ class Rootfs(object, metaclass=ABCMeta):
         post_process_cmds = self.d.getVar("ROOTFS_POSTPROCESS_COMMAND")
         rootfs_post_install_cmds = self.d.getVar('ROOTFS_POSTINSTALL_COMMAND')
 
-        bb.utils.mkdirhier(self.image_rootfs)
+        def make_last(command, commands):
+            commands = commands.split()
+            if command in commands:
+                commands.remove(command)
+                commands.append(command)
+            return " ".join(commands)
 
-        bb.utils.mkdirhier(self.deploydir)
+        # We want this to run as late as possible, in particular after
+        # systemd_sysusers_create and set_user_group. Using :append is not enough
+        post_process_cmds = make_last("tidy_shadowutils_files", post_process_cmds)
+        post_process_cmds = make_last("rootfs_reproducible", post_process_cmds)
 
         execute_pre_post_process(self.d, pre_process_cmds)
 
@@ -257,7 +269,11 @@ class Rootfs(object, metaclass=ABCMeta):
                 self.pm.remove(["run-postinsts"])
 
         image_rorfs = bb.utils.contains("IMAGE_FEATURES", "read-only-rootfs",
+                                        True, False, self.d) and \
+                      not bb.utils.contains("IMAGE_FEATURES",
+                                        "read-only-rootfs-delayed-postinsts",
                                         True, False, self.d)
+
         image_rorfs_force = self.d.getVar('FORCE_RO_REMOVE')
 
         if image_rorfs or image_rorfs_force == "1":
@@ -315,7 +331,7 @@ class Rootfs(object, metaclass=ABCMeta):
     def _check_for_kernel_modules(self, modules_dir):
         for root, dirs, files in os.walk(modules_dir, topdown=True):
             for name in files:
-                found_ko = name.endswith((".ko", ".ko.gz", ".ko.xz"))
+                found_ko = name.endswith((".ko", ".ko.gz", ".ko.xz", ".ko.zst"))
                 if found_ko:
                     return found_ko
         return False
@@ -327,17 +343,31 @@ class Rootfs(object, metaclass=ABCMeta):
             bb.note("No Kernel Modules found, not running depmod")
             return
 
-        kernel_abi_ver_file = oe.path.join(self.d.getVar('PKGDATA_DIR'), "kernel-depmod",
-                                           'kernel-abiversion')
-        if not os.path.exists(kernel_abi_ver_file):
-            bb.fatal("No kernel-abiversion file found (%s), cannot run depmod, aborting" % kernel_abi_ver_file)
+        pkgdatadir = self.d.getVar('PKGDATA_DIR')
 
-        kernel_ver = open(kernel_abi_ver_file).read().strip(' \n')
-        versioned_modules_dir = os.path.join(self.image_rootfs, modules_dir, kernel_ver)
+        # PKGDATA_DIR can include multiple kernels so we run depmod for each
+        # one of them.
+        for direntry in os.listdir(pkgdatadir):
+            match = re.match('(.*)-depmod', direntry)
+            if not match:
+                continue
+            kernel_package_name = match.group(1)
 
-        bb.utils.mkdirhier(versioned_modules_dir)
+            kernel_abi_ver_file = oe.path.join(pkgdatadir, direntry, kernel_package_name + '-abiversion')
+            if not os.path.exists(kernel_abi_ver_file):
+                bb.fatal("No kernel-abiversion file found (%s), cannot run depmod, aborting" % kernel_abi_ver_file)
 
-        self._exec_shell_cmd(['depmodwrapper', '-a', '-b', self.image_rootfs, kernel_ver])
+            with open(kernel_abi_ver_file) as f:
+                kernel_ver = f.read().strip(' \n')
+
+            versioned_modules_dir = os.path.join(self.image_rootfs, modules_dir, kernel_ver)
+
+            if os.path.exists(versioned_modules_dir):
+                bb.note("Running depmodwrapper for %s ..." % versioned_modules_dir)
+                if self._exec_shell_cmd(['depmodwrapper', '-a', '-b', self.image_rootfs, kernel_ver, kernel_package_name]):
+                    bb.fatal("Kernel modules dependency generation failed")
+            else:
+                bb.note("Not running depmodwrapper for %s since directory does not exist" % versioned_modules_dir)
 
     """
     Create devfs:
@@ -386,6 +416,10 @@ def create_rootfs(d, manifest_dir=None, progress_reporter=None, logcatcher=None)
 
 
 def image_list_installed_packages(d, rootfs_dir=None):
+    # Theres no rootfs for baremetal images
+    if bb.data.inherits_class('baremetal-image', d):
+        return ""
+
     if not rootfs_dir:
         rootfs_dir = d.getVar('IMAGE_ROOTFS')
 
@@ -394,12 +428,3 @@ def image_list_installed_packages(d, rootfs_dir=None):
     import importlib
     cls = importlib.import_module('oe.package_manager.' + img_type)
     return cls.PMPkgsList(d, rootfs_dir).list_pkgs()
-
-if __name__ == "__main__":
-    """
-    We should be able to run this as a standalone script, from outside bitbake
-    environment.
-    """
-    """
-    TBD
-    """

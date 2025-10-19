@@ -4,7 +4,7 @@ of any of these items or of any of the metadata associated with them."
 HOMEPAGE = "http://www.freedesktop.org/wiki/Software/ConsoleKit"
 BUGTRACKER = "https://bugs.freedesktop.org/buglist.cgi?query_format=specific&product=ConsoleKit"
 
-LICENSE = "GPLv2+"
+LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552 \
                     file://src/main.c;endline=21;md5=0a994e09769780220163255d8f9071c3"
 
@@ -20,7 +20,6 @@ SRC_URI = "http://www.freedesktop.org/software/ConsoleKit/dist/ConsoleKit-${PV}.
            file://add-polkit-configure-argument.patch \
 "
 
-SRC_URI[md5sum] = "611792b4d616253a5bdec9175f8b7678"
 SRC_URI[sha256sum] = "b41d17e06f80059589fbeefe96ad07bcc564c49e65516da1caf975146475565c"
 
 S = "${WORKDIR}/ConsoleKit-${PV}"
@@ -30,6 +29,9 @@ PACKAGECONFIG ??= "${@bb.utils.filter('DISTRO_FEATURES', 'pam systemd polkit', d
 PACKAGECONFIG[pam] = "--enable-pam-module --with-pam-module-dir=${base_libdir}/security,--disable-pam-module,libpam"
 PACKAGECONFIG[polkit] = "--with-polkit,--without-polkit,polkit"
 PACKAGECONFIG[systemd] = "--with-systemdsystemunitdir=${systemd_system_unitdir}/,--with-systemdsystemunitdir="
+
+# Fails to build with GCC14 with incompatible pointer error warning being treated as error
+CFLAGS += "-Wno-error=incompatible-pointer-types"
 
 FILES:${PN} += "${exec_prefix}/lib/ConsoleKit \
                 ${libdir}/ConsoleKit  ${systemd_unitdir} ${base_libdir} \

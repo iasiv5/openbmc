@@ -5,15 +5,18 @@ HOMEPAGE = "http://www.netperf.org/"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://COPYING;md5=e661ab33a2a71ad6652c178dedf8aaa2"
 
-PV = "2.7.0+git${SRCPV}"
+PV = "2.7.0+git"
 
-SRC_URI = "git://github.com/HewlettPackard/netperf.git \
+SRC_URI = "git://github.com/HewlettPackard/netperf.git;branch=master;protocol=https \
            file://cpu_set.patch \
            file://vfork.patch \
            file://init \
            file://netserver.service \
            file://0001-netlib.c-Move-including-sched.h-out-og-function.patch \
            file://0001-nettest_omni-Remove-duplicate-variable-definitions.patch \
+           file://netserver_permissions.patch \
+           file://0001-Makefile.am-add-ACLOCAL_AMFLAGS.patch \
+           file://0001-Fix-too-many-arguments-error-occurring-in-gcc-15.patch \
            "
 
 SRCREV = "3bc455b23f901dae377ca0a558e1e32aa56b31c4"
@@ -27,29 +30,22 @@ CFLAGS:append = " -DDO_UNIX -DDO_IPV6 -D_GNU_SOURCE"
 
 # set the "_FILE_OFFSET_BITS" preprocessor symbol to 64 to support files
 # larger than 2GB
-CFLAGS:append = "${@bb.utils.contains('DISTRO_FEATURES', 'largefile', \
-    ' -D_FILE_OFFSET_BITS=64', '', d)}"
+CFLAGS:append = " -D_FILE_OFFSET_BITS=64"
 
 PACKAGECONFIG ??= ""
 PACKAGECONFIG[sctp] = "--enable-sctp,--disable-sctp,lksctp-tools,"
 PACKAGECONFIG[intervals] = "--enable-intervals,--disable-intervals,,"
 PACKAGECONFIG[histogram] = "--enable-histogram,--disable-histogram,,"
 
-# autotools.bbclass attends to include m4 files with path depth <= 2 by
-# "find ${S} -maxdepth 2 -name \*.m4", so move m4 files from m4/m4.
-do_configure:prepend() {
-    test -d ${S}/m4/m4 && mv -f ${S}/m4/m4 ${S}/m4-files
-}
-
 do_install() {
-    sed -e 's#/usr/sbin/#${sbindir}/#g' -i ${WORKDIR}/init
+    sed -e 's#/usr/sbin/#${sbindir}/#g' -i ${UNPACKDIR}/init
     install -d ${D}${sbindir} ${D}${bindir} ${D}${sysconfdir}/init.d ${D}${systemd_system_unitdir}
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        sed -e 's#/usr/sbin/#${sbindir}/#g' ${WORKDIR}/netserver.service > ${D}${systemd_system_unitdir}/netserver.service
+        sed -e 's#/usr/sbin/#${sbindir}/#g' ${UNPACKDIR}/netserver.service > ${D}${systemd_system_unitdir}/netserver.service
     fi
     install -m 4755 src/netperf ${D}${bindir}
     install -m 4755 src/netserver ${D}${sbindir}
-    install -m 0755 ${WORKDIR}/init ${D}${sysconfdir}/init.d/netperf
+    install -m 0755 ${UNPACKDIR}/init ${D}${sysconfdir}/init.d/netperf
 
     # man
     install -d ${D}${mandir}/man1/
@@ -69,6 +65,6 @@ do_install() {
 
 RRECOMMENDS:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'sctp', 'kernel-module-sctp', '', d)}"
 
-INITSCRIPT_NAME="netperf"
-INITSCRIPT_PARAMS="defaults"
+INITSCRIPT_NAME = "netperf"
+INITSCRIPT_PARAMS = "defaults"
 SYSTEMD_SERVICE:${PN} = "netserver.service"

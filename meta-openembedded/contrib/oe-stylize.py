@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """\
 Sanitize a bitbake file following the OpenEmbedded style guidelines,
@@ -210,8 +210,8 @@ OE_vars = [
     'others'
 ]
 
-varRegexp = r'^([a-zA-Z_0-9${}-]*)([ \t]*)([+.:]?=[+.]?)([ \t]*)([^\t]+)'
-routineRegexp = r'^([a-zA-Z0-9_ ${}-]+?)\('
+varRegexp = r'^([a-zA-Z_0-9${}:-]*)([ \t]*)([+.:]?=[+.]?)([ \t]*)([^\t]+)'
+routineRegexp = r'^([a-zA-Z0-9_ ${}:-]+?)\('
 
 # Variables seen in the processed .bb
 seen_vars = {}
@@ -369,7 +369,7 @@ if __name__ == "__main__":
             line = line.expandtabs().rstrip()
             # ignore empty lines (or line filled with spaces or tabs only)
             # so that rule6 is always respected
-            if line is not '':
+            if line != '':
                 lines.append(line)
 
     # -- parse the file --
@@ -386,7 +386,7 @@ if __name__ == "__main__":
         line = follow_rule(6, line)
 
         # ignore empty lines
-        if line.isspace() or line is '':
+        if line.isspace() or line == '':
             # flush comments into the olines
             for c in commentBloc:
                 olines.append(c)
@@ -436,8 +436,8 @@ if __name__ == "__main__":
     # -- dump the sanitized .bb file --
     addEmptyLine = False
     # write comments that are not related to variables nor routines
-    for l in commentBloc:
-        olines.append(l)
+    for c in commentBloc:
+        olines.append(c)
     # write variables and routines
     previourVarPrefix = "unknown"
     for k in OE_vars:
@@ -446,8 +446,8 @@ if __name__ == "__main__":
         if seen_vars[k] != []:
             if addEmptyLine and not k.startswith(previourVarPrefix):
                 olines.append("")
-            for l in seen_vars[k]:
-                olines.append(l)
+            for s in seen_vars[k]:
+                olines.append(s)
             previourVarPrefix = k.split('_')[0] == '' and "unknown" or k.split('_')[0]
     for line in olines:
         print(line)

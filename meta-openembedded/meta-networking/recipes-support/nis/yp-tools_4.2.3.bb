@@ -14,7 +14,7 @@ and ypdomainname. \
 # v4.2.3
 SRCREV = "1bfda29c342a81b97cb1995ffd9e8da5de63e7ab"
 
-SRC_URI = "git://github.com/thkukuk/yp-tools \
+SRC_URI = "git://github.com/thkukuk/yp-tools;branch=master;protocol=https \
            file://domainname.service \
            "
 
@@ -43,5 +43,5 @@ FILES:${PN}-staticdev += " ${libdir}/yp-nis/*.a"
 
 do_install:append() {
     install -d ${D}${systemd_unitdir}/system
-    install -m 0644 ${WORKDIR}/domainname.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${UNPACKDIR}/domainname.service ${D}${systemd_unitdir}/system
 }

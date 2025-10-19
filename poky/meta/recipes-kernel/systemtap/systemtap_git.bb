@@ -6,7 +6,10 @@ HOMEPAGE = "https://sourceware.org/systemtap/"
 
 require systemtap_git.inc
 
-SRC_URI += "file://0001-improve-reproducibility-for-c-compiling.patch"
+SRC_URI += " \
+           file://0001-improve-reproducibility-for-c-compiling.patch \
+           file://0001-staprun-address-ncurses-6.3-failures.patch \
+           "
 
 DEPENDS = "elfutils"
 
@@ -14,6 +17,7 @@ EXTRA_OECONF += "--with-libelf=${STAGING_DIR_TARGET} --without-rpm \
             --without-nss --without-avahi --without-dyninst \
             --disable-server --disable-grapher --enable-prologues \
             --with-python3 --without-python2-probes \
+            --with-extra-version="oe" \
             ac_cv_prog_have_javac=no \
             ac_cv_prog_have_jar=no "
 
@@ -21,15 +25,16 @@ STAP_DOCS ?= "--disable-docs --disable-publican --disable-refdocs"
 
 EXTRA_OECONF += "${STAP_DOCS} "
 
-PACKAGECONFIG ??= "translator sqlite monitor python3-probes"
+PACKAGECONFIG ??= "translator sqlite monitor python3-probes ${@bb.utils.filter('DISTRO_FEATURES', 'debuginfod', d)}"
 PACKAGECONFIG[translator] = "--enable-translator,--disable-translator,boost,bash"
 PACKAGECONFIG[libvirt] = "--enable-libvirt,--disable-libvirt,libvirt"
 PACKAGECONFIG[sqlite] = "--enable-sqlite,--disable-sqlite,sqlite3"
 PACKAGECONFIG[monitor] = "--enable-monitor,--disable-monitor,ncurses json-c"
 PACKAGECONFIG[python3-probes] = "--with-python3-probes,--without-python3-probes,python3-setuptools-native"
+PACKAGECONFIG[debuginfod] = "--with-debuginfod, --without-debuginfod"
 
 inherit autotools gettext pkgconfig systemd
-inherit ${@bb.utils.contains('PACKAGECONFIG', 'python3-probes', 'distutils3-base', '', d)}
+inherit_defer ${@bb.utils.contains('PACKAGECONFIG', 'python3-probes', 'setuptools3-base', '', d)}
 
 # exporter comes with python3-probes
 PACKAGES =+ "${PN}-exporter"
@@ -94,3 +99,7 @@ do_install:append () {
 }
 
 BBCLASSEXTEND = "nativesdk"
+
+# Emits lot of warning which are treated as errors
+# They must be looked into before disabling
+TOOLCHAIN = "gcc"

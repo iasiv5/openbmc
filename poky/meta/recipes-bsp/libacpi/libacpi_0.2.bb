@@ -5,7 +5,6 @@ SECTION = "base"
 HOMEPAGE = "http://www.ngolde.de/libacpi.html"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=fec17f82f16630adf2dfb7d2a46f21c5"
-PR = "r6"
 
 SRC_URI = "http://www.ngolde.de/download/libacpi-${PV}.tar.gz \
 	   file://makefile-fix.patch \
@@ -15,14 +14,13 @@ SRC_URI = "http://www.ngolde.de/download/libacpi-${PV}.tar.gz \
            file://0001-libacpi-Fix-build-witth-fno-commom.patch \
            "
 
-SRC_URI[md5sum] = "05b53dd7bead66dda35fec502b91066c"
 SRC_URI[sha256sum] = "13086e31d428b9c125954d48ac497b754bbbce2ef34ea29ecd903e82e25bad29"
 
 UPSTREAM_CHECK_URI = "http://www.ngolde.de/libacpi.html"
 
 inherit lib_package
 
-COMPATIBLE_HOST = '(x86_64|i.86).*-(linux|freebsd.*)'
+COMPATIBLE_HOST = '(x86_64|i.86|aarch64).*-(linux|freebsd.*)'
 
 CFLAGS += "-fPIC"
 EXTRA_OEMAKE = '-e MAKEFLAGS= STRIP="echo"'

@@ -4,4 +4,6 @@
 /etc/systemd/network
 /var/google
 /var/lib/phosphor-inventory-manager
-/var/lib/smbios/smbios2
+/var/lib/smbios
+/var/log/state
+/var/lib/systemd/random-seed

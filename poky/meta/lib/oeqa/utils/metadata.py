@@ -27,9 +27,9 @@ def metadata_from_bb():
     data_dict = get_bb_vars()
 
     # Distro information
-    info_dict['distro'] = {'id': data_dict['DISTRO'],
-                           'version_id': data_dict['DISTRO_VERSION'],
-                           'pretty_name': '%s %s' % (data_dict['DISTRO'], data_dict['DISTRO_VERSION'])}
+    info_dict['distro'] = {'id': data_dict.get('DISTRO', 'NODISTRO'),
+                                'version_id': data_dict.get('DISTRO_VERSION', 'NO_DISTRO_VERSION'),
+                                'pretty_name': '%s %s' % (data_dict.get('DISTRO', 'NODISTRO'), data_dict.get('DISTRO_VERSION', 'NO_DISTRO_VERSION'))}
 
     # Host distro information
     os_release = get_os_release()
@@ -76,6 +76,10 @@ def git_rev_info(path):
             info['commit_count'] = int(subprocess.check_output(["git", "rev-list", "--count", "HEAD"], cwd=path).decode('utf-8').strip())
         except subprocess.CalledProcessError:
             pass
+        try:
+            info['commit_time'] = int(subprocess.check_output(["git", "show", "--no-patch", "--format=%ct", "HEAD"], cwd=path).decode('utf-8').strip())
+        except subprocess.CalledProcessError:
+            pass
         return info
     try:
         repo = Repo(path, search_parent_directories=True)
@@ -83,6 +87,7 @@ def git_rev_info(path):
         return info
     info['commit'] = repo.head.commit.hexsha
     info['commit_count'] = repo.head.commit.count()
+    info['commit_time'] = repo.head.commit.committed_date
     try:
         info['branch'] = repo.active_branch.name
     except TypeError:

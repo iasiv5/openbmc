@@ -1,3 +1,9 @@
+#
+# Copyright OpenEmbedded Contributors
+#
+# SPDX-License-Identifier: MIT
+#
+
 def preferred_ml_updates(d):
     # If any of PREFERRED_PROVIDER, PREFERRED_RPROVIDER, REQUIRED_VERSION
     # or PREFERRED_VERSION are set, we need to mirror these variables in
@@ -39,6 +45,9 @@ def preferred_ml_updates(d):
                     override = ":virtclass-multilib-" + p
                     localdata.setVar("OVERRIDES", localdata.getVar("OVERRIDES", False) + override)
                     if "-canadian-" in pkg:
+                        newtune = localdata.getVar("DEFAULTTUNE:" + "virtclass-multilib-" + p, False)
+                        if newtune:
+                            localdata.setVar("DEFAULTTUNE", newtune)
                         newname = localdata.expand(v)
                     else:
                         newname = localdata.expand(v).replace(version_str, version_str + p + '-')
@@ -137,14 +146,20 @@ def preferred_ml_updates(d):
         prov = prov.replace("virtual/", "")
         return "virtual/" + prefix + "-" + prov
 
-    mp = (d.getVar("MULTI_PROVIDER_WHITELIST") or "").split()
+    mp = (d.getVar("BB_MULTI_PROVIDER_ALLOWED") or "").split()
     extramp = []
     for p in mp:
         if p.endswith("-native") or "-crosssdk-" in p or p.startswith(("nativesdk-", "virtual/nativesdk-")) or 'cross-canadian' in p:
             continue
         for pref in prefixes:
             extramp.append(translate_provide(pref, p))
-    d.setVar("MULTI_PROVIDER_WHITELIST", " ".join(mp + extramp))
+    d.setVar("BB_MULTI_PROVIDER_ALLOWED", " ".join(mp + extramp))
+
+    virtprovs = d.getVar("BB_RECIPE_VIRTUAL_PROVIDERS").split()
+    for p in virtprovs.copy():
+        for pref in prefixes:
+            virtprovs.append(translate_provide(pref, p))
+    d.setVar("BB_RECIPE_VIRTUAL_PROVIDERS", " ".join(virtprovs))
 
     abisafe = (d.getVar("SIGGEN_EXCLUDERECIPES_ABISAFE") or "").split()
     extras = []
@@ -162,32 +177,35 @@ def preferred_ml_updates(d):
     d.appendVar("SIGGEN_EXCLUDE_SAFE_RECIPE_DEPS", " " + " ".join(extras))
 
 python multilib_virtclass_handler_vendor () {
-    if isinstance(e, bb.event.ConfigParsed):
-        for v in e.data.getVar("MULTILIB_VARIANTS").split():
-            if e.data.getVar("TARGET_VENDOR:virtclass-multilib-" + v, False) is None:
-                e.data.setVar("TARGET_VENDOR:virtclass-multilib-" + v, e.data.getVar("TARGET_VENDOR", False) + "ml" + v)
-        preferred_ml_updates(e.data)
+    for v in d.getVar("MULTILIB_VARIANTS").split():
+        if d.getVar("TARGET_VENDOR:virtclass-multilib-" + v, False) is None:
+            d.setVar("TARGET_VENDOR:virtclass-multilib-" + v, d.getVar("TARGET_VENDOR", False) + "ml" + v)
+    preferred_ml_updates(d)
 }
 addhandler multilib_virtclass_handler_vendor
 multilib_virtclass_handler_vendor[eventmask] = "bb.event.ConfigParsed"
 
 python multilib_virtclass_handler_global () {
-    variant = e.data.getVar("BBEXTENDVARIANT")
+    variant = d.getVar("BBEXTENDVARIANT")
     if variant:
+        return
+
+    if bb.data.inherits_class('native', d):
         return
 
     non_ml_recipes = d.getVar('NON_MULTILIB_RECIPES').split()
 
-    if bb.data.inherits_class('kernel', e.data) or \
-            bb.data.inherits_class('module-base', e.data) or \
+    if bb.data.inherits_class('kernel', d) or \
+            bb.data.inherits_class('module-base', d) or \
             d.getVar('BPN') in non_ml_recipes:
 
             # We need to avoid expanding KERNEL_VERSION which we can do by deleting it
             # from a copy of the datastore
             localdata = bb.data.createCopy(d)
             localdata.delVar("KERNEL_VERSION")
+            localdata.delVar("KERNEL_VERSION_PKG_NAME")
 
-            variants = (e.data.getVar("MULTILIB_VARIANTS") or "").split()
+            variants = (d.getVar("MULTILIB_VARIANTS") or "").split()
 
             import oe.classextend
             clsextends = []
@@ -198,22 +216,22 @@ python multilib_virtclass_handler_global () {
             origprovs = provs = localdata.getVar("PROVIDES") or ""
             for clsextend in clsextends:
                 provs = provs + " " + clsextend.map_variable("PROVIDES", setvar=False)
-            e.data.setVar("PROVIDES", provs)
+            d.setVar("PROVIDES", provs)
 
             # Process RPROVIDES
             origrprovs = rprovs = localdata.getVar("RPROVIDES") or ""
             for clsextend in clsextends:
                 rprovs = rprovs + " " + clsextend.map_variable("RPROVIDES", setvar=False)
             if rprovs.strip():
-                e.data.setVar("RPROVIDES", rprovs)
+                d.setVar("RPROVIDES", rprovs)
 
             # Process RPROVIDES:${PN}...
-            for pkg in (e.data.getVar("PACKAGES") or "").split():
+            for pkg in (d.getVar("PACKAGES") or "").split():
                 origrprovs = rprovs = localdata.getVar("RPROVIDES:%s" % pkg) or ""
                 for clsextend in clsextends:
                     rprovs = rprovs + " " + clsextend.map_variable("RPROVIDES:%s" % pkg, setvar=False)
                     rprovs = rprovs + " " + clsextend.extname + "-" + pkg
-                e.data.setVar("RPROVIDES:%s" % pkg, rprovs)
+                d.setVar("RPROVIDES:%s" % pkg, rprovs)
 }
 
 addhandler multilib_virtclass_handler_global

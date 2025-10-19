@@ -35,22 +35,22 @@ class RootfsPlugin(SourcePlugin):
     @staticmethod
     def __validate_path(cmd, rootfs_dir, path):
         if os.path.isabs(path):
-            logger.error("%s: Must be relative: %s" % (cmd, orig_path))
+            logger.error("%s: Must be relative: %s" % (cmd, path))
             sys.exit(1)
 
         # Disallow climbing outside of parent directory using '..',
         # because doing so could be quite disastrous (we will delete the
         # directory, or modify a directory outside OpenEmbedded).
-        full_path = os.path.realpath(os.path.join(rootfs_dir, path))
+        full_path = os.path.abspath(os.path.join(rootfs_dir, path))
         if not full_path.startswith(os.path.realpath(rootfs_dir)):
-            logger.error("%s: Must point inside the rootfs:" % (cmd, path))
+            logger.error("%s: Must point inside the rootfs: %s" % (cmd, path))
             sys.exit(1)
 
         return full_path
 
     @staticmethod
     def __get_rootfs_dir(rootfs_dir):
-        if os.path.isdir(rootfs_dir):
+        if rootfs_dir and os.path.isdir(rootfs_dir):
             return os.path.realpath(rootfs_dir)
 
         image_rootfs_dir = get_bitbake_var("IMAGE_ROOTFS", rootfs_dir)
@@ -96,6 +96,9 @@ class RootfsPlugin(SourcePlugin):
         part.rootfs_dir = cls.__get_rootfs_dir(rootfs_dir)
         part.has_fstab = os.path.exists(os.path.join(part.rootfs_dir, "etc/fstab"))
         pseudo_dir = os.path.join(part.rootfs_dir, "../pseudo")
+        if not os.path.lexists(pseudo_dir):
+            pseudo_dir = os.path.join(cls.__get_rootfs_dir(None), '../pseudo')
+
         if not os.path.lexists(pseudo_dir):
             logger.warn("%s folder does not exist. "
                         "Usernames and permissions will be invalid " % pseudo_dir)
@@ -221,7 +224,7 @@ class RootfsPlugin(SourcePlugin):
             if part.update_fstab_in_rootfs and part.has_fstab and not part.no_fstab_update:
                 fstab_path = os.path.join(new_rootfs, "etc/fstab")
                 # Assume that fstab should always be owned by root with fixed permissions
-                install_cmd = "install -m 0644 %s %s" % (part.updated_fstab_path, fstab_path)
+                install_cmd = "install -m 0644 -p %s %s" % (part.updated_fstab_path, fstab_path)
                 if new_pseudo:
                     pseudo = cls.__get_pseudo(native_sysroot, new_rootfs, new_pseudo)
                 else:

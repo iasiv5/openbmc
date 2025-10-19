@@ -21,6 +21,9 @@ STATE_MGR_PACKAGES = " \
     ${PN}-systemd-target-monitor \
     ${PN}-obmc-targets \
     ${PN}-scheduled-host-transition \
+    ${PN}-chassis-check-power-status \
+    ${PN}-secure-check \
+    ${PN}-chassis-poweron-log \
 "
 PACKAGE_BEFORE_PN += "${STATE_MGR_PACKAGES}"
 ALLOW_EMPTY:${PN} = "1"
@@ -32,6 +35,43 @@ SYSTEMD_PACKAGES = "${PN}-discover \
                     ${PN}-systemd-target-monitor \
 "
 
+# Set the common defaults
+PACKAGECONFIG ??= " \
+    only-run-apr-on-power-loss \
+    only-allow-boot-when-bmc-ready \
+    run-apr-on-software-reset \
+    install-utils \
+    "
+
+# Disable warm reboots of host
+PACKAGECONFIG[no-warm-reboot] = "-Dwarm-reboot=disabled,-Dwarm-reboot=enabled"
+
+# Disable forced warm reboots of host
+PACKAGECONFIG[no-force-warm-reboot] = "-Dforce-warm-reboot=disabled,-Dforce-warm-reboot=enabled"
+
+# Only run auto power restore logic if system had ac loss
+PACKAGECONFIG[only-run-apr-on-power-loss] = "-Donly-run-apr-on-power-loss=true,-Donly-run-apr-on-power-loss=false"
+
+# Only allow boot operations when BMC is in Ready state
+PACKAGECONFIG[only-allow-boot-when-bmc-ready] = "-Donly-allow-boot-when-bmc-ready=true,-Donly-allow-boot-when-bmc-ready=false"
+
+# Allow run APR when BMC has been rebooted due to pinhole action
+PACKAGECONFIG[run-apr-on-pinhole-reset] = "-Drun-apr-on-pinhole-reset=true,-Drun-apr-on-pinhole-reset=false"
+
+# Allow run APR when BMC has been rebooted due to watchdog
+PACKAGECONFIG[run-apr-on-watchdog-reset] = "-Drun-apr-on-watchdog-reset=true,-Drun-apr-on-watchdog-reset=false"
+
+# Allow run APR when BMC has been rebooted due to software request
+PACKAGECONFIG[run-apr-on-software-reset] = "-Drun-apr-on-software-reset=true,-Drun-apr-on-software-reset=false"
+
+# Enable host state GPIO
+PACKAGECONFIG[host-gpio] = "-Dhost-gpios=enabled,-Dhost-gpios=disabled,gpioplus"
+
+# Check firmware updating before do BMC/Chassis/Host transition
+PACKAGECONFIG[check-fwupdate-before-do-transition] = "-Dcheck-fwupdate-before-do-transition=enabled,-Dcheck-fwupdate-before-do-transition=disabled"
+
+PACKAGECONFIG[install-utils] = "-Dinstall-utils=enabled, -Dinstall-utils=disabled"
+
 # The host-check function will check if the host is running
 # after a BMC reset.
 # The reset-sensor-states function will reset the host
@@ -42,6 +82,10 @@ RRECOMMENDS:${PN}-host = "${PN}-host-check ${PN}-reset-sensor-states"
 
 # The obmc-targets are the base targets required to boot a computer system
 RRECOMMENDS:${PN}-host += "${PN}-obmc-targets"
+
+# Make it the default to create an info log when the chassis transitions
+# from off to on
+RRECOMMENDS:${PN}-chassis:append = " ${PN}-chassis-poweron-log"
 
 inherit meson pkgconfig
 inherit obmc-phosphor-dbus-service
@@ -56,25 +100,42 @@ DEPENDS += "nlohmann-json"
 DEPENDS += "cli11"
 DEPENDS += "libgpiod"
 
-RDEPENDS:${PN}-chassis += "bash"
+RDEPENDS:${PN}-bmc += "bash"
+RDEPENDS:${PN}-host += "bash"
 
 EXTRA_OEMESON:append = " -Dtests=disabled"
 
 FILES:${PN}-host = "${bindir}/phosphor-host-state-manager"
-DBUS_SERVICE:${PN}-host += "xyz.openbmc_project.State.Host.service"
+FILES:${PN}-host += "${bindir}/phosphor-host-condition-gpio"
+FILES:${PN}-host += "${libexecdir}/phosphor-state-manager/host-reboot"
+DBUS_SERVICE:${PN}-host += "xyz.openbmc_project.State.Host@.service"
 DBUS_SERVICE:${PN}-host += "phosphor-reboot-host@.service"
 SYSTEMD_SERVICE:${PN}-host += "phosphor-reset-host-reboot-attempts@.service"
 SYSTEMD_SERVICE:${PN}-host += "phosphor-clear-one-time@.service"
 SYSTEMD_SERVICE:${PN}-host += "phosphor-set-host-transition-to-running@.service"
 SYSTEMD_SERVICE:${PN}-host += "phosphor-set-host-transition-to-off@.service"
+SYSTEMD_SERVICE:${PN}-host += "${@bb.utils.contains('PACKAGECONFIG', 'host-gpio', 'phosphor-host-condition-gpio@.service', '', d)}"
 
 FILES:${PN}-chassis = "${bindir}/phosphor-chassis-state-manager"
-DBUS_SERVICE:${PN}-chassis += "xyz.openbmc_project.State.Chassis.service"
+DBUS_SERVICE:${PN}-chassis += "xyz.openbmc_project.State.Chassis@.service"
+SYSTEMD_SERVICE:${PN}-chassis += "obmc-power-start@.service"
+SYSTEMD_SERVICE:${PN}-chassis += "obmc-power-stop@.service"
+SYSTEMD_SERVICE:${PN}-chassis += "obmc-powered-off@.service"
+SYSTEMD_SERVICE:${PN}-chassis += "phosphor-reset-chassis-on@.service"
+SYSTEMD_SERVICE:${PN}-chassis += "phosphor-reset-chassis-running@.service"
+SYSTEMD_SERVICE:${PN}-chassis += "phosphor-set-chassis-transition-to-on@.service"
+SYSTEMD_SERVICE:${PN}-chassis += "phosphor-set-chassis-transition-to-off@.service"
 
-FILES:${PN}-chassis += "${bindir}/obmcutil"
+SYSTEMD_SERVICE:${PN}-chassis-poweron-log += "phosphor-create-chassis-poweron-log@.service"
 
 FILES:${PN}-bmc = "${bindir}/phosphor-bmc-state-manager"
+FILES:${PN}-bmc += "${sysconfdir}/phosphor-systemd-target-monitor/phosphor-service-monitor-default.json"
+FILES:${PN}-bmc += "${bindir}/obmcutil"
 DBUS_SERVICE:${PN}-bmc += "xyz.openbmc_project.State.BMC.service"
+DBUS_SERVICE:${PN}-bmc += "obmc-bmc-service-quiesce@.target"
+
+FILES:${PN}-secure-check = "${bindir}/phosphor-secure-boot-check"
+SYSTEMD_SERVICE:${PN}-secure-check += "phosphor-bmc-security-check.service"
 
 FILES:${PN}-hypervisor = "${bindir}/phosphor-hypervisor-state-manager"
 DBUS_SERVICE:${PN}-hypervisor += "xyz.openbmc_project.State.Hypervisor.service"
@@ -97,7 +158,10 @@ FILES:${PN}-systemd-target-monitor = " \
 SYSTEMD_SERVICE:${PN}-systemd-target-monitor += "phosphor-systemd-target-monitor.service"
 
 FILES:${PN}-scheduled-host-transition = "${bindir}/phosphor-scheduled-host-transition"
-DBUS_SERVICE:${PN}-scheduled-host-transition += "xyz.openbmc_project.State.ScheduledHostTransition.service"
+DBUS_SERVICE:${PN}-scheduled-host-transition += "xyz.openbmc_project.State.ScheduledHostTransition@.service"
+
+FILES:${PN}-chassis-check-power-status = "${bindir}/phosphor-chassis-check-power-status"
+SYSTEMD_SERVICE:${PN}-chassis-check-power-status += "phosphor-chassis-check-power-status@.service"
 
 # Chassis power synchronization targets
 # - start-pre:         Services to run before we start power on process
@@ -110,10 +174,12 @@ CHASSIS_SYNCH_TARGETS = "start-pre start on stop-pre stop off reset-on"
 # Chassis action power targets
 # - on:  Services to run to power on the chassis
 # - off: Services to run to power off the chassis
+# - cycle: Services to run to cycle power to the chassis
 # - powered-off: Services to run once chassis power is off
 # - reset: Services to check chassis power state and update chassis "on" target
 # - hard-off: Services to force an immediate power off of the chassis
-CHASSIS_ACTION_TARGETS = "poweron poweroff powered-off powerreset hard-poweroff"
+# - blackout: Target to enter when chassis experiences blackout
+CHASSIS_ACTION_TARGETS = "poweron poweroff powercycle powered-off powerreset hard-poweroff blackout"
 
 # Track all host synchronization point targets
 # - start-pre:                 Services to run before we start host boot
@@ -132,6 +198,7 @@ HOST_SYNCH_TARGETS = "start-pre starting started stop-pre stopping stopped reset
 #             be called by reboot and start target.
 # - stop:     Services to run to shutdown the host
 # - quiesce:  Target to enter on host boot failure
+# - graceful-quiesce:  Target to enter on host boot failure (allow host graceful shutdown)
 # - shutdown: Tell host to shutdown, then stop system
 # - reset:   Services to check if host is running and update host "start" target
 # - crash:   Target to run when host crashes. it is very much similar to
@@ -144,7 +211,7 @@ HOST_SYNCH_TARGETS = "start-pre starting started stop-pre stopping stopped reset
 #                      notifying the host.
 # - diagnostic-mode: This will be entered when the host is collecting diagnostic
 #                    data for itself.
-HOST_ACTION_TARGETS = "start startmin stop quiesce reset shutdown crash timeout "
+HOST_ACTION_TARGETS = "start startmin stop quiesce graceful-quiesce reset shutdown crash timeout "
 HOST_ACTION_TARGETS += "reboot warm-reboot force-warm-reboot diagnostic-mode"
 
 CHASSIS_SYNCH_FMT = "obmc-power-{0}@.target"
@@ -185,8 +252,38 @@ SYSTEMD_LINK:${PN}-obmc-targets += "${@compose_list(d, 'HOST_LINK_ACTION_FMT', '
 SYSTEMD_LINK:${PN}-obmc-targets += "${@compose_list(d, 'FAN_LINK_FMT', 'OBMC_CHASSIS_INSTANCES')}"
 SYSTEMD_LINK:${PN}-obmc-targets += "${@compose_list(d, 'QUIESCE_FMT', 'HOST_ERROR_TARGETS', 'OBMC_HOST_INSTANCES')}"
 
+# Create target relationships
 
-SRC_URI += "git://github.com/openbmc/phosphor-state-manager"
-SRCREV = "68a8c31d820718588a583625e88ba2626ef64526"
+# Starting the host requires chassis power on
+START_TMPL_CTRL = "obmc-chassis-poweron@.target"
+START_TGTFMT_CTRL = "obmc-host-startmin@{1}.target"
+START_INSTFMT_CTRL = "obmc-chassis-poweron@{0}.target"
+START_FMT_CTRL = "../${START_TMPL_CTRL}:${START_TGTFMT_CTRL}.requires/${START_INSTFMT_CTRL}"
+SYSTEMD_LINK:${PN}-obmc-targets += "${@compose_list_zip(d, 'START_FMT_CTRL', 'OBMC_CHASSIS_INSTANCES', 'OBMC_CHASSIS_INSTANCES')}"
+
+# Chassis off requires host off
+STOP_TMPL_CTRL = "obmc-host-stop@.target"
+STOP_TGTFMT_CTRL = "obmc-chassis-poweroff@{0}.target"
+STOP_INSTFMT_CTRL = "obmc-host-stop@{1}.target"
+STOP_FMT_CTRL = "../${STOP_TMPL_CTRL}:${STOP_TGTFMT_CTRL}.requires/${STOP_INSTFMT_CTRL}"
+SYSTEMD_LINK:${PN}-obmc-targets += "${@compose_list_zip(d, 'STOP_FMT_CTRL', 'OBMC_HOST_INSTANCES', 'OBMC_HOST_INSTANCES')}"
+
+# Hard power off requires chassis off
+HARD_OFF_TMPL_CTRL = "obmc-chassis-poweroff@.target"
+HARD_OFF_TGTFMT_CTRL = "obmc-chassis-hard-poweroff@{0}.target"
+HARD_OFF_INSTFMT_CTRL = "obmc-chassis-poweroff@{0}.target"
+HARD_OFF_FMT_CTRL = "../${HARD_OFF_TMPL_CTRL}:${HARD_OFF_TGTFMT_CTRL}.requires/${HARD_OFF_INSTFMT_CTRL}"
+SYSTEMD_LINK:${PN}-obmc-targets += "${@compose_list_zip(d, 'HARD_OFF_FMT_CTRL', 'OBMC_CHASSIS_INSTANCES')}"
+
+# Force the standby target to run the chassis reset check target
+RESET_TMPL_CTRL = "obmc-chassis-powerreset@.target"
+SYSD_TGT = "multi-user.target"
+RESET_INSTFMT_CTRL = "obmc-chassis-powerreset@{0}.target"
+RESET_FMT_CTRL = "../${RESET_TMPL_CTRL}:${SYSD_TGT}.wants/${RESET_INSTFMT_CTRL}"
+SYSTEMD_LINK:${PN}-obmc-targets += "${@compose_list_zip(d, 'RESET_FMT_CTRL', 'OBMC_CHASSIS_INSTANCES')}"
+SYSTEMD_LINK[vardeps] += "OBMC_CHASSIS_INSTANCES OBMC_HOST_INSTANCES"
+
+SRC_URI = "git://github.com/openbmc/phosphor-state-manager;branch=master;protocol=https"
+SRCREV = "31a3861d1db7eba3c144ce614e9552af8e6f0c5e"
 
 S = "${WORKDIR}/git"

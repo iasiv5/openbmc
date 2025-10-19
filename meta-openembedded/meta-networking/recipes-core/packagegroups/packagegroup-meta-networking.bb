@@ -1,5 +1,6 @@
 SUMMARY = "Meta-networking packagegroups"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit packagegroup
 
 PROVIDES = "${PACKAGES}"
@@ -12,7 +13,6 @@ PACKAGES = ' \
     packagegroup-meta-networking-filter \
     packagegroup-meta-networking-irc \
     packagegroup-meta-networking-kernel \
-    packagegroup-meta-networking-netkit \
     packagegroup-meta-networking-protocols \
     packagegroup-meta-networking-support \
 '
@@ -25,13 +25,11 @@ RDEPENDS:packagegroup-meta-networking = "\
     packagegroup-meta-networking-filter \
     packagegroup-meta-networking-irc \
     packagegroup-meta-networking-kernel \
-    packagegroup-meta-networking-netkit \
     packagegroup-meta-networking-protocols \
     packagegroup-meta-networking-support \
     "
 
 RDEPENDS:packagegroup-meta-networking-connectivity = "\
-    crda \
     daq \
     adcli \
     ${@bb.utils.contains("DISTRO_FEATURES", "bluetooth x11", "blueman", "", d)} \
@@ -49,14 +47,13 @@ RDEPENDS:packagegroup-meta-networking-connectivity = "\
     vlan \
     vpnc \
     ez-ipupdate \
-    firewalld \
+    ${@bb.utils.contains("BBFILE_COLLECTIONS", "meta-python", "firewalld", "", d)} \
     freeradius \
     mbedtls \
     miniupnpd \
     mosquitto \
     nanomsg \
     nng \
-    netplan \
     networkmanager-openvpn \
     networkmanager \
     openconnect \
@@ -100,7 +97,6 @@ RDEPENDS:packagegroup-meta-networking-daemons = "\
 RDEPENDS:packagegroup-meta-networking-daemons:remove:libc-musl = "opensaf"
 
 RDEPENDS:packagegroup-meta-networking-devtools = "\
-    python3-ldap \
     python3-scapy \
 "
 
@@ -136,32 +132,17 @@ RDEPENDS:packagegroup-meta-networking-kernel = "\
     wireguard-tools \
 "
 
-RDEPENDS:packagegroup-meta-networking-netkit = "\
-    netkit-rwho-client \
-    netkit-rwho-server \
-    netkit-rsh-client \
-    netkit-rsh-server \
-    netkit-telnet \
-    netkit-tftp-client \
-    netkit-tftp-server \
-    netkit-ftp \
-    netkit-rpc \
-    "
-
-RDEPENDS:packagegroup-meta-networking-netkit:remove:libc-musl = " \
-    netkit-rsh-client netkit-rsh-server netkit-telnet"
-
 RDEPENDS:packagegroup-meta-networking-protocols = "\
     babeld \
     ${@bb.utils.contains("DISTRO_FEATURES", "pam", "dante", "", d)} \
     freediameter \
+    frr \
     net-snmp \
     openflow \
     openflow \
     openl2tp \
     mdns \
     nopoll \
-    quagga \
     radiusclient-ng \
     tsocks \
     openlldp \
@@ -171,8 +152,6 @@ RDEPENDS:packagegroup-meta-networking-protocols = "\
     usrsctp \
     xl2tpd \
 "
-
-RDEPENDS:packagegroup-meta-networking-protocols:remove:libc-musl = "mdns"
 
 RDEPENDS:packagegroup-meta-networking-support = "\
     aoetools \
@@ -207,19 +186,23 @@ RDEPENDS:packagegroup-meta-networking-support = "\
     libtevent \
     linux-atm \
     lksctp-tools \
+    mctp \
     memcached \
     ifenslave \
     netcat \
     netcat-openbsd \
     libtdb \
-    ${@bb.utils.contains("LICENSE_FLAGS_WHITELIST", "non-commercial", "netperf", "", d)} \
+    ${@bb.utils.contains("LICENSE_FLAGS_ACCEPTED", "non-commercial", "netperf", "", d)} \
     yp-tools \
     ypbind-mt \
     yp-tools \
     mtr \
-    ntp ntpdate sntp ntpdc ntpq ntp-tickadj ntp-utils \
+    netsniff-ng \
+    ntp sntp ntpdc ntpq ntp-tickadj ntp-utils \
+    ${@bb.utils.contains("DISTRO_FEATURES", "x11", "ntpsec", "", d)} \
     nbd-client \
     nbd-server \
+    nbd-trplay \
     nbd-trdump \
     openvpn \
     macchanger \
@@ -233,7 +216,6 @@ RDEPENDS:packagegroup-meta-networking-support = "\
     tcpdump \
     tcpslice \
     netcf \
-    nghttp2 \
     tnftp \
     traceroute \
     tunctl \
@@ -241,7 +223,6 @@ RDEPENDS:packagegroup-meta-networking-support = "\
     ndpi \
     ntopng \
     nuttcp \
-    nvmetcli \
     open-isns \
     openipmi \
     phytool \
@@ -255,13 +236,17 @@ RDEPENDS:packagegroup-meta-networking-support = "\
     rdma-core \
     tcpreplay \
     tinyproxy \
+    udpcast \
     uftp \
     unbound \
     vnstat \
     wpan-tools \
     ettercap \
+    libcpr \
 "
 RDEPENDS:packagegroup-meta-networking-support:remove:mipsarch = "memcached"
+RDEPENDS:packagegroup-meta-networking-support:remove:riscv64 = "memcached"
+RDEPENDS:packagegroup-meta-networking-support:remove:libc-musl = "ypbind-mt"
 
 EXCLUDE_FROM_WORLD = "1"
 # Empty packages, only devel headers and libs

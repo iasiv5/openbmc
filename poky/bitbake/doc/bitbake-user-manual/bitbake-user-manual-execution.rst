@@ -79,8 +79,8 @@ directives.
 Prior to parsing configuration files, BitBake looks at certain
 variables, including:
 
--  :term:`BB_ENV_WHITELIST`
--  :term:`BB_ENV_EXTRAWHITE`
+-  :term:`BB_ENV_PASSTHROUGH`
+-  :term:`BB_ENV_PASSTHROUGH_ADDITIONS`
 -  :term:`BB_PRESERVE_ENV`
 -  :term:`BB_ORIGENV`
 -  :term:`BITBAKE_UI`
@@ -228,7 +228,7 @@ and then reload it.
 Where possible, subsequent BitBake commands reuse this cache of recipe
 information. The validity of this cache is determined by first computing
 a checksum of the base configuration data (see
-:term:`BB_HASHCONFIG_WHITELIST`) and
+:term:`BB_HASHCONFIG_IGNORE_VARS`) and
 then checking if the checksum matches. If that checksum matches what is
 in the cache and the recipe and class files have not changed, BitBake is
 able to use the cache. BitBake then reloads the cached information about
@@ -435,7 +435,7 @@ BitBake writes a shell script to
 executes the script. The generated shell script contains all the
 exported variables, and the shell functions with all variables expanded.
 Output from the shell script goes to the file
-``${T}/log.do_taskname.pid``. Looking at the expanded shell functions in
+``${``\ :term:`T`\ ``}/log.do_taskname.pid``. Looking at the expanded shell functions in
 the run file and the output in the log files is a useful debugging
 technique.
 
@@ -477,7 +477,7 @@ changes because it should not affect the output for target packages. The
 simplistic approach for excluding the working directory is to set it to
 some fixed value and create the checksum for the "run" script. BitBake
 goes one step better and uses the
-:term:`BB_HASHBASE_WHITELIST` variable
+:term:`BB_BASEHASH_IGNORE_VARS` variable
 to define a list of variables that should never be included when
 generating the signatures.
 
@@ -523,7 +523,7 @@ it cannot figure out dependencies.
 Thus far, this section has limited discussion to the direct inputs into
 a task. Information based on direct inputs is referred to as the
 "basehash" in the code. However, there is still the question of a task's
-indirect inputs - the things that were already built and present in the
+indirect inputs --- the things that were already built and present in the
 build directory. The checksum (or signature) for a particular task needs
 to add the hashes of all the tasks on which the particular task depends.
 Choosing which dependencies to add is a policy decision. However, the
@@ -534,11 +534,11 @@ At the code level, there are a variety of ways both the basehash and the
 dependent task hashes can be influenced. Within the BitBake
 configuration file, we can give BitBake some extra information to help
 it construct the basehash. The following statement effectively results
-in a list of global variable dependency excludes - variables never
+in a list of global variable dependency excludes --- variables never
 included in any checksum. This example uses variables from OpenEmbedded
 to help illustrate the concept::
 
-   BB_HASHBASE_WHITELIST ?= "TMPDIR FILE PATH PWD BB_TASKHASH BBPATH DL_DIR \
+   BB_BASEHASH_IGNORE_VARS ?= "TMPDIR FILE PATH PWD BB_TASKHASH BBPATH DL_DIR \
        SSTATE_DIR THISDIR FILESEXTRAPATHS FILE_DIRNAME HOME LOGNAME SHELL \
        USER FILESPATH STAGING_DIR_HOST STAGING_DIR_TARGET COREBASE PRSERV_HOST \
        PRSERV_DUMPDIR PRSERV_DUMPFILE PRSERV_LOCKDOWN PARALLEL_MAKE \
@@ -552,8 +552,8 @@ through dependency chains are more complex and are generally
 accomplished with a Python function. The code in
 ``meta/lib/oe/sstatesig.py`` shows two examples of this and also
 illustrates how you can insert your own policy into the system if so
-desired. This file defines the two basic signature generators
-OpenEmbedded-Core uses: "OEBasic" and "OEBasicHash". By default, there
+desired. This file defines the basic signature generator
+OpenEmbedded-Core uses: "OEBasicHash". By default, there
 is a dummy "noop" signature handler enabled in BitBake. This means that
 behavior is unchanged from previous versions. ``OE-Core`` uses the
 "OEBasicHash" signature handler by default through this setting in the
@@ -561,14 +561,13 @@ behavior is unchanged from previous versions. ``OE-Core`` uses the
 
   BB_SIGNATURE_HANDLER ?= "OEBasicHash"
 
-The "OEBasicHash" :term:`BB_SIGNATURE_HANDLER` is the same as the "OEBasic"
-version but adds the task hash to the stamp files. This results in any
-metadata change that changes the task hash, automatically causing the
-task to be run again. This removes the need to bump
-:term:`PR` values, and changes to metadata automatically
-ripple across the build.
+The main feature of the "OEBasicHash" :term:`BB_SIGNATURE_HANDLER` is that
+it adds the task hash to the stamp files. Thanks to this, any metadata
+change will change the task hash, automatically causing the task to be run
+again. This removes the need to bump :term:`PR` values, and changes to
+metadata automatically ripple across the build.
 
-It is also worth noting that the end result of these signature
+It is also worth noting that the end result of signature
 generators is to make some dependency and hash information available to
 the build. This information includes:
 
@@ -587,10 +586,11 @@ or possibly those defined in the metadata/signature handler itself. The
 simplest parameter to pass is "none", which causes a set of signature
 information to be written out into ``STAMPS_DIR`` corresponding to the
 targets specified. The other currently available parameter is
-"printdiff", which causes BitBake to try to establish the closest
+"printdiff", which causes BitBake to try to establish the most recent
 signature match it can (e.g. in the sstate cache) and then run
-``bitbake-diffsigs`` over the matches to determine the stamps and delta
-where these two stamp trees diverge.
+compare the matched signatures to determine the stamps and delta
+where these two stamp trees diverge. This can be used to determine why
+tasks need to be re-run in situations where that is not expected.
 
 .. note::
 
@@ -657,7 +657,7 @@ builds are when execute, bitbake also supports user defined
 configuration of the `Python
 logging <https://docs.python.org/3/library/logging.html>`__ facilities
 through the :term:`BB_LOGCONFIG` variable. This
-variable defines a json or yaml `logging
+variable defines a JSON or YAML `logging
 configuration <https://docs.python.org/3/library/logging.config.html>`__
 that will be intelligently merged into the default configuration. The
 logging configuration is merged using the following rules:
@@ -691,9 +691,9 @@ logging configuration is merged using the following rules:
    adds a filter called ``BitBake.defaultFilter``, both filters will be
    applied to the logger
 
-As an example, consider the following user logging configuration file
-which logs all Hash Equivalence related messages of VERBOSE or higher to
-a file called ``hashequiv.log`` ::
+As a first example, you can create a ``hashequiv.json`` user logging
+configuration file to log all Hash Equivalence related messages of ``VERBOSE``
+or higher priority to a file called ``hashequiv.log``::
 
    {
        "version": 1,
@@ -722,3 +722,40 @@ a file called ``hashequiv.log`` ::
            }
        }
    }
+
+Then set the :term:`BB_LOGCONFIG` variable in ``conf/local.conf``::
+
+   BB_LOGCONFIG = "hashequiv.json"
+
+Another example is this ``warn.json`` file to log all ``WARNING`` and
+higher priority messages to a ``warn.log`` file::
+
+  {
+      "version": 1,
+      "formatters": {
+          "warnlogFormatter": {
+              "()": "bb.msg.BBLogFormatter",
+              "format": "%(levelname)s: %(message)s"
+          }
+      },
+
+      "handlers": {
+          "warnlog": {
+              "class": "logging.FileHandler",
+              "formatter": "warnlogFormatter",
+              "level": "WARNING",
+              "filename": "warn.log"
+          }
+      },
+
+      "loggers": {
+          "BitBake": {
+              "handlers": ["warnlog"]
+          }
+      },
+
+      "@disable_existing_loggers": false
+  }
+
+Note that BitBake's helper classes for structured logging are implemented in
+``lib/bb/msg.py``.

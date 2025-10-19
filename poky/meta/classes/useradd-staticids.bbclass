@@ -1,3 +1,9 @@
+#
+# Copyright OpenEmbedded Contributors
+#
+# SPDX-License-Identifier: MIT
+#
+
 # In order to support a deterministic set of 'dynamic' users/groups,
 # we need a function to reformat the params based on a static file
 def update_useradd_static_config(d):
@@ -41,7 +47,7 @@ def update_useradd_static_config(d):
     def handle_missing_id(id, type, pkg, files, var, value):
         # For backwards compatibility we accept "1" in addition to "error"
         error_dynamic = d.getVar('USERADD_ERROR_DYNAMIC')
-        msg = "%s - %s: %sname %s does not have a static ID defined." % (d.getVar('PN'), pkg, type, id)
+        msg = 'Recipe %s, package %s: %sname "%s" does not have a static ID defined.' % (d.getVar('PN'), pkg, type, id)
         if files:
             msg += " Add %s to one of these files: %s" % (id, files)
         else:
@@ -174,8 +180,6 @@ def update_useradd_static_config(d):
             newparam += ['', ' --non-unique'][uaargs.non_unique]
             if uaargs.password != None:
                 newparam += ['', ' --password %s' % uaargs.password][uaargs.password != None]
-            elif uaargs.clear_password:
-                newparam += ['', ' --clear-password %s' % uaargs.clear_password][uaargs.clear_password != None]
             newparam += ['', ' --root %s' % uaargs.root][uaargs.root != None]
             newparam += ['', ' --system'][uaargs.system]
             newparam += ['', ' --shell %s' % uaargs.shell][uaargs.shell != None]
@@ -236,8 +240,6 @@ def update_useradd_static_config(d):
             newparam += ['', ' --non-unique'][gaargs.non_unique]
             if gaargs.password != None:
                 newparam += ['', ' --password %s' % gaargs.password][gaargs.password != None]
-            elif gaargs.clear_password:
-                newparam += ['', ' --clear-password %s' % gaargs.clear_password][gaargs.clear_password != None]
             newparam += ['', ' --root %s' % gaargs.root][gaargs.root != None]
             newparam += ['', ' --system'][gaargs.system]
             newparam += ' %s' % gaargs.GROUP

@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: CC-BY-SA-2.0-UK
+
 Release 2.7 (warrior)
 =====================
 
@@ -15,7 +17,7 @@ The following changes have been made to BitBake:
    functions (e.g. ``def funcname:``) in the metadata for tab
    indentation. If found, BitBake produces a warning.
 
--  Bitbake now checks
+-  BitBake now checks
    :term:`BBFILE_COLLECTIONS` for duplicate
    entries and triggers an error if any are found.
 
@@ -87,8 +89,8 @@ This section provides information about packaging changes.
    ``bind-utils`` package.
 
 -  Debug split: The default debug split has been changed to create
-   separate source packages (i.e. package_name\ ``-dbg`` and
-   package_name\ ``-src``). If you are currently using ``dbg-pkgs`` in
+   separate source packages (i.e. ``package_name-dbg`` and
+   ``package_name-src``). If you are currently using ``dbg-pkgs`` in
    :term:`IMAGE_FEATURES` to bring in debug
    symbols and you still need the sources, you must now also add
    ``src-pkgs`` to :term:`IMAGE_FEATURES`. Source packages remain in the
@@ -172,8 +174,7 @@ The following miscellaneous changes occurred:
 -  ``base/pixbufcache``: Obsolete ``sstatecompletions`` code has been
    removed.
 
--  :ref:`native <ref-classes-native>` class:
-   :term:`RDEPENDS` handling has been enabled.
+-  :ref:`ref-classes-native` class: :term:`RDEPENDS` handling has been enabled.
 
 -  ``inetutils``: This recipe has rsh disabled.
 

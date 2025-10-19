@@ -2,7 +2,7 @@ SUMMARY = "Utility scripts for internationalizing XML"
 HOMEPAGE = "https://launchpad.net/intltool"
 DESCRIPTION = "Utility scripts for internationalizing XML. This tool automatically extracts translatable strings from oaf, glade, bonobo ui, nautilus theme and other XML files into the po files."
 SECTION = "devel"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=94d55d512a9ba36caa9b7df079bae19f"
 
 SRC_URI = "http://launchpad.net/${BPN}/trunk/${PV}/+download/${BP}.tar.gz \
@@ -11,7 +11,6 @@ SRC_URI = "http://launchpad.net/${BPN}/trunk/${PV}/+download/${BP}.tar.gz \
            file://remove-perl-check.patch \
            file://noperlcheck.patch \
            "
-SRC_URI[md5sum] = "12e517cac2b57a0121cda351570f1e63"
 SRC_URI[sha256sum] = "67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd"
 
 UPSTREAM_CHECK_URI = "https://launchpad.net/intltool/trunk/"

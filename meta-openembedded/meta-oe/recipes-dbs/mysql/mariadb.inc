@@ -1,7 +1,7 @@
 SUMMARY = "A robust, scalable, and reliable SQL server"
 HOMEPAGE = "http://mariadb.org"
 SECTION = "libs"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b1becf0cfa3366e0f4d854d1d264f311"
 
 SRC_URI = "https://archive.mariadb.org/${BP}/source/${BP}.tar.gz \
@@ -12,37 +12,35 @@ SRC_URI = "https://archive.mariadb.org/${BP}/source/${BP}.tar.gz \
            file://mysql-systemd-start \
            file://configure.cmake-fix-valgrind.patch \
            file://support-files-CMakeLists.txt-fix-do_populate_sysroot.patch \
-           file://c11_atomics.patch \
            file://fix-arm-atomic.patch \
            file://0001-Fix-library-LZ4-lookup.patch \
            file://0001-innobase-Define-__NR_futex-if-it-does-not-exist.patch \
            file://0001-aio_linux-Check-if-syscall-exists-before-using-it.patch \
            file://ssize_t.patch \
-           file://mm_malloc.patch \
            file://sys_futex.patch \
+           file://cross-compiling.patch \
+           file://0001-sql-CMakeLists.txt-fix-gen_lex_hash-not-found.patch \
+           file://lfs64.patch \
+           file://0001-Add-missing-includes-cstdint-and-cstdio.patch \
+           file://0001-Ensure-compatibility-with-ARMv9-by-updating-.arch-di.patch \
+           file://riscv32.patch \
           "
-SRC_URI:append:libc-musl = " file://ppc-remove-glibc-dep.patch"
+SRC_URI[sha256sum] = "1b26c0bb2d025dbfac3b9852d2b7eafda56a171b67ac2e27831ec0414fb7df07"
 
-SRC_URI[sha256sum] = "75bf9b147a95d38160d01a73b098d50a1960563b46d16a235971fff64d99643c"
-
-UPSTREAM_CHECK_URI = "https://github.com/MariaDB/server/releases"
-
-S = "${WORKDIR}/mariadb-${PV}"
+UPSTREAM_CHECK_URI = "https://github.com/MariaDB/server/tags"
 
 BINCONFIG_GLOB = "mysql_config"
 
-inherit cmake gettext binconfig update-rc.d useradd systemd multilib_script
+inherit cmake gettext binconfig update-rc.d systemd multilib_script multilib_header pkgconfig
 
 MULTILIB_SCRIPTS = "${PN}-server:${bindir}/mariadbd-safe \
-                    ${PN}-setupdb:${bindir}/mariadb-install-db"
+                    ${PN}-setupdb:${bindir}/mariadb-install-db \
+                    libmysqlclient-dev:${bindir}/mysql_config \
+                    "
 
 INITSCRIPT_PACKAGES = "${PN}-server ${PN}-setupdb"
 INITSCRIPT_NAME:${PN}-server = "mysqld"
 INITSCRIPT_PARAMS:${PN}-server ?= "start 45 5 . stop 45 0 6 1 ."
-
-USERADD_PACKAGES = "${PN}-setupdb"
-USERADD_PARAM:${PN}-setupdb = "--system --home-dir /var/mysql -g mysql --shell /bin/false mysql"
-GROUPADD_PARAM:${PN}-setupdb = "--system mysql"
 
 INITSCRIPT_NAME:${PN}-setupdb = "install_db"
 INITSCRIPT_PARAMS:${PN}-setupdb ?= "defaults 44 44"
@@ -61,19 +59,20 @@ FILES:${PN}-setupdb = "${sysconfdir}/init.d/install_db \
                        ${bindir}/mysql-systemd-start \
                        "
 
-PACKAGECONFIG ??= "${@bb.utils.filter('DISTRO_FEATURES', 'pam', d)}"
+PACKAGECONFIG ??= "${@bb.utils.filter('DISTRO_FEATURES', 'pam', d)} lz4 openssl"
+EXTRA_OEMAKE = "'GEN_LEX_HASH=${STAGING_BINDIR_NATIVE}/gen_lex_hash'"
+
 PACKAGECONFIG:class-native = ""
-PACKAGECONFIG[pam] = ",-DWITHOUT_AUTH_PAM=TRUE,libpam"
+PACKAGECONFIG[pam] = "-DPLUGIN_AUTH_PAM=YES -DINSTALL_PAMDIR=${base_libdir}/security,-DPLUGIN_AUTH_PAM=NO,libpam"
 PACKAGECONFIG[valgrind] = "-DWITH_VALGRIND=TRUE,-DWITH_VALGRIND=FALSE,valgrind"
 PACKAGECONFIG[krb5] = ", ,krb5"
-PACKAGECONFIG[zstd] = "-DWITH_ROCKSDB_ZSTD=ON,-DWITH_ROCKSDB_ZSTD=OFF,zstd"
+PACKAGECONFIG[lz4] = ", ,lz4"
+PACKAGECONFIG[openssl] = "-DWITH_SSL='system',-DWITH_SSL='bundled',openssl"
 
-# MariaDB doesn't link properly with gold
-# https://mariadb.atlassian.net/browse/MDEV-5982
-TARGET_CFLAGS += "-fuse-ld=bfd"
 LDFLAGS += " -pthread"
-BUILD_CFLAGS += "-fuse-ld=bfd"
-BUILD_CXXFLAGS += "-fuse-ld=bfd"
+
+LDFLAGS:x86:toolchain-clang = "-latomic"
+LDFLAGS:riscv32:toolchain-clang = "-latomic"
 
 EXTRA_OECMAKE = "-DWITH_EMBEDDED_SERVER=ON \
                  -DWITH_JEMALLOC=no \
@@ -88,12 +87,16 @@ EXTRA_OECMAKE = "-DWITH_EMBEDDED_SERVER=ON \
                  -DINSTALL_DOCDIR:PATH=${datadir}/doc/${BPN} \
                  -DINSTALL_LIBDIR:PATH=${baselib} \
                  -DINSTALL_PLUGINDIR:PATH=${baselib}/plugin \
+                 -DINSTALL_PCDIR:PATH=${baselib}/pkgconfig \
                  -DINSTALL_SYSCONFDIR:PATH=${sysconfdir} \
                  -DMYSQL_DATADIR:PATH=/var/mysql \
                  -DCAT_EXECUTABLE=`which cat` \
+                 -DHAVE_SYSTEM_LIBFMT_EXITCODE=0 \
+                 -DLSTAT_FOLLOWS_SLASHED_SYMLINK_EXITCODE=0 \
+                 -DSTAT_EMPTY_STRING_BUG_EXITCODE=0 \
+                 -DMASK_LONGDOUBLE_EXITCODE=0 \
                  -DCMAKE_AR:FILEPATH=${AR}"
 
-EXTRA_OECMAKE:prepend:class-target = "-DCMAKE_CROSSCOMPILING_EMULATOR=${WORKDIR}/qemuwrapper "
 
 # With Ninja it fails with:
 # make: *** No rule to make target `install'.  Stop.
@@ -101,6 +104,11 @@ OECMAKE_GENERATOR = "Unix Makefiles"
 
 ARM_INSTRUCTION_SET:armv4 = "arm"
 ARM_INSTRUCTION_SET:armv5 = "arm"
+
+do_compile:prepend:class-target () {
+    # remove the buildpath
+    sed -i -e "s:CMAKE_SYSROOT:CMAKE_SYSROOT_PLACE_HOLDER:g" ${S}/libmariadb/mariadb_config/mariadb_config.c.in
+}
 
 do_configure:append() {
     # handle distros with different values of ${libexecdir}
@@ -117,18 +125,12 @@ do_generate_toolchain_file:append:class-native () {
     sed -i "/set( CMAKE_SYSTEM_PROCESSOR/d" ${WORKDIR}/toolchain.cmake
 }
 
-do_configure:prepend:class-target () {
-	# Write out a qemu wrapper that will be used by cmake
-	# so that it can run target helper binaries through that.
-	qemu_binary="${@qemu_wrapper_cmdline(d, d.getVar('STAGING_DIR_HOST'), [d.expand('${STAGING_DIR_HOST}${libdir}'),d.expand('${STAGING_DIR_HOST}${base_libdir}')])}"
-	cat > ${WORKDIR}/qemuwrapper << EOF
-#!/bin/sh
-$qemu_binary "\$@"
-EOF
-	chmod +x ${WORKDIR}/qemuwrapper
-}
 
 do_compile:prepend:class-target () {
+    # These need to be in-tree or make will think they need to be built,
+    # and since we're cross-compiling that is disabled
+    cp ${STAGING_BINDIR_NATIVE}/comp_err ${S}/extra
+    cp ${STAGING_BINDIR_NATIVE}/comp_sql ${S}/scripts
     if [ "${@bb.utils.contains('PACKAGECONFIG', 'krb5', 'yes', 'no', d)}" = "no" ]; then
         if ! [ -e ${B}/include/openssl/kssl.h ] ; then
             mkdir -p ${B}/include/openssl
@@ -138,6 +140,7 @@ do_compile:prepend:class-target () {
             echo "#endif" >>${B}/include/openssl/kssl.h
         fi
     fi
+    install -D ${RECIPE_SYSROOT_NATIVE}/usr/bin/uca-dump ${B}/strings/uca-dump
 }
 
 SYSROOT_PREPROCESS_FUNCS += "mariadb_sysroot_preprocess"
@@ -154,31 +157,31 @@ mariadb_sysroot_preprocess () {
 
 do_install() {
     oe_runmake 'DESTDIR=${D}' install
+    oe_multilib_header mysql/mariadb_version.h mysql/server/my_config.h mysql/server/private/config.h
 
     install -d ${D}/${sysconfdir}/init.d
-    install -m 0644 ${WORKDIR}/my.cnf ${D}/${sysconfdir}/
-    install -m 0755 ${WORKDIR}/install_db ${D}/${sysconfdir}/init.d/
+    install -m 0644 ${UNPACKDIR}/my.cnf ${D}/${sysconfdir}/
+    install -m 0755 ${UNPACKDIR}/install_db ${D}/${sysconfdir}/init.d/
     mv ${D}/${sysconfdir}/init.d/mysql ${D}/${sysconfdir}/init.d/mysqld
 
     install -d ${D}${systemd_unitdir}/system
-    install -m 0644 ${WORKDIR}/mysqld.service ${D}${systemd_unitdir}/system
-    install -m 0644 ${WORKDIR}/install_db.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${UNPACKDIR}/mysqld.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${UNPACKDIR}/install_db.service ${D}${systemd_unitdir}/system
     sed -i -e 's,@BINDIR@,${bindir},g' -e 's,@PREFIX@,${prefix},g' ${D}${systemd_unitdir}/system/mysqld.service \
                                                                    ${D}${systemd_unitdir}/system/install_db.service
 
     install -d ${D}${bindir}
-    install -m 755 ${WORKDIR}/mysql-systemd-start ${D}${bindir}
+    install -m 755 ${UNPACKDIR}/mysql-systemd-start ${D}${bindir}
     install -d ${D}${datadir}/doc/${PN}
     if [ -f ${D}${datadir}/doc/README ]; then
         mv ${D}${datadir}/doc/README ${D}${datadir}/doc/${PN}/
     fi
-    if ${@bb.utils.contains('DISTRO_FEATURES', 'pam', 'true', 'false', d)}; then
-        pam_so=$(find ${D} -name pam_user_map.so)
-        if [ x"${pam_so}" != x ]; then
-            pam_dir=$(dirname ${pam_so})
-            mv ${pam_dir} ${D}/${libdir}
-            rmdir --ignore-fail-on-non-empty ${pam_dir%security}
-        fi
+
+    # mini-benchmark used for Gitlab-CI to run on every commit to catch
+    # if there are severe performance regressions.
+    # remove it to avoid introducing bash dependency
+    if [ -f ${D}${datadir}/mariadb/mini-benchmark ]; then
+        rm -rf ${D}${datadir}/mariadb/mini-benchmark
     fi
 }
 
@@ -202,7 +205,7 @@ RDEPENDS:${PN}-client = "perl perl-module-getopt-long perl-module-file-temp \
 RDEPENDS:${PN}-server = "perl perl-module-getopt-long perl-module-data-dumper \
     perl-module-file-basename perl-module-file-path perl-module-sys-hostname \
     perl-module-file-copy perl-module-file-temp perl-module-posix \
-    ${PN}-client ${PN}-setupdb libdbi-perl libdbd-mysql-perl"
+    ${PN}-client ${PN}-setupdb libdbi-perl dbd-mariadb lzo"
 RDEPENDS:${PN}-leftovers = "perl perl-module-cwd perl-module-benchmark perl-module-getopt-long \
     perl-module-posix perl-module-data-dumper perl-module-sigtrap perl-module-threads \
     perl-module-threads-shared perl-module-io-socket perl-module-sys-hostname perl-module-file-copy \
@@ -213,6 +216,17 @@ RDEPENDS:${PN}-setupdb = "coreutils"
 
 # Allow old code to link to the backward compatible library
 RDEPENDS:libmysqlclient-dev = "libmysqlclient-r-dev"
+
+PACKAGE_PREPROCESS_FUNCS += "src_package_preprocess"
+src_package_preprocess () {
+        # Trim build paths from comments in generated sources to ensure reproducibility
+        sed -i -e "s,${S}/sql/,,g" \
+               -e "s,${B}/sql/,,g" \
+            ${B}/sql/yy_oracle.hh \
+            ${B}/sql/yy_mariadb.cc \
+            ${B}/sql/yy_mariadb.hh \
+            ${B}/sql/yy_oracle.cc
+}
 
 FILES:libmysqlclient = "\
     ${libdir}/libmysqlclient.so.* \
@@ -319,9 +333,9 @@ FILES:${PN}-server = "\
     ${sbindir}/mysqld \
     ${sbindir}/mariadbd \
     ${libdir}/plugin/*.so \
-    ${libdir}/security/*.so \
+    ${base_libdir}/security/*.so \
     ${libdir}/plugin/auth_pam_tool_dir/auth_pam_tool \
-    ${datadir}/mysql/ \
+    ${datadir}/mariadb/ \
     ${localstatedir}/mysql/ \
     ${sysconfdir}/init.d/mysqld \
     ${sysconfdir}/my.cnf \

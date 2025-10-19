@@ -1,8 +1,11 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
 from oe.manifest import Manifest
+import re
 
 class PkgManifest(Manifest):
     """

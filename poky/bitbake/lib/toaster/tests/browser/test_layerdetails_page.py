@@ -8,6 +8,7 @@
 #
 
 from django.urls import reverse
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import Layer, Layer_Version, Project, LayerSource, Release
@@ -63,11 +64,12 @@ class TestLayerDetailsPage(SeleniumTestCase):
                            args=(self.project.pk,
                                  self.imported_layer_version.pk))
 
-    def test_edit_layerdetails(self):
+    def test_edit_layerdetails_page(self):
         """ Edit all the editable fields for the layer refresh the page and
         check that the new values exist"""
 
         self.get(self.url)
+        self.wait_until_visible("#add-remove-layer-btn")
 
         self.click("#add-remove-layer-btn")
         self.click("#edit-layer-source")
@@ -97,13 +99,19 @@ class TestLayerDetailsPage(SeleniumTestCase):
                             "Expecting any of \"%s\"but got \"%s\"" %
                             (self.initial_values, value))
 
+            # Make sure the input visible beofre sending keys
+            self.wait_until_clickable("#layer-git input[type=text]")
             inputs.send_keys("-edited")
 
         # Save the new values
         for save_btn in self.find_all(".change-btn"):
             save_btn.click()
 
-        self.click("#save-changes-for-switch")
+        self.wait_until_visible("#save-changes-for-switch")
+        btn_save_chg_for_switch = self.wait_until_clickable(
+            "#save-changes-for-switch")
+        btn_save_chg_for_switch.click()
+
         self.wait_until_visible("#edit-layer-source")
 
         # Refresh the page to see if the new values are returned
@@ -132,7 +140,11 @@ class TestLayerDetailsPage(SeleniumTestCase):
         new_dir = "/home/test/my-meta-dir"
         dir_input.send_keys(new_dir)
 
-        self.click("#save-changes-for-switch")
+        self.wait_until_visible("#save-changes-for-switch")
+        btn_save_chg_for_switch = self.wait_until_clickable(
+            "#save-changes-for-switch")
+        btn_save_chg_for_switch.click()
+
         self.wait_until_visible("#edit-layer-source")
 
         # Refresh the page to see if the new values are returned
@@ -141,6 +153,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         self.assertTrue(new_dir in dir_input.get_attribute("value"),
                         "Expected %s in the dir value for layer directory" %
                         new_dir)
+
 
     def test_delete_layer(self):
         """ Delete the layer """
@@ -178,6 +191,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         self.get(self.url)
 
         # Add the layer
+        self.wait_until_clickable("#add-remove-layer-btn")
         self.click("#add-remove-layer-btn")
 
         notification = self.wait_until_visible("#change-notification-msg")
@@ -185,12 +199,17 @@ class TestLayerDetailsPage(SeleniumTestCase):
         expected_text = "You have added 1 layer to your project: %s" % \
             self.imported_layer_version.layer.name
 
-        self.assertTrue(expected_text in notification.text,
+        self.assertIn(expected_text, notification.text,
                         "Expected notification text %s not found was "
                         " \"%s\" instead" %
                         (expected_text, notification.text))
 
+        hide_button = self.find('#hide-alert')
+        hide_button.click()
+        self.wait_until_not_visible('#change-notification')
+
         # Remove the layer
+        self.wait_until_clickable("#add-remove-layer-btn")
         self.click("#add-remove-layer-btn")
 
         notification = self.wait_until_visible("#change-notification-msg")
@@ -198,7 +217,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         expected_text = "You have removed 1 layer from your project: %s" % \
             self.imported_layer_version.layer.name
 
-        self.assertTrue(expected_text in notification.text,
+        self.assertIn(expected_text, notification.text,
                         "Expected notification text %s not found was "
                         " \"%s\" instead" %
                         (expected_text, notification.text))

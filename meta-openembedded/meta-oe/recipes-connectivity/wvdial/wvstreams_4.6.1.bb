@@ -1,10 +1,10 @@
 HOMEPAGE = "http://alumnit.ca/wiki/index.php?page=WvStreams"
 SUMMARY = "WvStreams is a network programming library in C++"
 
-LICENSE = "LGPLv2"
+LICENSE = "LGPL-2.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=55ca817ccb7d5b5b66355690e9abc605"
 
-DEPENDS = "zlib openssl (>= 0.9.8) dbus readline"
+DEPENDS = "zlib openssl (>= 0.9.8) dbus readline boost"
 DEPENDS:append:libc-musl = " argp-standalone libexecinfo"
 
 SRC_URI = "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/${BPN}/${BP}.tar.gz \
@@ -25,8 +25,11 @@ SRC_URI = "https://storage.googleapis.com/google-code-archive-downloads/v2/code.
            file://0001-Fix-narrowing-conversion-error.patch \
            "
 
-SRC_URI[md5sum] = "2760dac31a43d452a19a3147bfde571c"
 SRC_URI[sha256sum] = "8403f5fbf83aa9ac0c6ce15d97fd85607488152aa84e007b7d0621b8ebc07633"
+
+# The code.google.com/archive page is generated using Javascript from a JSON file and does not 
+# allow devtool to find the latest version
+UPSTREAM_VERSION_UNKNOWN = "1"
 
 COMPATIBLE_HOST:libc-musl = "null"
 

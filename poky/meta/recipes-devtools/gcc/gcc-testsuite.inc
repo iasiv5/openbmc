@@ -51,9 +51,14 @@ python check_prepare() {
         # enable all valid instructions, since the test suite itself does not
         # limit itself to the target cpu options.
         #   - valid for x86*, powerpc, arm, arm64
-        if qemu_binary.lstrip("qemu-") in ["x86_64", "i386", "ppc", "arm", "aarch64"]:
+        if qemu_binary.endswith(("x86_64", "i386", "arm", "aarch64")):
             args += ["-cpu", "max"]
-
+        else:
+            extra = d.getVar("QEMU_EXTRAOPTIONS:tune-%s" % d.getVar('TUNE_PKGARCH'))
+            if extra:
+                args += extra.split()
+        # For mips64 we could set a maximal CPU (e.g. Loongson-3A4000) however they either have MSA
+        # or Loongson-MMI vector extensions, not both and qemu lacks complete support for MMI
         sysroot = d.getVar("RECIPE_SYSROOT")
         args += ["-L", sysroot]
         # lib paths are static here instead of using $libdir since this is used by a -cross recipe
@@ -96,7 +101,7 @@ python check_prepare() {
         f.write(generate_qemu_linux_user_config(d))
 
     # write out target ssh board config
-    with open(os.path.join(dejagnudir, "ssh.exp"), "w") as f:
+    with open(os.path.join(dejagnudir, "linux-ssh.exp"), "w") as f:
         f.write(generate_remote_ssh_linux_config(d))
 
     # generate site.exp to provide boards

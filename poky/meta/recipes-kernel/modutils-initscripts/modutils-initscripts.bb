@@ -1,13 +1,11 @@
 SUMMARY = "Initscript for auto-loading kernel modules on boot"
 SECTION = "base"
-LICENSE = "PD"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=7bf87fc37976e93ec66ad84fac58c098"
-SRC_URI = "file://modutils.sh \
-	   file://PD.patch"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://modutils.sh;beginline=3;endline=3;md5=b2dccaa94b3629a08bfb4f983cad6f89"
+SRC_URI = "file://modutils.sh"
 
-PR = "r7"
-
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 INITSCRIPT_NAME = "modutils.sh"
 INITSCRIPT_PARAMS = "start 06 S ."
@@ -19,7 +17,7 @@ do_compile () {
 
 do_install () {
 	install -d ${D}${sysconfdir}/init.d/
-	install -m 0755 ${WORKDIR}/modutils.sh ${D}${sysconfdir}/init.d/
+	install -m 0755 ${S}/modutils.sh ${D}${sysconfdir}/init.d/
 }
 
 PACKAGE_WRITE_DEPS:append = " ${@bb.utils.contains('DISTRO_FEATURES','systemd','systemd-systemctl-native','',d)}"

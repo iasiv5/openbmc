@@ -4,25 +4,24 @@
 require musl.inc
 inherit linuxloader
 
-SRCREV = "3f701faace7addc75d16dea8a6cd769fa5b3f260"
+SRCREV = "c47ad25ea3b484e10326f933e927c0bc8cded3da"
 
-BASEVER = "1.2.2"
+BASEVER = "1.2.5"
 
-PV = "${BASEVER}+git${SRCPV}"
+PV = "${BASEVER}+git"
 
-# mirror is at git://github.com/kraj/musl.git
-
-SRC_URI = "git://git.musl-libc.org/musl \
+SRC_URI = "git://git.musl-libc.org/musl;branch=master \
            file://0001-Make-dynamic-linker-a-relative-symlink-to-libc.patch \
            file://0002-ldso-Use-syslibdir-and-libdir-as-default-pathes-to-l.patch \
+           file://0001-Update-syscalls-for-r32-rv64-from-kernel-6.4-through.patch \
           "
 
 S = "${WORKDIR}/git"
 
 PROVIDES += "virtual/libc virtual/libiconv virtual/libintl virtual/crypt"
 
-DEPENDS = "virtual/${TARGET_PREFIX}binutils \
-           virtual/${TARGET_PREFIX}gcc \
+DEPENDS = "virtual/cross-binutils \
+           virtual/cross-cc \
            libgcc-initial \
            linux-libc-headers \
            bsd-headers \
@@ -31,7 +30,7 @@ DEPENDS = "virtual/${TARGET_PREFIX}binutils \
 GLIBC_LDSO = "${@get_glibc_loader(d)}"
 MUSL_LDSO_ARCH = "${@get_musl_loader_arch(d)}"
 
-export CROSS_COMPILE="${TARGET_PREFIX}"
+export CROSS_COMPILE = "${TARGET_PREFIX}"
 
 LDFLAGS += "-Wl,-soname,libc.so"
 
@@ -49,7 +48,7 @@ CONFIGUREOPTS = " \
     --bindir=${bindir} \
     --libdir=${libdir} \
     --includedir=${includedir} \
-    --syslibdir=/lib \
+    --syslibdir=${nonarch_base_libdir} \
 "
 
 do_configure() {
@@ -62,14 +61,14 @@ do_compile() {
 
 do_install() {
 	oe_runmake install DESTDIR='${D}'
-	install -d ${D}${bindir} ${D}/lib ${D}${sysconfdir}
+	install -d ${D}${bindir} ${D}${sysconfdir}
         echo "${base_libdir}" > ${D}${sysconfdir}/ld-musl-${MUSL_LDSO_ARCH}.path
         echo "${libdir}" >> ${D}${sysconfdir}/ld-musl-${MUSL_LDSO_ARCH}.path
 	rm -f ${D}${bindir}/ldd ${D}${GLIBC_LDSO}
-	lnr ${D}${libdir}/libc.so ${D}${bindir}/ldd
+	ln -rs ${D}${libdir}/libc.so ${D}${bindir}/ldd
 }
 
-FILES:${PN} += "/lib/ld-musl-${MUSL_LDSO_ARCH}.so.1 ${sysconfdir}/ld-musl-${MUSL_LDSO_ARCH}.path"
+FILES:${PN} += "${nonarch_base_libdir}/ld-musl-${MUSL_LDSO_ARCH}.so.1 ${sysconfdir}/ld-musl-${MUSL_LDSO_ARCH}.path"
 FILES:${PN}-staticdev = "${libdir}/libc.a"
 FILES:${PN}-dev =+ "${libdir}/libcrypt.a ${libdir}/libdl.a ${libdir}/libm.a \
                     ${libdir}/libpthread.a ${libdir}/libresolv.a \
@@ -78,7 +77,7 @@ FILES:${PN}-dev =+ "${libdir}/libcrypt.a ${libdir}/libdl.a ${libdir}/libm.a \
 
 RDEPENDS:${PN}-dev += "linux-libc-headers-dev bsd-headers-dev libssp-nonshared-staticdev"
 RPROVIDES:${PN}-dev += "libc-dev virtual-libc-dev"
-RPROVIDES:${PN} += "ldd libsegfault rtld(GNU_HASH)"
+RPROVIDES:${PN} += "ldd rtld(GNU_HASH)"
 
 LEAD_SONAME = "libc.so"
 INSANE_SKIP:${PN}-dev = "staticdev"

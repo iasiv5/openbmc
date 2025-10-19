@@ -1,6 +1,6 @@
 SUMMARY = "Hardware health monitoring applications"
 HOMEPAGE = "https://hwmon.wiki.kernel.org/"
-LICENSE = "GPLv2+ & LGPLv2.1+"
+LICENSE = "GPL-2.0-or-later & LGPL-2.1-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe \
                     file://COPYING.LGPL;md5=4fbd65380cdd255951079008b364516c"
 
@@ -10,10 +10,11 @@ DEPENDS = " \
     virtual/libiconv \
 "
 
-SRC_URI = "git://github.com/lm-sensors/lm-sensors.git;protocol=https \
+SRC_URI = "git://github.com/lm-sensors/lm-sensors.git;protocol=https;branch=master \
            file://fancontrol.init \
            file://sensord.init \
            file://0001-Change-PIDFile-path-from-var-run-to-run.patch \
+           file://0001-Fix-building-with-GCC-14.patch \
 "
 SRCREV = "1667b850a1ce38151dae17156276f981be6fb557"
 
@@ -48,15 +49,15 @@ S = "${WORKDIR}/git"
 EXTRA_OEMAKE = 'EXLDFLAGS="${LDFLAGS}" \
         MACHINE=${TARGET_ARCH} PREFIX=${prefix} MANDIR=${mandir} \
         LIBDIR=${libdir} \
-        CC="${CC}" AR="${AR}"'
+        CC="${CC}" AR="${AR}" \
+        PROG_EXTRA="sensors ${PACKAGECONFIG_CONFARGS}"'
 
 do_compile() {
-    sed -i -e 's:^# \(PROG_EXTRA\):\1:' ${S}/Makefile
     # Respect LDFLAGS
     sed -i -e 's/\$(LIBDIR)$/\$(LIBDIR) \$(LDFLAGS)/g' ${S}/Makefile
     sed -i -e 's/\$(LIBSHSONAME) -o/$(LIBSHSONAME) \$(LDFLAGS) -o/g' \
                 ${S}/lib/Module.mk
-    oe_runmake user PROG_EXTRA="sensors ${PACKAGECONFIG_CONFARGS}"
+    oe_runmake user
 }
 
 do_install() {
@@ -70,11 +71,11 @@ do_install() {
     install -d ${D}${INIT_D_DIR}
 
     # Install fancontrol init script
-    install -m 0755 ${WORKDIR}/fancontrol.init ${D}${INIT_D_DIR}/fancontrol
+    install -m 0755 ${UNPACKDIR}/fancontrol.init ${D}${INIT_D_DIR}/fancontrol
 
     if ${@bb.utils.contains('PACKAGECONFIG', 'sensord', 'true', 'false', d)}; then
         # Install sensord init script
-        install -m 0755 ${WORKDIR}/sensord.init ${D}${INIT_D_DIR}/sensord
+        install -m 0755 ${UNPACKDIR}/sensord.init ${D}${INIT_D_DIR}/sensord
     fi
 
     # Insall sensord service script
@@ -151,12 +152,13 @@ RRECOMMENDS:${PN}-fancontrol = "lmsensors-config-fancontrol"
 # sensors-detect script files
 FILES:${PN}-sensorsdetect = "${sbindir}/sensors-detect"
 FILES:${PN}-sensorsdetect-doc = "${mandir}/man8/sensors-detect.8"
-RDEPENDS:${PN}-sensorsdetect = "${PN}-sensors perl perl-modules"
+RDEPENDS:${PN}-sensorsdetect = "${PN}-sensors perl perl-module-fcntl perl-module-file-basename \
+	perl-module-strict perl-module-constant"
 
 # sensors-conf-convert script files
 FILES:${PN}-sensorsconfconvert = "${bindir}/sensors-conf-convert"
 FILES:${PN}-sensorsconfconvert-doc = "${mandir}/man8/sensors-conf-convert.8"
-RDEPENDS:${PN}-sensorsconfconvert = "${PN}-sensors perl perl-modules"
+RDEPENDS:${PN}-sensorsconfconvert = "${PN}-sensors perl perl-module-strict perl-module-vars"
 
 # pwmconfig script files
 FILES:${PN}-pwmconfig = "${sbindir}/pwmconfig"

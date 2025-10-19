@@ -1,9 +1,9 @@
 SUMMARY = "eCMD"
 DESCRIPTION = "eCMD is a hardware access API for POWER Systems"
-LICENSE= "Apache-2.0"
+LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${S}/NOTICE;md5=fee220301a2af3faf8f211524b4248ea"
 
-SRC_URI = "git://github.com/open-power/eCMD.git;branch=ecmd15;protocol=git"
+SRC_URI = "git://github.com/open-power/eCMD.git;branch=ecmd15;protocol=https"
 SRCREV = "15e382180d49f7ea4117ccc341ca91e361721fd4"
 
 inherit python3native
@@ -11,8 +11,8 @@ DEPENDS = "zlib"
 
 S = "${WORKDIR}/git"
 
-export LD="${CXX}"
-export SLDFLAGS="${LDFLAGS}"
+export LD = "${CXX}"
+export SLDFLAGS = "${LDFLAGS}"
 
 # use native config.py to build required ecmd extensions
 do_configure() {

@@ -1,14 +1,13 @@
 SUMMARY = "Multi-purpose linux bootloader"
 HOMEPAGE = "http://www.syslinux.org/"
 DESCRIPTION = "The Syslinux Project covers lightweight bootloaders for MS-DOS FAT filesystems (SYSLINUX), network booting (PXELINUX), bootable "El Torito" CD-ROMs (ISOLINUX), and Linux ext2/ext3/ext4 or btrfs filesystems (EXTLINUX). The project also includes MEMDISK, a tool to boot legacy operating systems (such as DOS) from nontraditional media; it is usually used in conjunction with PXELINUX and ISOLINUX."
-LICENSE = "GPLv2+"
+LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=0636e73ff0215e8d672dc4c32c317bb3 \
                     file://README;beginline=35;endline=41;md5=558f2c71cb1fb9ba511ccd4858e48e8a"
 
 DEPENDS = "nasm-native util-linux e2fsprogs"
 
 SRC_URI = "https://www.zytor.com/pub/syslinux/Testing/6.04/syslinux-${PV}.tar.xz \
-           file://syslinux-remove-clean-script.patch \
            file://0001-linux-syslinux-support-ext2-3-4-device.patch \
            file://0002-linux-syslinux-implement-open_ext2_fs.patch \
            file://0003-linux-syslinux-implement-install_to_ext2.patch \
@@ -19,15 +18,17 @@ SRC_URI = "https://www.zytor.com/pub/syslinux/Testing/6.04/syslinux-${PV}.tar.xz
            file://0008-libinstaller-syslinuxext-implement-syslinux_patch_bo.patch \
            file://0009-linux-syslinux-implement-install_bootblock.patch \
            file://0010-Workaround-multiple-definition-of-symbol-errors.patch \
-           file://0001-install-don-t-install-obsolete-file-com32.ld.patch \
-           file://determinism.patch \
+           file://0011-install-don-t-install-obsolete-file-com32.ld.patch \
+           file://0012-libinstaller-Fix-build-with-glibc-2.36.patch \
+           file://0013-remove-clean-script.patch \
+           file://0014-Fix-reproducibility-issues.patch \
+           file://0001-ext2_fs.h-do-not-carry-an-outdated-copy.patch \
+           file://0001-Add-extra-sector-count-from-section-entry-for-EFI-ca.patch \
            "
 
-SRC_URI[md5sum] = "2b31c78f087f99179feb357da312d7ec"
 SRC_URI[sha256sum] = "4441a5d593f85bb6e8d578cf6653fb4ec30f9e8f4a2315a3d8f2d0a8b3fadf94"
 
 # remove at next version upgrade or when output changes
-PR = "r1"
 
 RECIPE_NO_UPDATE_REASON = "6.04-pre3 is broken"
 UPSTREAM_CHECK_URI = "https://www.zytor.com/pub/syslinux/"
@@ -48,7 +49,7 @@ TARGET_LDFLAGS = ""
 SECURITY_LDFLAGS = ""
 LDFLAGS_SECTION_REMOVAL = ""
 
-CFLAGS:append = " -DNO_INLINE_FUNCS"
+CFLAGS += "-DNO_INLINE_FUNCS -Wno-error=implicit-function-declaration -idirafter ${STAGING_INCDIR}"
 
 EXTRA_OEMAKE = " \
 	BINDIR=${bindir} SBINDIR=${sbindir} LIBDIR=${libdir} \
@@ -62,6 +63,10 @@ EXTRA_OEMAKE = " \
 	NM="${NM}" \
 	RANLIB="${RANLIB}" \
 "
+
+# mtools allows non-root users to install syslinux
+PACKAGECONFIG ??= "mtools"
+PACKAGECONFIG[mtools] = ",,,"
 
 #
 # Tasks for native/nativesdk which just build the installer.
@@ -77,10 +82,15 @@ do_compile() {
 do_install() {
 	install -d ${D}${bindir}
 	install \
-		${B}/bios/mtools/syslinux \
 		${B}/bios/extlinux/extlinux \
 		${B}/bios/utils/isohybrid \
 		${D}${bindir}
+
+	if ${@bb.utils.contains("PACKAGECONFIG", "mtools", "true", "false", d)}; then
+		install ${B}/bios/mtools/syslinux ${D}${bindir}
+	else
+		install ${B}/bios/linux/syslinux ${D}${bindir}
+	fi
 }
 
 #
@@ -104,14 +114,12 @@ do_install:class-target() {
 	install -m 644 ${S}/bios/core/ldlinux.bss ${D}${datadir}/syslinux/
 }
 
-PACKAGES += "${PN}-nomtools ${PN}-extlinux ${PN}-mbr ${PN}-chain ${PN}-pxelinux ${PN}-isolinux ${PN}-misc"
+PACKAGES += "${PN}-extlinux ${PN}-mbr ${PN}-chain ${PN}-pxelinux ${PN}-isolinux ${PN}-misc"
 
-RDEPENDS:${PN} += "mtools"
-RDEPENDS:${PN}-nomtools += "libext2fs"
+RDEPENDS:${PN} += "${@bb.utils.contains("PACKAGECONFIG", "mtools", "mtools", "", d)}"
 RDEPENDS:${PN}-misc += "perl"
 
 FILES:${PN} = "${bindir}/syslinux"
-FILES:${PN}-nomtools = "${bindir}/syslinux-nomtools"
 FILES:${PN}-extlinux = "${sbindir}/extlinux"
 FILES:${PN}-mbr = "${datadir}/${BPN}/mbr.bin"
 FILES:${PN}-chain = "${datadir}/${BPN}/chain.c32"
@@ -122,3 +130,8 @@ FILES:${PN}-staticdev += "${datadir}/${BPN}/com32/lib*.a ${libdir}/${BPN}/com32/
 FILES:${PN}-misc = "${datadir}/${BPN}/* ${libdir}/${BPN}/* ${bindir}/*"
 
 BBCLASSEXTEND = "native nativesdk"
+
+# com32/lib/../include/stdarg.h:9:15: fatal error: 'stdarg.h' file not found
+#    9 | #include_next <stdarg.h>
+#      |               ^~~~~~~~~~
+TOOLCHAIN = "gcc"

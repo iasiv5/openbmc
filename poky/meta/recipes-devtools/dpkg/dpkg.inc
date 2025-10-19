@@ -1,21 +1,21 @@
 SUMMARY = "Package maintenance system from Debian"
-LICENSE = "GPLv2.0+"
+LICENSE = "GPL-2.0-or-later"
 HOMEPAGE = "https://salsa.debian.org/dpkg-team/dpkg"
 DESCRIPTION = "The primary interface for the dpkg suite is the dselect program. A more low-level and less user-friendly interface is available in the form of the dpkg command."
 SECTION = "base"
 
-DEPENDS = "zlib bzip2 perl ncurses"
-DEPENDS:class-native = "bzip2-replacement-native zlib-native virtual/update-alternatives-native gettext-native perl-native"
+DEPENDS = "zlib bzip2 perl ncurses libmd"
+DEPENDS:class-native = "bzip2-replacement-native zlib-native virtual/update-alternatives-native gettext-native perl-native libmd-native"
 RDEPENDS:${PN} = "${VIRTUAL-RUNTIME_update-alternatives} perl"
 RDEPENDS:${PN}:class-native = ""
 
 UPSTREAM_CHECK_GITTAGREGEX = "(?P<pver>(\d+(\.\d+)+))"
 
-inherit autotools gettext perlnative pkgconfig perl-version update-alternatives
+inherit autotools gettext perlnative pkgconfig perl-version update-alternatives bash-completion
 
 PERL:class-native = "${STAGING_BINDIR_NATIVE}/perl-native/perl"
 
-export PERL_LIBDIR = "${libdir}/perl/${@get_perl_version(d)}"
+export PERL_LIBDIR = "${libdir}/perl5/${@get_perl_version(d)}"
 PERL_LIBDIR:class-native = "${libdir}/perl-native/perl/${@get_perl_version(d)}"
 
 EXTRA_OECONF = "\
@@ -43,15 +43,17 @@ do_configure:prepend () {
         # update dselect/po and scripts/po
         cp -f ${STAGING_DATADIR_NATIVE}/gettext/po/Makefile.in.in ${S}/dselect/po/
         cp -f ${STAGING_DATADIR_NATIVE}/gettext/po/Makefile.in.in ${S}/scripts/po/
+
+        [ ! -e ${S}/.dist-version ] && echo ${PV} > ${S}/.dist-version
 }
 
 do_install:append () {
 	if [ "${PN}" = "dpkg-native" ]; then
 		# update-alternatives doesn't have an offline mode
 		rm ${D}${bindir}/update-alternatives
-		sed -i -e 's|^#!.*${STAGING_BINDIR_NATIVE}/perl-native.*/perl|#!/usr/bin/env nativeperl|' ${D}${bindir}/dpkg-*
+		sed -i -e 's|^#!.*${STAGING_BINDIR_NATIVE}/perl-native.*/perl|#!/usr/bin/env nativeperl|' ${D}${bindir}/dpkg-* ${D}${sbindir}/dpkg-*
 	else
-		sed -i -e 's|^#!.*${STAGING_BINDIR_NATIVE}/perl-native.*/perl|#!/usr/bin/env perl|' ${D}${bindir}/dpkg-*
+		sed -i -e 's|^#!.*${STAGING_BINDIR_NATIVE}/perl-native.*/perl|#!/usr/bin/env perl|' ${D}${bindir}/dpkg-* ${D}${sbindir}/dpkg-*
 	fi
 }
 
@@ -61,12 +63,14 @@ PROV:class-nativesdk = ""
 
 PROVIDES += "${PROV}"
 
+FILES:${PN} += "${datadir}/zsh"
+
 PACKAGES =+ "update-alternatives-dpkg"
 FILES:update-alternatives-dpkg = "${bindir}/update-alternatives ${localstatedir}/lib/dpkg/alternatives ${sysconfdir}/alternatives"
 RPROVIDES:update-alternatives-dpkg += "update-alternatives"
 
 PACKAGES += "${PN}-perl"
-FILES:${PN}-perl = "${libdir}/perl/${@get_perl_version(d)}"
+FILES:${PN}-perl = "${libdir}/perl5/${@get_perl_version(d)}"
 
 RDEPENDS:${PN}-perl += "perl-module-carp perl-module-constant \
                         perl-module-cwd perl-module-digest \

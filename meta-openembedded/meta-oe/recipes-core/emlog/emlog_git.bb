@@ -18,9 +18,20 @@ do_compile() {
 }
 
 do_install() {
-   install -Dm 0755 ${WORKDIR}/${BPN}.initd ${D}${sysconfdir}/init.d/${BPN}
+   install -Dm 0755 ${UNPACKDIR}/${BPN}.initd ${D}${sysconfdir}/init.d/${BPN}
    install -Dm 0755 ${S}/nbcat ${D}${bindir}/nbcat
    install -Dm 0755 ${S}/mkemlog ${D}${bindir}/mkemlog
 }
 
 RRECOMMENDS:${PN} += "kernel-module-emlog"
+
+CVE_STATUS_GROUPS += "CVE_STATUS_EMLOG"
+CVE_STATUS_EMLOG[status] = "fixed-version: The name of this product is exactly the same as github.com/emlog/emlog. CVE can be safely ignored."
+CVE_STATUS_EMLOG = " \
+    CVE-2019-16868 \
+    CVE-2019-17073 \
+    CVE-2021-44584 \
+    CVE-2022-1526 \
+    CVE-2022-3968 \
+    CVE-2023-43291 \
+"

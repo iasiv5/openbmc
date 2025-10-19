@@ -9,12 +9,19 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-__version__ = "1.51.1"
+__version__ = "2.12.0"
 
 import sys
-if sys.version_info < (3, 6, 0):
-    raise RuntimeError("Sorry, python 3.6.0 or later is required for this version of bitbake")
+if sys.version_info < (3, 9, 0):
+    raise RuntimeError("Sorry, python 3.9.0 or later is required for this version of bitbake")
 
+if sys.version_info < (3, 10, 0):
+    # With python 3.8 and 3.9, we see errors of "libgcc_s.so.1 must be installed for pthread_cancel to work"
+    # https://stackoverflow.com/questions/64797838/libgcc-s-so-1-must-be-installed-for-pthread-cancel-to-work
+    # https://bugs.ams1.psf.io/issue42888
+    # so ensure libgcc_s is loaded early on
+    import ctypes
+    libgcc_s = ctypes.CDLL('libgcc_s.so.1')
 
 class BBHandledException(Exception):
     """
@@ -29,6 +36,7 @@ class BBHandledException(Exception):
 
 import os
 import logging
+from collections import namedtuple
 
 
 class NullHandler(logging.Handler):
@@ -60,6 +68,10 @@ class BBLoggerMixin(object):
                 return
             if loglevel < bb.msg.loggerDefaultLogLevel:
                 return
+
+        if not isinstance(level, int) or not isinstance(msg, str):
+            mainlogger.warning("Invalid arguments in bbdebug: %s" % repr((level, msg,) + args))
+
         return self.log(loglevel, msg, *args, **kwargs)
 
     def plain(self, msg, *args, **kwargs):
@@ -70,6 +82,13 @@ class BBLoggerMixin(object):
 
     def verbnote(self, msg, *args, **kwargs):
         return self.log(logging.INFO + 2, msg, *args, **kwargs)
+
+    def warnonce(self, msg, *args, **kwargs):
+        return self.log(logging.WARNING - 1, msg, *args, **kwargs)
+
+    def erroronce(self, msg, *args, **kwargs):
+        return self.log(logging.ERROR - 1, msg, *args, **kwargs)
+
 
 Logger = logging.getLoggerClass()
 class BBLogger(Logger, BBLoggerMixin):
@@ -84,26 +103,6 @@ class BBLoggerAdapter(logging.LoggerAdapter, BBLoggerMixin):
     def __init__(self, logger, *args, **kwargs):
         self.setup_bblogger(logger.name)
         super().__init__(logger, *args, **kwargs)
-
-    if sys.version_info < (3, 6):
-        # These properties were added in Python 3.6. Add them in older versions
-        # for compatibility
-        @property
-        def manager(self):
-            return self.logger.manager
-
-        @manager.setter
-        def manager(self, value):
-            self.logger.manager = value
-
-        @property
-        def name(self):
-            return self.logger.name
-
-        def __repr__(self):
-            logger = self.logger
-            level = logger.getLevelName(logger.getEffectiveLevel())
-            return '<%s %s (%s)>' % (self.__class__.__name__, logger.name, level)
 
 logging.LoggerAdapter = BBLoggerAdapter
 
@@ -130,9 +129,25 @@ sys.modules['bb.fetch'] = sys.modules['bb.fetch2']
 
 # Messaging convenience functions
 def plain(*args):
+    """
+    Prints a message at "plain" level (higher level than a ``bb.note()``).
+
+    Arguments:
+
+    -  ``args``: one or more strings to print.
+    """
     mainlogger.plain(''.join(args))
 
 def debug(lvl, *args):
+    """
+    Prints a debug message.
+
+    Arguments:
+
+    -  ``lvl``: debug level. Higher value increases the debug level
+       (determined by ``bitbake -D``).
+    -  ``args``: one or more strings to print.
+    """
     if isinstance(lvl, str):
         mainlogger.warning("Passed invalid debug level '%s' to bb.debug", lvl)
         args = (lvl,) + args
@@ -140,27 +155,81 @@ def debug(lvl, *args):
     mainlogger.bbdebug(lvl, ''.join(args))
 
 def note(*args):
+    """
+    Prints a message at "note" level.
+
+    Arguments:
+
+    -  ``args``: one or more strings to print.
+    """
     mainlogger.info(''.join(args))
 
-#
-# A higher prioity note which will show on the console but isn't a warning
-#
-# Something is happening the user should be aware of but they probably did
-# something to make it happen
-#
 def verbnote(*args):
+    """
+    A higher priority note which will show on the console but isn't a warning.
+
+    Use in contexts when something is happening the user should be aware of but
+    they probably did something to make it happen.
+
+    Arguments:
+
+    -  ``args``: one or more strings to print.
+    """
     mainlogger.verbnote(''.join(args))
 
 #
 # Warnings - things the user likely needs to pay attention to and fix
 #
 def warn(*args):
+    """
+    Prints a warning message.
+
+    Arguments:
+
+    -  ``args``: one or more strings to print.
+    """
     mainlogger.warning(''.join(args))
 
+def warnonce(*args):
+    """
+    Prints a warning message like ``bb.warn()``, but only prints the message
+    once.
+
+    Arguments:
+
+    -  ``args``: one or more strings to print.
+    """
+    mainlogger.warnonce(''.join(args))
+
 def error(*args, **kwargs):
+    """
+    Prints an error message.
+
+    Arguments:
+
+    -  ``args``: one or more strings to print.
+    """
     mainlogger.error(''.join(args), extra=kwargs)
 
+def erroronce(*args):
+    """
+    Prints an error message like ``bb.error()``, but only prints the message
+    once.
+
+    Arguments:
+
+    -  ``args``: one or more strings to print.
+    """
+    mainlogger.erroronce(''.join(args))
+
 def fatal(*args, **kwargs):
+    """
+    Prints an error message and stops the BitBake execution.
+
+    Arguments:
+
+    -  ``args``: one or more strings to print.
+    """
     mainlogger.critical(''.join(args), extra=kwargs)
     raise BBHandledException()
 
@@ -189,7 +258,6 @@ def deprecated(func, name=None, advice=""):
 # For compatibility
 def deprecate_import(current, modulename, fromlist, renames = None):
     """Import objects from one module into another, wrapping them with a DeprecationWarning"""
-    import sys
 
     module = __import__(modulename, fromlist = fromlist)
     for position, objname in enumerate(fromlist):
@@ -203,3 +271,14 @@ def deprecate_import(current, modulename, fromlist, renames = None):
 
         setattr(sys.modules[current], newname, newobj)
 
+TaskData = namedtuple("TaskData", [
+    "pn",
+    "taskname",
+    "fn",
+    "deps",
+    "provides",
+    "taskhash",
+    "unihash",
+    "hashfn",
+    "taskhash_deps",
+])

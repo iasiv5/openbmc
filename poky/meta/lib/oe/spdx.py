@@ -1,4 +1,6 @@
 #
+# Copyright OpenEmbedded Contributors
+#
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
@@ -105,10 +107,13 @@ class _ListProperty(_Property):
                 obj._spdx[name] = []
             return obj._spdx[name]
 
+        def set_helper(obj, value):
+            obj._spdx[name] = list(value)
+
         def del_helper(obj):
             del obj._spdx[name]
 
-        attrs[name] = property(get_helper, None, del_helper)
+        attrs[name] = property(get_helper, set_helper, del_helper)
 
     def init(self, source):
         return [self.prop.init(o) for o in source]
@@ -196,6 +201,7 @@ class SPDXRelationship(SPDXObject):
     relatedSpdxElement = _String()
     relationshipType = _String()
     comment = _String()
+    annotations = _ObjectList(SPDXAnnotation)
 
 
 class SPDXExternalReference(SPDXObject):
@@ -210,11 +216,23 @@ class SPDXPackageVerificationCode(SPDXObject):
 
 
 class SPDXPackage(SPDXObject):
+    ALLOWED_CHECKSUMS = [
+        "SHA1",
+        "SHA224",
+        "SHA256",
+        "SHA384",
+        "SHA512",
+        "MD2",
+        "MD4",
+        "MD5",
+        "MD6",
+    ]
+
     name = _String()
     SPDXID = _String()
     versionInfo = _String()
     downloadLocation = _String(default="NOASSERTION")
-    packageSupplier = _String(default="NOASSERTION")
+    supplier = _String(default="NOASSERTION")
     homepage = _String()
     licenseConcluded = _String(default="NOASSERTION")
     licenseDeclared = _String(default="NOASSERTION")
@@ -228,6 +246,7 @@ class SPDXPackage(SPDXObject):
     hasFiles = _StringList()
     packageFileName = _String()
     annotations = _ObjectList(SPDXAnnotation)
+    checksums = _ObjectList(SPDXChecksum)
 
 
 class SPDXFile(SPDXObject):
@@ -300,7 +319,7 @@ class SPDXDocument(SPDXObject):
     def from_json(cls, f):
         return cls(**json.load(f))
 
-    def add_relationship(self, _from, relationship, _to, *, comment=None):
+    def add_relationship(self, _from, relationship, _to, *, comment=None, annotation=None):
         if isinstance(_from, SPDXObject):
             from_spdxid = _from.SPDXID
         else:
@@ -319,6 +338,9 @@ class SPDXDocument(SPDXObject):
 
         if comment is not None:
             r.comment = comment
+
+        if annotation is not None:
+            r.annotations.append(annotation)
 
         self.relationships.append(r)
 

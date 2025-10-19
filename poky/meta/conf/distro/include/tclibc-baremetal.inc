@@ -19,15 +19,15 @@ IMAGE_LINGUAS = ""
 LIBC_DEPENDENCIES = ""
 
 EXTRA_OECONF:pn-gcc-cross-${TARGET_ARCH}:append = " --without-headers"
-DEPENDS:remove:pn-meta-toolchain = "virtual/libc virtual/${TARGET_PREFIX}compilerlibs"
+DEPENDS:remove:pn-meta-toolchain = "virtual/libc virtual/compilerlibs"
 
 # certain compiler libs cannot be used without libc, avoid the dependence on compilerlibs
-BASEDEPENDS:remove:class-target = "virtual/${TARGET_PREFIX}compilerlibs"
+BASEDEPENDS:remove:class-target = "virtual/compilerlibs"
 
 TARGET_OS = "elf"
 TARGET_OS:arm = "eabi"
 
-TOOLCHAIN_HOST_TASK ?= "packagegroup-cross-canadian-${MACHINE} nativesdk-qemu"
+TOOLCHAIN_HOST_TASK ?= "packagegroup-cross-canadian-${MACHINE} nativesdk-qemu nativesdk-sdk-provides-dummy"
 TOOLCHAIN_HOST_TASK_ATTEMPTONLY ?= ""
 TOOLCHAIN_TARGET_TASK ?= "libgcc-dev"
 TOOLCHAIN_NEED_CONFIGSITE_CACHE:remove = "virtual/${MLPREFIX}libc zlib ncurses"

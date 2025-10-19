@@ -26,9 +26,6 @@ RPROVIDES:${PN}-flash += "virtual-obmc-flash-mgmt"
 RPROVIDES:${PN}-system += "virtual-obmc-system-mgmt"
 
 SUMMARY:${PN}-chassis = "Facebook Chassis"
-RDEPENDS:${PN}-chassis = " \
-        x86-power-control \
-        "
 
 SUMMARY:${PN}-extras:tiogapass = "Extra features for tiogapass"
 RDEPENDS:${PN}-extras:tiogapass = "phosphor-nvme"
@@ -45,15 +42,12 @@ RDEPENDS:${PN}-flash = " \
 
 RDEPENDS_PN_SYSTEM_EXTRAS = ""
 RDEPENDS_PN_SYSTEM_EXTRAS:fb-withhost = " \
-        fb-powerctrl \
         phosphor-ipmi-ipmb \
         fb-ipmi-oem \
-        phosphor-hostlogger \
         phosphor-sel-logger \
-        ipmitool \
         phosphor-post-code-manager \
         phosphor-host-postd \
-        tzdata-core \
+        phosphor-state-manager \
         "
 
 SUMMARY:${PN}-system = "Facebook System"
@@ -61,5 +55,8 @@ RDEPENDS:${PN}-system = " \
         entity-manager \
         dbus-sensors \
         phosphor-virtual-sensor \
+        phosphor-gpio-monitor-monitor \
+        tzdata-core \
+        fb-common-functions \
         ${RDEPENDS_PN_SYSTEM_EXTRAS} \
         "

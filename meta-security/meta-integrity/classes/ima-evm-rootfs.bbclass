@@ -8,6 +8,17 @@ IMA_EVM_KEY_DIR ?= "IMA_EVM_KEY_DIR_NOT_SET"
 # using the example key directory.
 IMA_EVM_PRIVKEY ?= "${IMA_EVM_KEY_DIR}/privkey_ima.pem"
 
+# Additional option when signing. Allows to for example provide
+# --keyid <id> or --keyid-from-cert <filename>.
+IMA_EVM_PRIVKEY_KEYID_OPT ?= ""
+
+# Password for the private key
+IMA_EVM_EVMCTL_KEY_PASSWORD ?= ""
+
+# Whether to create IMA signatures (--imasig) or hashes (--imahash).
+# Hashes are sufficient for IMA when EVM uses signatures.
+IMA_EVM_IMA_XATTR_OPT ?= "--imasig"
+
 # Public part of certificates (used for both IMA and EVM).
 # The default is okay when using the example key directory.
 IMA_EVM_X509 ?= "${IMA_EVM_KEY_DIR}/x509_ima.der"
@@ -17,12 +28,7 @@ IMA_EVM_X509 ?= "${IMA_EVM_KEY_DIR}/x509_ima.der"
 # with a .x509 suffix. See linux-%.bbappend for details.
 #
 # ima-local-ca.x509 is what ima-gen-local-ca.sh creates.
-IMA_EVM_ROOT_CA ?= ""
-
-# Sign all regular files by default.
-IMA_EVM_ROOTFS_SIGNED ?= ". -type f"
-# Hash nothing by default.
-IMA_EVM_ROOTFS_HASHED ?= ". -depth 0 -false"
+IMA_EVM_ROOT_CA ?= "${IMA_EVM_KEY_DIR}/ima-local-ca.pem"
 
 # Mount these file systems (identified via their mount point) with
 # the iversion flags (needed by IMA when allowing writing).
@@ -30,6 +36,9 @@ IMA_EVM_ROOTFS_IVERSION ?= ""
 
 # Avoid re-generating fstab when ima is enabled.
 WIC_CREATE_EXTRA_ARGS:append = "${@bb.utils.contains('DISTRO_FEATURES', 'ima', ' --no-fstab-update', '', d)}"
+
+# Add necessary tools (e.g., keyctl) to image
+IMAGE_INSTALL:append = "${@bb.utils.contains('DISTRO_FEATURES', 'ima', ' ima-evm-utils', '', d)}"
 
 ima_evm_sign_rootfs () {
     cd ${IMAGE_ROOTFS}
@@ -56,20 +65,53 @@ ima_evm_sign_rootfs () {
     #
     # Deduplicates iversion in case that this gets called more than once.
     if [ -f etc/fstab ]; then
-       perl -pi -e 's;(\S+)(\s+)(${@"|".join((d.getVar("IMA_EVM_ROOTFS_IVERSION", True) or "no-such-mount-point").split())})(\s+)(\S+)(\s+)(\S+);\1\2\3\4\5\6\7,iversion;; s/(,iversion)+/,iversion/;' etc/fstab
+       perl -pi -e 's;(\S+)(\s+)(${@"|".join((d.getVar("IMA_EVM_ROOTFS_IVERSION") or "no-such-mount-point").split())})(\s+)(\S+)(\s+)(\S+);\1\2\3\4\5\6\7,iversion;; s/(,iversion)+/,iversion/;' etc/fstab
     fi
 
-    # Sign file with private IMA key. EVM not supported at the moment.
-    bbnote "IMA/EVM: signing files 'find ${IMA_EVM_ROOTFS_SIGNED}' with private key '${IMA_EVM_PRIVKEY}'"
-    find ${IMA_EVM_ROOTFS_SIGNED} | xargs -d "\n" --no-run-if-empty --verbose evmctl ima_sign --key ${IMA_EVM_PRIVKEY}
-    bbnote "IMA/EVM: hashing files 'find ${IMA_EVM_ROOTFS_HASHED}'"
-    find ${IMA_EVM_ROOTFS_HASHED} | xargs -d "\n" --no-run-if-empty --verbose evmctl ima_hash
+    # Detect 32bit target to pass --m32 to evmctl by looking at libc
+    tmp="$(file "${IMAGE_ROOTFS}/lib/libc.so.6" | grep -o 'ELF .*-bit')"
+    if [ "${tmp}" = "ELF 32-bit" ]; then
+        evmctl_param="--m32"
+    elif [ "${tmp}" = "ELF 64-bit" ]; then
+        evmctl_param=""
+    else
+        bberror "Unknown target architecture bitness: '${tmp}'" >&2
+        exit 1
+    fi
+
+    export EVMCTL_KEY_PASSWORD=${IMA_EVM_EVMCTL_KEY_PASSWORD}
+
+    bbnote "IMA/EVM: Signing root filesystem at ${IMAGE_ROOTFS} with key ${IMA_EVM_PRIVKEY}"
+    evmctl sign ${IMA_EVM_IMA_XATTR_OPT} ${evmctl_param} --portable -a sha256 \
+        --key "${IMA_EVM_PRIVKEY}" ${IMA_EVM_PRIVKEY_KEYID_OPT} -r "${IMAGE_ROOTFS}"
+
+    # check signing key and signature verification key
+    if [ "${IMA_EVM_IMA_XATTR_OPT}" = "--imasig" ]; then
+        evmctl ima_verify ${evmctl_param} --key "${IMA_EVM_X509}" "${IMAGE_ROOTFS}/lib/libc.so.6" || exit 1
+    fi
+    evmctl verify     ${evmctl_param} --key "${IMA_EVM_X509}" "${IMAGE_ROOTFS}/lib/libc.so.6" || exit 1
 
     # Optionally install custom policy for loading by systemd.
-    if [ "${IMA_EVM_POLICY_SYSTEMD}" ]; then
+    if [ "${IMA_EVM_POLICY}" ]; then
         install -d ./${sysconfdir}/ima
         rm -f ./${sysconfdir}/ima/ima-policy
-        install "${IMA_EVM_POLICY_SYSTEMD}" ./${sysconfdir}/ima/ima-policy
+        install "${IMA_EVM_POLICY}" ./${sysconfdir}/ima/ima-policy
+
+        bbnote "IMA/EVM: Signing IMA policy with key ${IMA_EVM_PRIVKEY}"
+        evmctl sign --imasig ${evmctl_param} --portable -a sha256 \
+          --key "${IMA_EVM_PRIVKEY}" ${IMA_EVM_PRIVKEY_KEYID_OPT} "${IMAGE_ROOTFS}/etc/ima/ima-policy"
+    fi
+
+    # Optionally write the file names and ima and evm signatures into files
+    if [ "${IMA_FILE_SIGNATURES_FILE}" ]; then
+        getfattr -R -m security.ima --e hex --dump ./ 2>/dev/null | \
+          sed -n -e 's|# file: |/|p' -e 's|security.ima=|ima:|p' | \
+          sed '$!N;s/\n/ /' > ./${IMA_FILE_SIGNATURES_FILE}
+    fi
+    if [ "${EVM_FILE_SIGNATURES_FILE}" ]; then
+        getfattr -R -m security.evm --e hex --dump ./ 2>/dev/null | \
+          sed -n -e 's|# file: |/|p' -e 's|security.evm=|evm:|p' | \
+          sed '$!N;s/\n/ /' > ./${EVM_FILE_SIGNATURES_FILE}
     fi
 }
 

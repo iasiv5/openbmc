@@ -13,9 +13,6 @@ SRC_URI = "file://misc"
 SOURCE_DATE_EPOCH = "1613559011"
 
 PE = "1"
-PR = "r4"
-# remove at next version upgrade or when output changes
-HASHEQUIV_HASH_VERSION .= ".1"
 
 inherit allarch features_check
 
@@ -30,7 +27,9 @@ RDEPENDS:${PN} += "font-alias"
 
 do_install() {
 	install -d ${D}/${datadir}/fonts/X11/misc
-	install -m 0644 ${S}/* ${D}/${datadir}/fonts/X11/misc/
+	for file in ${S}/*.gz ${S}/fonts.dir; do
+		install -m 0644 "$file" ${D}/${datadir}/fonts/X11/misc/
+	done
 	# Pick a date/time as otherwise it would be the git checkout/modify time
 	touch -d @1613559011 ${D}/${datadir}/fonts/X11/misc/*
 	install -d ${D}/${libdir}/X11

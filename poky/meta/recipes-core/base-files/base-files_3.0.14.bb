@@ -1,8 +1,7 @@
 SUMMARY = "Miscellaneous files for the base system"
 DESCRIPTION = "The base-files package creates the basic system directory structure and provides a small set of key configuration files for the system."
 SECTION = "base"
-PR = "r89"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://licenses/GPL-2;md5=94d55d512a9ba36caa9b7df079bae19f"
 # Removed all license related tasks in this recipe as license.bbclass 
 # now deals with this. In order to get accurate licensing on to the image:
@@ -12,6 +11,7 @@ LIC_FILES_CHKSUM = "file://licenses/GPL-2;md5=94d55d512a9ba36caa9b7df079bae19f"
 
 SRC_URI = "file://rotation \
            file://nsswitch.conf \
+           file://nsswitch-resolved.conf \
            file://motd \
            file://hosts \
            file://host.conf \
@@ -24,12 +24,14 @@ SRC_URI = "file://rotation \
            file://share/dot.profile \
            file://licenses/GPL-2 \
            "
-S = "${WORKDIR}"
+
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 INHIBIT_DEFAULT_DEPS = "1"
 
 docdir:append = "/${P}"
-dirs1777 = "/tmp ${localstatedir}/volatile/tmp"
+dirs1777 = "/tmp ${localstatedir}/${@bb.utils.contains('FILESYSTEM_PERMS_TABLES', 'files/fs-perms-volatile-tmp.txt', 'volatile/', '', d)}tmp"
 dirs2775 = ""
 dirs555 = "/sys /proc"
 dirs755 = "/boot /dev ${base_bindir} ${base_sbindir} ${base_libdir} \
@@ -42,7 +44,7 @@ dirs755 = "/boot /dev ${base_bindir} ${base_sbindir} ${base_libdir} \
            ${localstatedir}/backups ${localstatedir}/lib \
            ${localstatedir}/lib/misc ${localstatedir}/spool \
            ${localstatedir}/volatile \
-           ${localstatedir}/${@'volatile/' if oe.types.boolean('${VOLATILE_LOG_DIR}') else ''}log \
+           ${localstatedir}/${@bb.utils.contains('FILESYSTEM_PERMS_TABLES', 'files/fs-perms-volatile-log.txt', 'volatile/', '', d)}log \
            /home ${prefix}/src ${localstatedir}/local \
            /media"
 
@@ -53,7 +55,8 @@ dirs755-lsb = "/srv  \
                ${prefix}/lib/locale"
 dirs2775-lsb = "/var/mail"
 
-volatiles = "${@'log' if oe.types.boolean('${VOLATILE_LOG_DIR}') else ''} tmp"
+volatiles = "${@bb.utils.contains('FILESYSTEM_PERMS_TABLES', 'files/fs-perms-volatile-log.txt', 'log', '', d)} \
+             ${@bb.utils.contains('FILESYSTEM_PERMS_TABLES', 'files/fs-perms-volatile-tmp.txt', 'tmp', '', d)}"
 conffiles = "${sysconfdir}/debian_version ${sysconfdir}/host.conf \
              ${sysconfdir}/issue /${sysconfdir}/issue.net \
              ${sysconfdir}/nsswitch.conf ${sysconfdir}/profile \
@@ -68,29 +71,6 @@ conffiles = "${sysconfdir}/debian_version ${sysconfdir}/host.conf \
 hostname = "${MACHINE}"
 
 BASEFILESISSUEINSTALL ?= "do_install_basefilesissue"
-
-# In previous versions of base-files, /run was a softlink to /var/run and the
-# directory was located in /var/volatlie/run.  Also, /var/lock was a softlink
-# to /var/volatile/lock which is where the real directory was located.  Now,
-# /run and /run/lock are the real directories.  If we are upgrading, we may
-# need to remove the symbolic links first before we create the directories.
-# Otherwise the directory creation will fail and we will have circular symbolic
-# links.
-# 
-pkg_preinst:${PN} () {
-    #!/bin/sh -e
-    if [ x"$D" = "x" ]; then
-        if [ -h "/var/lock" ]; then
-            # Remove the symbolic link
-            rm -f /var/lock
-        fi
-
-        if [ -h "/run" ]; then
-            # Remove the symbolic link
-            rm -f /run
-        fi
-    fi     
-}
 
 do_install () {
 	for d in ${dirs555}; do
@@ -112,23 +92,23 @@ do_install () {
 	ln -snf ../run ${D}${localstatedir}/run
 	ln -snf ../run/lock ${D}${localstatedir}/lock
 
-	install -m 0644 ${WORKDIR}/hosts ${D}${sysconfdir}/hosts
+	install -m 0644 ${S}/hosts ${D}${sysconfdir}/hosts
 	${BASEFILESISSUEINSTALL}
 
-	rotation=`cat ${WORKDIR}/rotation`
+	rotation=`cat ${S}/rotation`
 	if [ "$rotation" != "0" ]; then
- 		install -m 0644 ${WORKDIR}/rotation ${D}${sysconfdir}/rotation
+ 		install -m 0644 ${S}/rotation ${D}${sysconfdir}/rotation
 	fi
 
-	install -m 0644 ${WORKDIR}/fstab ${D}${sysconfdir}/fstab
-	install -m 0644 ${WORKDIR}/profile ${D}${sysconfdir}/profile
+	install -m 0644 ${S}/fstab ${D}${sysconfdir}/fstab
+	install -m 0644 ${S}/profile ${D}${sysconfdir}/profile
 	sed -i 's#ROOTHOME#${ROOT_HOME}#' ${D}${sysconfdir}/profile
         sed -i 's#@BINDIR@#${bindir}#g' ${D}${sysconfdir}/profile
-	install -m 0644 ${WORKDIR}/shells ${D}${sysconfdir}/shells
-	install -m 0755 ${WORKDIR}/share/dot.profile ${D}${sysconfdir}/skel/.profile
-	install -m 0755 ${WORKDIR}/share/dot.bashrc ${D}${sysconfdir}/skel/.bashrc
-	install -m 0644 ${WORKDIR}/host.conf ${D}${sysconfdir}/host.conf
-	install -m 0644 ${WORKDIR}/motd ${D}${sysconfdir}/motd
+	install -m 0644 ${S}/shells ${D}${sysconfdir}/shells
+	install -m 0755 ${S}/share/dot.profile ${D}${sysconfdir}/skel/.profile
+	install -m 0755 ${S}/share/dot.bashrc ${D}${sysconfdir}/skel/.bashrc
+	install -m 0644 ${S}/host.conf ${D}${sysconfdir}/host.conf
+	install -m 0644 ${S}/motd ${D}${sysconfdir}/motd
 
 	ln -sf /proc/mounts ${D}${sysconfdir}/mtab
 
@@ -137,15 +117,19 @@ do_install () {
 		echo ${hostname} > ${D}${sysconfdir}/hostname
 		echo "127.0.1.1 ${hostname}" >> ${D}${sysconfdir}/hosts
 	fi
+
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'false', 'true', d)}; then
+		sed -i '/^::1/s/ localhost//' ${D}${sysconfdir}/hosts
+	fi
 }
 
 do_install:append:libc-glibc () {
-	install -m 0644 ${WORKDIR}/nsswitch.conf ${D}${sysconfdir}/nsswitch.conf
+	install -m 0644 ${S}/${@bb.utils.contains('DISTRO_FEATURES', 'systemd systemd-resolved', 'nsswitch-resolved.conf', 'nsswitch.conf', d)} ${D}${sysconfdir}/nsswitch.conf
 }
 
 DISTRO_VERSION[vardepsexclude] += "DATE"
 do_install_basefilesissue () {
-	install -m 644 ${WORKDIR}/issue*  ${D}${sysconfdir}
+	install -m 644 ${S}/issue*  ${D}${sysconfdir}
         if [ -n "${DISTRO_NAME}" ]; then
 		printf "${DISTRO_NAME} " >> ${D}${sysconfdir}/issue
 		printf "${DISTRO_NAME} " >> ${D}${sysconfdir}/issue.net
@@ -182,3 +166,5 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 CONFFILES:${PN} = "${sysconfdir}/fstab ${@['', '${sysconfdir}/hostname ${sysconfdir}/hosts'][(d.getVar('hostname') != '')]} ${sysconfdir}/shells"
 CONFFILES:${PN} += "${sysconfdir}/motd ${sysconfdir}/nsswitch.conf ${sysconfdir}/profile"
+
+INSANE_SKIP:${PN} += "empty-dirs"

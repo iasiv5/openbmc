@@ -4,7 +4,6 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384
 RDEPENDS:${PN} += "${VIRTUAL-RUNTIME_base-utils}"
 RRECOMMENDS:${PN} = "${VIRTUAL-RUNTIME_base-utils-syslog}"
 
-PR = "r4"
 
 inherit allarch
 
@@ -18,36 +17,41 @@ SRC_URI = "file://init \
            file://e2fs \
            file://debug \
            file://lvm \
+           file://overlayroot \
           "
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 do_install() {
     install -d ${D}/init.d
 
     # base
-    install -m 0755 ${WORKDIR}/init ${D}/init
-    install -m 0755 ${WORKDIR}/nfsrootfs ${D}/init.d/85-nfsrootfs
-    install -m 0755 ${WORKDIR}/rootfs ${D}/init.d/90-rootfs
-    install -m 0755 ${WORKDIR}/finish ${D}/init.d/99-finish
+    install -m 0755 ${S}/init ${D}/init
+    install -m 0755 ${S}/nfsrootfs ${D}/init.d/85-nfsrootfs
+    install -m 0755 ${S}/rootfs ${D}/init.d/90-rootfs
+    install -m 0755 ${S}/finish ${D}/init.d/99-finish
 
     # exec
-    install -m 0755 ${WORKDIR}/exec ${D}/init.d/89-exec
+    install -m 0755 ${S}/exec ${D}/init.d/89-exec
 
     # mdev
-    install -m 0755 ${WORKDIR}/mdev ${D}/init.d/01-mdev
+    install -m 0755 ${S}/mdev ${D}/init.d/01-mdev
 
     # udev
-    install -m 0755 ${WORKDIR}/udev ${D}/init.d/01-udev
+    install -m 0755 ${S}/udev ${D}/init.d/01-udev
 
     # e2fs
-    install -m 0755 ${WORKDIR}/e2fs ${D}/init.d/10-e2fs
+    install -m 0755 ${S}/e2fs ${D}/init.d/10-e2fs
 
     # debug
-    install -m 0755 ${WORKDIR}/debug ${D}/init.d/00-debug
+    install -m 0755 ${S}/debug ${D}/init.d/00-debug
 
     # lvm
-    install -m 0755 ${WORKDIR}/lvm ${D}/init.d/09-lvm
+    install -m 0755 ${S}/lvm ${D}/init.d/09-lvm
+
+    # overlayroot needs to run after rootfs module but before finish
+    install -m 0755 ${S}/overlayroot ${D}/init.d/91-overlayroot
 
     # Create device nodes expected by some kernels in initramfs
     # before even executing /init.
@@ -64,6 +68,7 @@ PACKAGES = "${PN}-base \
             initramfs-module-rootfs \
             initramfs-module-debug \
             initramfs-module-lvm \
+            initramfs-module-overlayroot \
            "
 
 FILES:${PN}-base = "/init /init.d/99-finish /dev"
@@ -107,3 +112,7 @@ FILES:initramfs-module-debug = "/init.d/00-debug"
 SUMMARY:initramfs-module-lvm = "initramfs lvm rootfs support"
 RDEPENDS:initramfs-module-lvm = "${PN}-base"
 FILES:initramfs-module-lvm = "/init.d/09-lvm"
+
+SUMMARY:initramfs-module-overlayroot = "initramfs support for mounting a RW overlay on top of a RO root filesystem"
+RDEPENDS:initramfs-module-overlayroot = "${PN}-base initramfs-module-rootfs"
+FILES:initramfs-module-overlayroot = "/init.d/91-overlayroot"

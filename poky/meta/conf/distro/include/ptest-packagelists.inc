@@ -4,112 +4,158 @@
 # ptests which take less than ~30s each
 #
 PTESTS_FAST = "\
-    acl-ptest \
-    apr-ptest \
-    apr-util-ptest \
-    attr-ptest \
-    bluez5-ptest \
-    bzip2-ptest \
-    diffstat-ptest \
-    diffutils-ptest \
-    elfutils-ptest \
-    ethtool-ptest \
-    expat-ptest \
-    flex-ptest \
-    gawk-ptest \
-    gdbm-ptest \
-    gdk-pixbuf-ptest \
-    gettext-ptest \
-    glib-networking-ptest \
-    gzip-ptest \
-    json-glib-ptest \
-    libconvert-asn1-perl-ptest \
-    liberror-perl-ptest \
-    libnl-ptest \
-    libmodule-build-perl-ptest \
-    libpcre-ptest \
-    libssh2-ptest \
-    libtimedate-perl-ptest \
-    libtest-needs-perl-ptest \
-    liburi-perl-ptest \
-    libusb1-ptest \
-    libxml-namespacesupport-perl-ptest \
-    libxml-perl-ptest \
-    libxml-parser-perl-ptest \
-    libxml-sax-perl-ptest \
-    libxml-sax-base-perl-ptest \
-    libxml-simple-perl-ptest \
-    libxml2-ptest \
-    lzo-ptest \
-    m4-ptest \
-    nettle-ptest \
-    openssl-ptest \
-    opkg-ptest \
-    pango-ptest \
-    parted-ptest \
-    python3-atomicwrites-ptest \
-    python3-hypothesis-ptest \
-    python3-jinja2-ptest \
-    python3-markupsafe-ptest \
-    python3-more-itertools-ptest \
-    python3-pluggy-ptest \
-    python3-wcwidth-ptest \
-    qemu-ptest \
-    quilt-ptest \
-    sed-ptest \
-    slang-ptest \
-    wayland-ptest \
-    zlib-ptest \
+    acl \
+    apr-util \
+    attr \
+    babeltrace \
+    babeltrace2 \
+    bc \
+    bluez5 \
+    busybox \
+    cpio \
+    diffstat \
+    diffutils \
+    ethtool \
+    expat \
+    expect \
+    findutils \
+    flex \
+    gawk \
+    gdbm \
+    gdk-pixbuf \
+    glib-networking \
+    gzip \
+    json-c \
+    json-glib \
+    libconvert-asn1-perl \
+    libexif \
+    libgpg-error\
+    libnl \
+    libpcre \
+    libssh2 \
+    libtest-fatal-perl \
+    libtest-needs-perl \
+    libtest-warnings-perl \
+    libtimedate-perl \
+    libtry-tiny-perl \
+    libusb1 \
+    libxml-namespacesupport-perl \
+    libxml-parser-perl \
+    libxml-perl \
+    libxml-sax-base-perl \
+    libxml-sax-perl \
+    libxml-simple-perl \
+    libxml2 \
+    libxmlb \
+    logrotate \
+    lua \
+    lzo \
+    m4 \
+    nettle \
+    opkg \
+    popt \
+    python3-atomicwrites \
+    python3-attrs \
+    python3-bcrypt \
+    python3-calver \
+    python3-hypothesis \
+    python3-idna \
+    python3-jinja2 \
+    python3-jsonpointer \
+    python3-libarchive-c \
+    python3-license-expression \
+    python3-mako \
+    python3-markupsafe \
+    python3-more-itertools \
+    python3-packaging \
+    python3-pluggy \
+    python3-pefile \
+    python3-pyasn1 \
+    python3-pytz \
+    python3-pyyaml \
+    python3-rpds-py \
+    python3-trove-classifiers \
+    python3-uritools \
+    python3-wcwidth \
+    python3-webcolors \
+    qemu \
+    quilt \
+    rpm-sequoia \
+    sed \
+    slang \
+    wayland \
+    xz \
+    zlib \
 "
-PTESTS_FAST:remove:mips64 = "qemu-ptest"
-PTESTS_PROBLEMS:append:mips64 = "qemu-ptest"
+PTESTS_FAST:remove:mips64 = "qemu"
+PTESTS_PROBLEMS:append:mips64 = " qemu"
+PTESTS_FAST:remove:riscv32 = "qemu"
+PTESTS_PROBLEMS:append:riscv32 = " qemu"
 
 PTESTS_SLOW = "\
-    babeltrace-ptest \
-    babeltrace2-ptest \
-    busybox-ptest \
-    coreutils-ptest \
-    dbus-test-ptest \
-    e2fsprogs-ptest \
-    glib-2.0-ptest \
-    gstreamer1.0-ptest \
-    libevent-ptest \
-    lttng-tools-ptest \
-    openssh-ptest \
-    openssl-ptest \
-    perl-ptest \
-    python3-ptest \
-    strace-ptest \
-    tcl-ptest \
-    util-linux-ptest \
-    valgrind-ptest \
+    apr \
+    bzip2 \
+    coreutils \
+    curl \
+    dbus \
+    e2fsprogs \
+    elfutils \
+    gettext \
+    glib-2.0 \
+    gnutls \
+    gstreamer1.0 \
+    less \
+    libevent \
+    libgcrypt \
+    libmodule-build-perl \
+    libseccomp \
+    lttng-tools \
+    lz4 \
+    openssh \
+    openssl \
+    parted \
+    perl \
+    python3 \
+    python3-cffi \
+    python3-click \
+    python3-cryptography \
+    python3-numpy \
+    python3-xmltodict \
+    strace \
+    tar \
+    tcl \
+    tcl8 \
+    util-linux \
 "
 
-PTESTS_SLOW:remove:riscv64 = "valgrind-ptest"
-PTESTS_PROBLEMS:append:riscv64 = "valgrind-ptest"
+# python3 ptests hang on qemuriscv64
+PTESTS_SLOW:remove:riscv64 = "python3"
+PTESTS_PROBLEMS:append:riscv64 = " python3"
+PTESTS_SLOW:remove:riscv32 = "lttng-tools strace "
+PTESTS_PROBLEMS:append:riscv32 = " lttng-tools strace"
+PTESTS_SLOW:append:libc-musl = " libc-test"
 
-#    ruby-ptest \ # Timeout
-#    lz4-ptest \ # Needs a rewrite
-#    rt-tests-ptest \ # Needs to be checked whether it runs at all
-#    bash-ptest \ # Test outcomes are non-deterministic by design
-#    ifupdown-ptest \ # Tested separately in lib/oeqa/selftest/cases/imagefeatures.py
-#    mdadm-ptest \ # Tests rely on non-deterministic sleep() amounts
-#    libinput-ptest \ # Tests need an unloaded system to be reliable
-#    libpam-ptest \ # Needs pam DISTRO_FEATURE
-#    numactl-ptest \ # qemu not (yet) configured for numa; all tests are skipped
-#    libseccomp-ptest \ #  tests failed: 38; add to slow tests once addressed
-#    python3-numpy-ptest \ # requires even more RAM and (possibly) disk space; multiple failures
+# These tests don't yet pass for riscv64
+PTESTS_SLOW:remove:riscv64 = "tcl tcl8 python3-cffi strace lttng-tools python3-numpy perl"
+PTESTS_PROBLEMS:append:riscv64 = " tcl tcl8 python3-cffi strace lttng-tools python3-numpy perl"
+
+#    ruby \ # Timeout
+#    rt-tests \ # Needs to be checked whether it runs at all
+#    bash \ # Test outcomes are non-deterministic by design
+#    ifupdown \ # Tested separately in lib/oeqa/selftest/cases/imagefeatures.py
+#    libinput \ # Tests need an unloaded system to be reliable
+#    libpam \ # Needs pam DISTRO_FEATURE
+#    mdadm \ # tests are flaky in AB.
+#    numactl \ # qemu not (yet) configured for numa; all tests are skipped
 
 PTESTS_PROBLEMS = "\
-    ruby-ptest \
-    lz4-ptest \
-    rt-tests-ptest \
-    bash-ptest \
-    ifupdown-ptest \
-    mdadm-ptest \
-    libinput-ptest \
-    libpam-ptest \
-    libseccomp-ptest \
-    numactl-ptest \
-    python3-numpy-ptest \
+    ruby \
+    rt-tests \
+    bash \
+    ifupdown \
+    libinput \
+    libpam \
+    mdadm \
+    numactl \
+    python3-license-expression \
 "

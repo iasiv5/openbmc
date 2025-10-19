@@ -16,7 +16,7 @@ RDEPENDS:${PN} += "bash"
 FILES:${PN} += "${datadir}/phosphor-ipmi-flash/config-bmccpld.json"
 FILES:${PN} += "${datadir}/phosphor-ipmi-flash/config-mbcpld.json"
 
-SRC_URI:append:kudo = " \
+SRC_URI += " \
     file://phosphor-ipmi-flash-bmccpld-update.service \
     file://phosphor-ipmi-flash-mbcpld-update.service \
     file://config-bmccpld.json \
@@ -24,16 +24,16 @@ SRC_URI:append:kudo = " \
     "
 
 SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE:${PN}:append:kudo = " \
+SYSTEMD_SERVICE:${PN} += " \
     phosphor-ipmi-flash-bmccpld-update.service \
     phosphor-ipmi-flash-mbcpld-update.service \
     "
 
 do_install () {
     install -d ${D}${datadir}/phosphor-ipmi-flash
-    install -m 0644 ${WORKDIR}/config-bmccpld.json ${D}${datadir}/phosphor-ipmi-flash
-    install -m 0644 ${WORKDIR}/config-mbcpld.json ${D}${datadir}/phosphor-ipmi-flash
+    install -m 0644 ${UNPACKDIR}/config-bmccpld.json ${D}${datadir}/phosphor-ipmi-flash
+    install -m 0644 ${UNPACKDIR}/config-mbcpld.json ${D}${datadir}/phosphor-ipmi-flash
     install -d ${D}${systemd_system_unitdir}
-    install -m 0644 ${WORKDIR}/phosphor-ipmi-flash-bmccpld-update.service ${D}${systemd_system_unitdir}
-    install -m 0644 ${WORKDIR}/phosphor-ipmi-flash-mbcpld-update.service ${D}${systemd_system_unitdir}
+    install -m 0644 ${UNPACKDIR}/phosphor-ipmi-flash-bmccpld-update.service ${D}${systemd_system_unitdir}
+    install -m 0644 ${UNPACKDIR}/phosphor-ipmi-flash-mbcpld-update.service ${D}${systemd_system_unitdir}
 }

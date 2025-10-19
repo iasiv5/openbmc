@@ -4,17 +4,15 @@ DESCRIPTION = "Intel OEM IPMI commands"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=a6a4edad4aed50f39a66d098d74b265b"
 
-SRC_URI = "git://github.com/openbmc/intel-ipmi-oem"
-SRCREV = "9e58cfe1ba5ca5bcd5263b50730c5a231eabdd4f"
+SRC_URI = "git://github.com/openbmc/intel-ipmi-oem;branch=master;protocol=https"
+SRCREV = "0f1397f024ffd88ccd0a33e21ed5faa9e6182873"
 
 S = "${WORKDIR}/git"
 PV = "0.1+git${SRCPV}"
 
-DEPENDS = "boost phosphor-ipmi-host phosphor-logging systemd intel-dbus-interfaces libgpiod"
+DEPENDS = "boost phosphor-ipmi-host phosphor-logging systemd phosphor-dbus-interfaces libgpiod libtinyxml2"
 
-inherit cmake obmc-phosphor-ipmiprovider-symlink
-
-EXTRA_OECMAKE="-DENABLE_TEST=0 -DYOCTO=1"
+inherit meson obmc-phosphor-ipmiprovider-symlink pkgconfig
 
 LIBRARY_NAMES = "libzinteloemcmds.so"
 

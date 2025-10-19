@@ -29,8 +29,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -40,12 +40,23 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/fan0_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "cooled_by",
+                        "fType": "cooling"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis"
                     ]
                 }
             ]
@@ -69,8 +80,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -80,12 +91,23 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/fan1_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "cooled_by",
+                        "fType": "cooling"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis"
                     ]
                 }
             ]
@@ -109,8 +131,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -120,12 +142,23 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/fan2_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "cooled_by",
+                        "fType": "cooling"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis"
                     ]
                 }
             ]
@@ -149,8 +182,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -160,12 +193,23 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/fan3_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "cooled_by",
+                        "fType": "cooling"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis"
                     ]
                 }
             ]
@@ -177,8 +221,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -188,12 +232,23 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/enclosure_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "throttling",
+                        "fType": "throttled_by"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/control/host0/power_cap"
                     ]
                 },
                 {
@@ -204,6 +259,34 @@
                     },
                     "paths":
                     [
+                        "/xyz/openbmc_project/sensors/power/ps0_input_power",
+                        "/xyz/openbmc_project/sensors/voltage/ps0_input_voltage",
+                        "/xyz/openbmc_project/sensors/current/ps0_output_current",
+                        "/xyz/openbmc_project/sensors/voltage/ps0_output_voltage",
+                        "/xyz/openbmc_project/sensors/temperature/ps0_temp0",
+                        "/xyz/openbmc_project/sensors/temperature/ps0_temp1",
+                        "/xyz/openbmc_project/sensors/temperature/ps0_temp2",
+                        "/xyz/openbmc_project/sensors/power/ps1_input_power",
+                        "/xyz/openbmc_project/sensors/voltage/ps1_input_voltage",
+                        "/xyz/openbmc_project/sensors/current/ps1_output_current",
+                        "/xyz/openbmc_project/sensors/voltage/ps1_output_voltage",
+                        "/xyz/openbmc_project/sensors/temperature/ps1_temp0",
+                        "/xyz/openbmc_project/sensors/temperature/ps1_temp1",
+                        "/xyz/openbmc_project/sensors/temperature/ps1_temp2",
+                        "/xyz/openbmc_project/sensors/power/ps2_input_power",
+                        "/xyz/openbmc_project/sensors/voltage/ps2_input_voltage",
+                        "/xyz/openbmc_project/sensors/current/ps2_output_current",
+                        "/xyz/openbmc_project/sensors/voltage/ps2_output_voltage",
+                        "/xyz/openbmc_project/sensors/temperature/ps2_temp0",
+                        "/xyz/openbmc_project/sensors/temperature/ps2_temp1",
+                        "/xyz/openbmc_project/sensors/temperature/ps2_temp2",
+                        "/xyz/openbmc_project/sensors/power/ps3_input_power",
+                        "/xyz/openbmc_project/sensors/voltage/ps3_input_voltage",
+                        "/xyz/openbmc_project/sensors/current/ps3_output_current",
+                        "/xyz/openbmc_project/sensors/voltage/ps3_output_voltage",
+                        "/xyz/openbmc_project/sensors/temperature/ps3_temp0",
+                        "/xyz/openbmc_project/sensors/temperature/ps3_temp1",
+                        "/xyz/openbmc_project/sensors/temperature/ps3_temp2",
                         "/xyz/openbmc_project/sensors/altitude/Altitude",
                         "/xyz/openbmc_project/sensors/fan_tach/fan0_0",
                         "/xyz/openbmc_project/sensors/fan_tach/fan0_1",
@@ -218,8 +301,8 @@
                 {
                     "types":
                     {
-                        "rType": "inventory",
-                        "fType": "assembly"
+                        "rType": "contained_by",
+                        "fType": "containing"
                     },
                     "paths":
                     [
@@ -242,18 +325,9 @@
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc/tod_battery",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/tpm",
-                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/panel0"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "chassis",
-                        "fType": "inventory"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/panel0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/panel1",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot1",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot2",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot3",
@@ -264,6 +338,9 @@
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot8",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot9",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot10",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot11",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot12",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot12/pcie_card12",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme0",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme1",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme2",
@@ -273,7 +350,21 @@
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme6",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme7",
                         "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme8",
-                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme9"
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme9",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/connector0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/connector1",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/connector2",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/connector3",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/connector4",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/connector5",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/dp_connector0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/dp_connector1",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc/ethernet0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc/ethernet1",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc/usb2_conn0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc/usb2_conn1",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc/usb3_conn0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc/usb3_conn1"
                     ]
                 }
             ]
@@ -285,13 +376,24 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/partition_system_attention_indicator",
                         "/xyz/openbmc_project/led/groups/platform_system_attention_indicator"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/enclosure_identify"
                     ]
                 }
             ]
@@ -303,8 +405,25 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/power/ps0_input_power",
+                        "/xyz/openbmc_project/sensors/voltage/ps0_input_voltage",
+                        "/xyz/openbmc_project/sensors/current/ps0_output_current",
+                        "/xyz/openbmc_project/sensors/voltage/ps0_output_voltage",
+                        "/xyz/openbmc_project/sensors/temperature/ps0_temp0",
+                        "/xyz/openbmc_project/sensors/temperature/ps0_temp1",
+                        "/xyz/openbmc_project/sensors/temperature/ps0_temp2"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -314,8 +433,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -325,8 +444,8 @@
                 {
                     "types":
                     {
-                        "rType": "inventory",
-                        "fType": "chassis"
+                        "rType": "powered_by",
+                        "fType": "powering"
                     },
                     "paths":
                     [
@@ -342,8 +461,25 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/power/ps1_input_power",
+                        "/xyz/openbmc_project/sensors/voltage/ps1_input_voltage",
+                        "/xyz/openbmc_project/sensors/current/ps1_output_current",
+                        "/xyz/openbmc_project/sensors/voltage/ps1_output_voltage",
+                        "/xyz/openbmc_project/sensors/temperature/ps1_temp0",
+                        "/xyz/openbmc_project/sensors/temperature/ps1_temp1",
+                        "/xyz/openbmc_project/sensors/temperature/ps1_temp2"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -353,8 +489,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -364,8 +500,8 @@
                 {
                     "types":
                     {
-                        "rType": "inventory",
-                        "fType": "chassis"
+                        "rType": "powered_by",
+                        "fType": "powering"
                     },
                     "paths":
                     [
@@ -381,8 +517,25 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/power/ps2_input_power",
+                        "/xyz/openbmc_project/sensors/voltage/ps2_input_voltage",
+                        "/xyz/openbmc_project/sensors/current/ps2_output_current",
+                        "/xyz/openbmc_project/sensors/voltage/ps2_output_voltage",
+                        "/xyz/openbmc_project/sensors/temperature/ps2_temp0",
+                        "/xyz/openbmc_project/sensors/temperature/ps2_temp1",
+                        "/xyz/openbmc_project/sensors/temperature/ps2_temp2"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -392,8 +545,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -403,8 +556,8 @@
                 {
                     "types":
                     {
-                        "rType": "inventory",
-                        "fType": "chassis"
+                        "rType": "powered_by",
+                        "fType": "powering"
                     },
                     "paths":
                     [
@@ -420,8 +573,25 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/power/ps3_input_power",
+                        "/xyz/openbmc_project/sensors/voltage/ps3_input_voltage",
+                        "/xyz/openbmc_project/sensors/current/ps3_output_current",
+                        "/xyz/openbmc_project/sensors/voltage/ps3_output_voltage",
+                        "/xyz/openbmc_project/sensors/temperature/ps3_temp0",
+                        "/xyz/openbmc_project/sensors/temperature/ps3_temp1",
+                        "/xyz/openbmc_project/sensors/temperature/ps3_temp2"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -431,8 +601,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -442,40 +612,12 @@
                 {
                     "types":
                     {
-                        "rType": "inventory",
-                        "fType": "chassis"
+                        "rType": "powered_by",
+                        "fType": "powering"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/inventory/system/chassis"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "system/chassis/motherboard/pcieslot0",
-            "endpoints":
-            [
-                {
-                    "types":
-                    {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c01_fault"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c01_identify"
                     ]
                 }
             ]
@@ -487,23 +629,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c02_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c01_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c02_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c01_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot1/pcie_card1"
                     ]
                 }
             ]
@@ -515,23 +668,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c03_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c02_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c03_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c02_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot2/pcie_card2"
                     ]
                 }
             ]
@@ -543,23 +707,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c04_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c03_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c04_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c03_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot3/pcie_card3"
                     ]
                 }
             ]
@@ -571,23 +746,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c05_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c04_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c05_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c04_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot4/pcie_card4"
                     ]
                 }
             ]
@@ -599,23 +785,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c06_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c05_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c06_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c05_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot5/pcie_card5"
                     ]
                 }
             ]
@@ -627,23 +824,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c07_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c06_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c07_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c06_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot6/pcie_card6"
                     ]
                 }
             ]
@@ -655,23 +863,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c08_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c07_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c08_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c07_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot7/pcie_card7"
                     ]
                 }
             ]
@@ -683,23 +902,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c09_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c08_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c09_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c08_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot8/pcie_card8"
                     ]
                 }
             ]
@@ -711,23 +941,34 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c10_fault"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c09_fault"
                     ]
                 },
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/pcieslot_c10_identify"
+                        "/xyz/openbmc_project/led/groups/pcieslot_c09_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot9/pcie_card9"
                     ]
                 }
             ]
@@ -739,8 +980,47 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/pcieslot_c10_fault"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/pcieslot_c10_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot10/pcie_card10"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot11",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -750,25 +1030,371 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/pcieslot_c11_identify"
                     ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot11/pcie_card11"
+                    ]
                 }
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card0/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot12",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot12/pcie_card12"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot1/pcie_card1",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C1_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C1_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot1/pcie_card1/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot1/pcie_card1/cxp_bot"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot2/pcie_card2",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C2_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C2_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot2/pcie_card2/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot2/pcie_card2/cxp_bot"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot3/pcie_card3",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C3_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C3_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot3/pcie_card3/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot3/pcie_card3/cxp_bot"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot4/pcie_card4",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C4_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C4_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot4/pcie_card4/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot4/pcie_card4/cxp_bot"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot5/pcie_card5",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C5_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C5_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot5/pcie_card5/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot5/pcie_card5/cxp_bot"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot6/pcie_card6",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C6_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C6_Local_Temp"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot7/pcie_card7",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C7_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C7_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot7/pcie_card7/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot7/pcie_card7/cxp_bot"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot8/pcie_card8",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C8_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C8_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot8/pcie_card8/c8_connector0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot8/pcie_card8/c8_connector1",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot8/pcie_card8/c8_connector2",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot8/pcie_card8/c8_connector3",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot8/pcie_card8/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot8/pcie_card8/cxp_bot"
+		    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot9/pcie_card9",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C9_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C9_Local_Temp"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot10/pcie_card10",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C10_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C10_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot10/pcie_card10/c10_connector0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot10/pcie_card10/c10_connector1",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot10/pcie_card10/c10_connector2",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot10/pcie_card10/c10_connector3",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot10/pcie_card10/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot10/pcie_card10/cxp_bot"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot11/pcie_card11",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C11_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIe_Cable_Card_C11_Local_Temp"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connected_to",
+                        "fType": "connecting"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot11/pcie_card11/c11_connector0",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot11/pcie_card11/c11_connector1",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot11/pcie_card11/c11_connector2",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot11/pcie_card11/c11_connector3",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot11/pcie_card11/cxp_top",
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/pcieslot11/pcie_card11/cxp_bot"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/pcieslot1/pcie_card1/cxp_top",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -778,8 +1404,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -789,14 +1415,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card0/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot1/pcie_card1/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -806,8 +1432,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -817,14 +1443,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card1/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot2/pcie_card2/cxp_top",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -834,8 +1460,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -845,14 +1471,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card1/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot2/pcie_card2/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -862,8 +1488,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -873,14 +1499,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card2/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot3/pcie_card3/cxp_top",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -890,8 +1516,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -901,14 +1527,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card2/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot3/pcie_card3/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -918,8 +1544,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -929,14 +1555,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card3/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot4/pcie_card4/cxp_top",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -946,8 +1572,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -957,14 +1583,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card3/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot4/pcie_card4/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -974,8 +1600,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -985,14 +1611,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card4/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot5/pcie_card5/cxp_top",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1002,8 +1628,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1013,14 +1639,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card4/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot5/pcie_card5/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1030,8 +1656,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1041,14 +1667,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card6/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot7/pcie_card7/cxp_top",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1058,8 +1684,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1069,14 +1695,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card6/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot7/pcie_card7/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1086,8 +1712,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1097,14 +1723,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card7/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot8/pcie_card8/cxp_top",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1114,8 +1740,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1125,14 +1751,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card7/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot8/pcie_card8/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1142,8 +1768,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1153,14 +1779,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card9/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot10/pcie_card10/cxp_top",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1170,8 +1796,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1181,14 +1807,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card9/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot10/pcie_card10/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1198,8 +1824,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1209,14 +1835,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card10/cxp_top",
+            "path": "system/chassis/motherboard/pcieslot11/pcie_card11/cxp_top",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1226,8 +1852,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1237,14 +1863,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/pcie_cable_card10/cxp_bot",
+            "path": "system/chassis/motherboard/pcieslot11/pcie_card11/cxp_bot",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1254,8 +1880,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1271,8 +1897,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1282,12 +1908,24 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/planar_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/PCIE_0_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/PCIE_1_Temp"
                     ]
                 }
             ]
@@ -1299,8 +1937,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1310,8 +1948,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1327,8 +1965,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1338,12 +1976,23 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/rtc_battery_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/voltage/Battery_Voltage"
                     ]
                 }
             ]
@@ -1355,8 +2004,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1366,8 +2015,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1383,8 +2032,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1394,8 +2043,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1411,8 +2060,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1422,8 +2071,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1439,8 +2088,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1450,8 +2099,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1467,8 +2116,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1478,8 +2127,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1495,8 +2144,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1506,8 +2155,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1523,8 +2172,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1534,8 +2183,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1551,8 +2200,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1562,8 +2211,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1579,8 +2228,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1590,8 +2239,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1607,8 +2256,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1618,8 +2267,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1635,8 +2284,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1646,8 +2295,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1663,8 +2312,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1674,8 +2323,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1691,8 +2340,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1702,8 +2351,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1719,8 +2368,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1730,8 +2379,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1747,8 +2396,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1758,8 +2407,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1775,8 +2424,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1786,8 +2435,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1803,8 +2452,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1814,8 +2463,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -1825,42 +2474,14 @@
             ]
         },
         {
-            "path": "system/chassis/motherboard/power_distribution",
+            "path": "system/chassis/motherboard/dcm1/cpu0",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/power_distribution_fault"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/power_distribution_identify"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "system/chassis/motherboard/cpu0",
-            "endpoints":
-            [
-                {
-                    "types":
-                    {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1870,25 +2491,36 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/cpu0_c14_identify"
                     ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "power_managing",
+                        "fType": "power_managed_by"
+                    },
+                    "paths":
+                    [
+                        "/org/open_power/control/occ0"
+                    ]
                 }
             ]
         },
         {
-            "path": "system/chassis/motherboard/cpu1",
+            "path": "system/chassis/motherboard/dcm1/cpu1",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1898,25 +2530,36 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/cpu0_c14_identify"
                     ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "power_managing",
+                        "fType": "power_managed_by"
+                    },
+                    "paths":
+                    [
+                        "/org/open_power/control/occ1"
+                    ]
                 }
             ]
         },
         {
-            "path": "system/chassis/motherboard/cpu2",
+            "path": "system/chassis/motherboard/dcm2/cpu0",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1926,25 +2569,36 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/cpu1_c19_identify"
                     ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "power_managing",
+                        "fType": "power_managed_by"
+                    },
+                    "paths":
+                    [
+                        "/org/open_power/control/occ2"
+                    ]
                 }
             ]
         },
         {
-            "path": "system/chassis/motherboard/cpu3",
+            "path": "system/chassis/motherboard/dcm2/cpu1",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1954,25 +2608,36 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/cpu1_c19_identify"
                     ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "power_managing",
+                        "fType": "power_managed_by"
+                    },
+                    "paths":
+                    [
+                        "/org/open_power/control/occ3"
+                    ]
                 }
             ]
         },
         {
-            "path": "system/chassis/motherboard/cpu4",
+            "path": "system/chassis/motherboard/dcm3/cpu0",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -1982,25 +2647,36 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/cpu2_c56_identify"
                     ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "power_managing",
+                        "fType": "power_managed_by"
+                    },
+                    "paths":
+                    [
+                        "/org/open_power/control/occ4"
+                    ]
                 }
             ]
         },
         {
-            "path": "system/chassis/motherboard/cpu5",
+            "path": "system/chassis/motherboard/dcm3/cpu1",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2010,25 +2686,36 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/cpu2_c56_identify"
                     ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "power_managing",
+                        "fType": "power_managed_by"
+                    },
+                    "paths":
+                    [
+                        "/org/open_power/control/occ5"
+                    ]
                 }
             ]
         },
         {
-            "path": "system/chassis/motherboard/cpu6",
+            "path": "system/chassis/motherboard/dcm0/cpu0",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2038,25 +2725,36 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/cpu3_c61_identify"
                     ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "power_managing",
+                        "fType": "power_managed_by"
+                    },
+                    "paths":
+                    [
+                        "/org/open_power/control/occ6"
+                    ]
                 }
             ]
         },
         {
-            "path": "system/chassis/motherboard/cpu7",
+            "path": "system/chassis/motherboard/dcm0/cpu1",
             "endpoints":
             [
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2066,12 +2764,23 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/cpu3_c61_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "power_managing",
+                        "fType": "power_managed_by"
+                    },
+                    "paths":
+                    [
+                        "/org/open_power/control/occ7"
                     ]
                 }
             ]
@@ -2083,8 +2792,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2094,12 +2803,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme0_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm3/cpu1"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme0/drive0"
                     ]
                 }
             ]
@@ -2111,8 +2842,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2122,12 +2853,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme1_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme1/drive1"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm3/cpu0"
                     ]
                 }
             ]
@@ -2139,8 +2892,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2150,12 +2903,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme2_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme2/drive2"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm0/cpu1"
                     ]
                 }
             ]
@@ -2167,8 +2942,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2178,12 +2953,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme3_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme3/drive3"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm0/cpu1"
                     ]
                 }
             ]
@@ -2195,8 +2992,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2206,12 +3003,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme4_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme4/drive4"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm0/cpu0"
                     ]
                 }
             ]
@@ -2223,8 +3042,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2234,12 +3053,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme5_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme5/drive5"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm3/cpu1"
                     ]
                 }
             ]
@@ -2251,8 +3092,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2262,12 +3103,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme6_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme6/drive6"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm3/cpu0"
                     ]
                 }
             ]
@@ -2279,8 +3142,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2290,12 +3153,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme7_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme7/drive7"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm0/cpu1"
                     ]
                 }
             ]
@@ -2307,8 +3192,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2318,12 +3203,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme8_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme8/drive8"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm0/cpu1"
                     ]
                 }
             ]
@@ -2335,8 +3242,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2346,12 +3253,34 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/nvme9_identify"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "contained_by",
+                        "fType": "containing"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/nvme9/drive9"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm0/cpu0"
                     ]
                 }
             ]
@@ -2363,8 +3292,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2374,8 +3303,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2391,8 +3320,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2402,8 +3331,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2419,8 +3348,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2430,8 +3359,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2447,8 +3376,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2458,8 +3387,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2475,8 +3404,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2486,8 +3415,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2503,8 +3432,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2514,8 +3443,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2531,8 +3460,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2542,8 +3471,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2559,8 +3488,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2570,8 +3499,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2587,8 +3516,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2598,8 +3527,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2615,8 +3544,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2626,8 +3555,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2643,8 +3572,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2654,8 +3583,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2671,8 +3600,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2682,8 +3611,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2699,8 +3628,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2710,8 +3639,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2727,8 +3656,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2738,8 +3667,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2755,8 +3684,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2766,8 +3695,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2783,8 +3712,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2794,8 +3723,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2811,8 +3740,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2822,8 +3751,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2839,8 +3768,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2850,8 +3779,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2867,8 +3796,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2878,8 +3807,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2895,8 +3824,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2906,8 +3835,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2923,8 +3852,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2934,8 +3863,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2951,8 +3880,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2962,8 +3891,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -2979,8 +3908,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -2990,8 +3919,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3007,8 +3936,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3018,8 +3947,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3035,8 +3964,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3046,8 +3975,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3063,8 +3992,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3074,8 +4003,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3091,8 +4020,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3102,8 +4031,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3119,8 +4048,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3130,8 +4059,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3147,8 +4076,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3158,8 +4087,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3175,8 +4104,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3186,8 +4115,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3203,8 +4132,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3214,8 +4143,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3231,8 +4160,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3242,8 +4171,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3259,8 +4188,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3270,8 +4199,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3287,8 +4216,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3298,8 +4227,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3315,8 +4244,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3326,8 +4255,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3343,8 +4272,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3354,8 +4283,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3371,8 +4300,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3382,8 +4311,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3399,8 +4328,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3410,8 +4339,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3427,8 +4356,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3438,8 +4367,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3455,8 +4384,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3466,8 +4395,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3483,8 +4412,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3494,8 +4423,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3511,8 +4440,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3522,8 +4451,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3539,8 +4468,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3550,8 +4479,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3567,8 +4496,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3578,8 +4507,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3595,8 +4524,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3606,8 +4535,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3623,8 +4552,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3634,8 +4563,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3651,8 +4580,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3662,8 +4591,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3679,8 +4608,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3690,8 +4619,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3707,8 +4636,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3718,8 +4647,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3735,8 +4664,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3746,8 +4675,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3763,8 +4692,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3774,8 +4703,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3791,8 +4720,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3802,8 +4731,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3819,8 +4748,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3830,8 +4759,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3847,8 +4776,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3858,8 +4787,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3875,8 +4804,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3886,8 +4815,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3903,8 +4832,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3914,12 +4843,12 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
-                        "/xyz/openbmc_project/led/groups/ddim55_identify"
+                        "/xyz/openbmc_project/led/groups/ddimm55_identify"
                     ]
                 }
             ]
@@ -3931,8 +4860,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3942,8 +4871,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3959,8 +4888,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3970,8 +4899,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -3987,8 +4916,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -3998,8 +4927,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -4015,8 +4944,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -4026,8 +4955,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -4043,8 +4972,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -4054,8 +4983,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -4071,8 +5000,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -4082,8 +5011,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -4099,8 +5028,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -4110,8 +5039,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -4127,8 +5056,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -4138,180 +5067,12 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
                         "/xyz/openbmc_project/led/groups/ddimm63_identify"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "system/chassis/motherboard/capi_conn0",
-            "endpoints":
-            [
-                {
-                    "types":
-                    {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector0_fault"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector0_identify"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "system/chassis/motherboard/capi_conn1",
-            "endpoints":
-            [
-                {
-                    "types":
-                    {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector1_fault"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector1_identify"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "system/chassis/motherboard/capi_conn2",
-            "endpoints":
-            [
-                {
-                    "types":
-                    {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector2_fault"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector2_identify"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "system/chassis/motherboard/capi_conn3",
-            "endpoints":
-            [
-                {
-                    "types":
-                    {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector3_fault"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector3_identify"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "system/chassis/motherboard/capi_conn4",
-            "endpoints":
-            [
-                {
-                    "types":
-                    {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector4_fault"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector4_identify"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "system/chassis/motherboard/capi_conn5",
-            "endpoints":
-            [
-                {
-                    "types":
-                    {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector5_fault"
-                    ]
-                },
-                {
-                    "types":
-                    {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
-                    },
-                    "paths":
-                    [
-                        "/xyz/openbmc_project/led/groups/opencapi_connector5_identify"
                     ]
                 }
             ]
@@ -4323,8 +5084,8 @@
                 {
                     "types":
                     {
-                        "rType": "fault_inventory_object",
-                        "fType": "fault_led_group"
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
                     },
                     "paths":
                     [
@@ -4334,8 +5095,8 @@
                 {
                     "types":
                     {
-                        "rType": "identify_inventory_object",
-                        "fType": "identify_led_group"
+                        "rType": "identified_by",
+                        "fType": "identifying"
                     },
                     "paths":
                     [
@@ -4344,33 +5105,567 @@
                 }
             ]
         },
-        {                                                              
+        {
             "path": "system/chassis/motherboard/dasd_backplane/panel0",
-            "endpoints":                                  
-            [                                             
-                {                                         
-                    "types":                              
-                    {                                                        
-                        "rType": "fault_inventory_object",                   
-                        "fType": "fault_led_group"                           
-                    },                                                       
-                    "paths":                                                 
-                    [                                                        
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
                         "/xyz/openbmc_project/led/groups/op_panel_base_fault"
-                    ]                                        
-                },                                           
-                {                                            
-                    "types":                                 
-                    {                                                           
-                        "rType": "identify_inventory_object",                   
-                        "fType": "identify_led_group"                           
-                    },                                                          
-                    "paths":                                                    
-                    [                                                           
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
                         "/xyz/openbmc_project/led/groups/op_panel_base_identify"
                     ]
-                }                                         
-            ]                                     
+                },
+                {
+                    "types":
+                    {
+                        "rType": "inventory",
+                        "fType": "sensors"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/sensors/temperature/Ambient_0_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/Ambient_1_Temp",
+                        "/xyz/openbmc_project/sensors/temperature/Ambient_2_Temp",
+                        "/xyz/openbmc_project/sensors/pressure/Station_Pressure",
+                        "/xyz/openbmc_project/sensors/humidity/Relative_Humidity"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "system/chassis/motherboard/dasd_backplane/panel1",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/op_panel_lcd_fault"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/op_panel_lcd_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/connector0",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector0_fault"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector0_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/connector1",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector1_fault"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector1_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/connector2",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector2_fault"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector2_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/connector3",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector3_fault"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector3_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/connector4",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector4_fault"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector4_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/connector5",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "fault_identified_by",
+                        "fType": "fault_identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector5_fault"
+                    ]
+                },
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/opencapi_connector5_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/bmc/ethernet0",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/ethernet0_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/bmc/ethernet1",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/ethernet1_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/bmc/usb2_conn0",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/usb2_conn0_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/bmc/usb2_conn1",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/usb2_conn1_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/bmc/usb3_conn0",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/usb3_conn0_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/bmc/usb3_conn1",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/usb3_conn1_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/dasd_backplane/dp_connector0",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/dp_connector0_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/dasd_backplane/dp_connector1",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "identified_by",
+                        "fType": "identifying"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/led/groups/dp_connector1_identify"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot1",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm0/cpu0"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot2",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm2/cpu1"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot3",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm2/cpu1"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot4",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm2/cpu0"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot5",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm2/cpu0"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot6",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm1/cpu1"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot7",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm1/cpu1"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot8",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm1/cpu1"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot9",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm1/cpu0"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot10",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm1/cpu0"
+                    ]
+                }
+            ]
+        },
+        {
+            "path": "/system/chassis/motherboard/pcieslot11",
+            "endpoints":
+            [
+                {
+                    "types":
+                    {
+                        "rType": "connecting",
+                        "fType": "connected_to"
+                    },
+                    "paths":
+                    [
+                        "/xyz/openbmc_project/inventory/system/chassis/motherboard/dcm1/cpu0"
+                    ]
+                }
+            ]
         }
-    ]                       
-}     
+    ]
+}

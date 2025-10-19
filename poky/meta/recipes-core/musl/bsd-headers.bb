@@ -15,7 +15,8 @@ do_compile[noexec] = "1"
 
 INHIBIT_DEFAULT_DEPS = "1"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 do_install() {
 	install -Dm 0644 ${S}/sys-queue.h ${D}${includedir}/sys/queue.h
@@ -27,5 +28,5 @@ do_install() {
 #
 
 COMPATIBLE_HOST = ".*-musl.*"
-RDEPENDS:${PN}-dev = ""
+DEV_PKG_DEPENDENCY = ""
 RRECOMMENDS:${PN}-dbg = "${PN}-dev (= ${EXTENDPKGV})"

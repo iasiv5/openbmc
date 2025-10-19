@@ -1,16 +1,8 @@
-HOMEPAGE = "http://github.com/openbmc/smbios-mdr"
 SUMMARY = "Extract CPU and Memory Inventory from SMSMBIOS Table and PECI"
 DESCRIPTION = "This package parses SMBIOS tables, reads Intel CPU PIROM and PECI and provides a dedicated IPMI blob to receive SMBIOS tables sent from LinuxBoot"
-
-PR = "r1"
-PV = "1.0+git${SRCPV}"
-
+HOMEPAGE = "http://github.com/openbmc/smbios-mdr"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=e3fc50a88d0a364313df4b21ef20c29e"
-
-inherit cmake pkgconfig systemd
-inherit obmc-phosphor-ipmiprovider-symlink
-
 DEPENDS += " \
     boost \
     systemd \
@@ -18,22 +10,28 @@ DEPENDS += " \
     phosphor-dbus-interfaces \
     phosphor-logging \
     "
+SRCREV = "ac4cb328365c7073a54da815c7f2362f1c64bf01"
 
-PACKAGECONFIG ?= "cpuinfo"
-PACKAGECONFIG[smbios-no-dimm] = "-DDIMM_DBUS=OFF,-DDIMM_DBUS=ON"
-PACKAGECONFIG[cpuinfo] = "-DCPU_INFO=ON,-DCPU_INFO=OFF,libpeci i2c-tools"
-PACKAGECONFIG[smbios-ipmi-blob] = "-DIPMI_BLOB=ON,-DIPMI_BLOB=OFF,phosphor-ipmi-blobs"
+PACKAGECONFIG[smbios-no-dimm] = "-Ddimm-dbus=disabled,-Ddimm-dbus=enabled"
+PACKAGECONFIG[cpuinfo] = "-Dcpuinfo=enabled,-Dcpuinfo=disabled,i2c-tools"
+PACKAGECONFIG[cpuinfo-peci] = "-Dcpuinfo-peci=enabled,-Dcpuinfo-peci=disabled,libpeci"
+PACKAGECONFIG[smbios-ipmi-blob] = "-Dsmbios-ipmi-blob=enabled,-Dsmbios-ipmi-blob=disabled,phosphor-ipmi-blobs"
+PACKAGECONFIG[assoc-trim-path] = "-Dassoc-trim-path=enabled,-Dassoc-trim-path=disabled"
+PACKAGECONFIG[tpm-dbus] = "-Dtpm-dbus=enabled,-Dtpm-dbus=disabled"
+PACKAGECONFIG[firmware-inventory-dbus] = "-Dfirmware-inventory-dbus=enabled,-Dfirmware-inventory-dbus=disabled"
+PACKAGECONFIG[expose-firmware-component-name] = "-Dexpose-firmware-component-name=enabled,-Dexpose-firmware-component-name=disabled"
+PACKAGECONFIG[slot-drive-presence] = "-Dslot-drive-presence=enabled,-Dslot-drive-presence=disabled"
+PACKAGECONFIG[dimm-only-locator] = "-Ddimm-only-locator=enabled,-Ddimm-only-locator=disabled"
 
-EXTRA_OECMAKE = "-DYOCTO=ON"
+PV = "1.0+git${SRCPV}"
+PR = "r1"
+
+SRC_URI = "git://github.com/openbmc/smbios-mdr.git;branch=master;protocol=https"
 
 S = "${WORKDIR}/git"
-SRC_URI = "git://github.com/openbmc/smbios-mdr.git"
-SRCREV = "5f2d627553b6d8fbe4472eb0c15cbff6bc2888d3"
-
 SYSTEMD_SERVICE:${PN} += "smbios-mdrv2.service"
 SYSTEMD_SERVICE:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'cpuinfo', 'xyz.openbmc_project.cpuinfo.service', '', d)}"
 
-FILES:${PN}:append = " ${libdir}/ipmid-providers/lib*${SOLIBS}"
-FILES:${PN}:append = " ${libdir}/blob-ipmid/lib*${SOLIBS}"
-FILES:${PN}-dev:append  = " ${libdir}/ipmid-providers/lib*${SOLIBSDEV}"
-BLOBIPMI_PROVIDER_LIBRARY += "${@bb.utils.contains('PACKAGECONFIG', 'smbios-ipmi-blob', 'libsmbiosstore.so', '', d)}"
+inherit meson pkgconfig systemd
+
+FILES:${PN} += "${libdir}/blob-ipmid"

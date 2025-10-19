@@ -77,7 +77,7 @@ class SFTP(FetchMethod):
         else:
             ud.basename = os.path.basename(ud.path)
 
-        ud.localfile = d.expand(urllib.parse.unquote(ud.basename))
+        ud.localfile = ud.basename
 
     def download(self, ud, d):
         """Fetch urls"""
@@ -103,7 +103,7 @@ class SFTP(FetchMethod):
         if path[:3] == '/~/':
             path = path[3:]
 
-        remote = '%s%s:%s' % (user, urlo.hostname, path)
+        remote = '"%s%s:%s"' % (user, urlo.hostname, path)
 
         cmd = '%s %s %s %s' % (basecmd, port, remote, lpath)
 

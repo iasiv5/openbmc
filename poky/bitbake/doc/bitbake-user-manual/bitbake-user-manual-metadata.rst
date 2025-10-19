@@ -104,15 +104,15 @@ Line Joining
 
 Outside of :ref:`functions <bitbake-user-manual/bitbake-user-manual-metadata:functions>`,
 BitBake joins any line ending in
-a backslash character ("\") with the following line before parsing
-statements. The most common use for the "\" character is to split
+a backslash character ("\\") with the following line before parsing
+statements. The most common use for the "\\" character is to split
 variable assignments over multiple lines, as in the following example::
 
    FOO = "bar \
           baz \
           qaz"
 
-Both the "\" character and the newline
+Both the "\\" character and the newline
 character that follow it are removed when joining lines. Thus, no
 newline characters end up in the value of ``FOO``.
 
@@ -125,7 +125,7 @@ Consider this additional example where the two assignments both assign
 
 .. note::
 
-   BitBake does not interpret escape sequences like "\n" in variable
+   BitBake does not interpret escape sequences like "\\n" in variable
    values. For these to have an effect, the value must be passed to some
    utility that interprets escape sequences, such as
    ``printf`` or ``echo -n``.
@@ -159,7 +159,7 @@ behavior::
    C = "qux"
    *At this point, ${A} equals "qux bar baz"*
    B = "norf"
-   *At this point, ${A} equals "norf baz"\*
+   *At this point, ${A} equals "norf baz"*
 
 Contrast this behavior with the
 :ref:`bitbake-user-manual/bitbake-user-manual-metadata:immediate variable
@@ -195,22 +195,45 @@ value. However, if ``A`` is not set, the variable is set to "aval".
 Setting a weak default value (??=)
 ----------------------------------
 
-It is possible to use a "weaker" assignment than in the previous section
-by using the "??=" operator. This assignment behaves identical to "?="
-except that the assignment is made at the end of the parsing process
-rather than immediately. Consequently, when multiple "??=" assignments
-exist, the last one is used. Also, any "=" or "?=" assignment will
-override the value set with "??=". Here is an example::
+The weak default value of a variable is the value which that variable
+will expand to if no value has been assigned to it via any of the other
+assignment operators. The "??=" operator takes effect immediately, replacing
+any previously defined weak default value. Here is an example::
 
-   A ??= "somevalue"
-   A ??= "someothervalue"
+   W ??= "x"
+   A := "${W}" # Immediate variable expansion
+   W ??= "y"
+   B := "${W}" # Immediate variable expansion
+   W ??= "z"
+   C = "${W}"
+   W ?= "i"
 
-If ``A`` is set before the above statements are
-parsed, the variable retains its value. If ``A`` is not set, the
-variable is set to "someothervalue".
+After parsing we will have::
 
-Again, this assignment is a "lazy" or "weak" assignment because it does
-not occur until the end of the parsing process.
+   A = "x"
+   B = "y"
+   C = "i"
+   W = "i"
+
+Appending and prepending non-override style will not substitute the weak
+default value, which means that after parsing::
+
+   W ??= "x"
+   W += "y"
+
+we will have::
+
+   W = " y"
+
+On the other hand, override-style appends/prepends/removes are applied after
+any active weak default value has been substituted::
+
+   W ??= "x"
+   W:append = "y"
+
+After parsing we will have::
+
+   W = "xy"
 
 Immediate variable expansion (:=)
 ---------------------------------
@@ -296,6 +319,10 @@ The variable ``D`` becomes "dvaladditional data".
 
    You must control all spacing when you use the override syntax.
 
+.. note::
+
+   The overrides are applied in this order, ":append", ":prepend", ":remove".
+
 It is also possible to append and prepend to shell functions and
 BitBake-style Python functions. See the ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:shell functions`" and ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:bitbake-style python functions`"
 sections for examples.
@@ -307,7 +334,8 @@ Removal (Override Style Syntax)
 
 You can remove values from lists using the removal override style
 syntax. Specifying a value for removal causes all occurrences of that
-value to be removed from the variable.
+value to be removed from the variable. Unlike ":append" and ":prepend",
+there is no need to add a leading or trailing space to the value.
 
 When you use this syntax, BitBake expects one or more strings.
 Surrounding spaces and spacing are preserved. Here is an example::
@@ -327,6 +355,28 @@ The variable ``FOO`` becomes
 
 Like ":append" and ":prepend", ":remove" is applied at variable
 expansion time.
+
+.. note::
+
+   The overrides are applied in this order, ":append", ":prepend", ":remove".
+   This implies it is not possible to re-append previously removed strings.
+   However, one can undo a ":remove" by using an intermediate variable whose
+   content is passed to the ":remove" so that modifying the intermediate
+   variable equals to keeping the string in::
+
+     FOOREMOVE = "123 456 789"
+     FOO:remove = "${FOOREMOVE}"
+     ...
+     FOOREMOVE = "123 789"
+
+   This expands to ``FOO:remove = "123 789"``.
+
+.. note::
+
+   Override application order may not match variable parse history, i.e.
+   the output of ``bitbake -e`` may contain ":remove" before ":append",
+   but the result will be removed string, because ":remove" is handled
+   last.
 
 Override Style Operation Advantages
 -----------------------------------
@@ -397,6 +447,12 @@ them. One extremely common application is to attach some brief
 documentation to a BitBake variable as follows::
 
    CACHE[doc] = "The directory holding the cache of the metadata."
+
+.. note::
+
+   Variable flag names starting with an underscore (``_``) character
+   are allowed but are ignored by ``d.getVarFlags("VAR")``
+   in Python code. Such flag names are used internally by BitBake.
 
 Inline Python Variable Expansion
 --------------------------------
@@ -510,8 +566,8 @@ variable.
 
 .. note::
 
-   Overrides can only use lower-case characters. Additionally,
-   underscores are not permitted in override names as they are used to
+   Overrides can only use lower-case characters, digits and dashes.
+   In particular, colons are not permitted in override names as they are used to
    separate overrides from each other and from the variable name.
 
 -  *Selecting a Variable:* The :term:`OVERRIDES` variable is a
@@ -523,14 +579,14 @@ variable.
 
       OVERRIDES = "architecture:os:machine"
       TEST = "default"
-      TEST_os = "osspecific"
-      TEST_nooverride = "othercondvalue"
+      TEST:os = "osspecific"
+      TEST:nooverride = "othercondvalue"
 
    In this example, the :term:`OVERRIDES`
    variable lists three overrides: "architecture", "os", and "machine".
    The variable ``TEST`` by itself has a default value of "default". You
    select the os-specific version of the ``TEST`` variable by appending
-   the "os" override to the variable (i.e. ``TEST_os``).
+   the "os" override to the variable (i.e. ``TEST:os``).
 
    To better understand this, consider a practical example that assumes
    an OpenEmbedded metadata-based Linux kernel recipe file. The
@@ -567,7 +623,7 @@ variable.
 -  *Setting a Variable for a Single Task:* BitBake supports setting a
    variable just for the duration of a single task. Here is an example::
 
-      FOO_task-configure = "val 1"
+      FOO:task-configure = "val 1"
       FOO:task-compile = "val 2"
 
    In the
@@ -584,6 +640,16 @@ variable.
    "``:prepend``") as shown in the following example::
 
       EXTRA_OEMAKE:prepend:task-compile = "${PARALLEL_MAKE} "
+
+.. note::
+
+   Before BitBake 1.52 (Honister 3.4), the syntax for :term:`OVERRIDES`
+   used ``_`` instead of ``:``, so you will still find a lot of documentation
+   using ``_append``, ``_prepend``, and ``_remove``, for example.
+
+   For details, see the
+   :yocto_docs:`Overrides Syntax Changes </migration-guides/migration-3.4.html#override-syntax-changes>`
+   section in the Yocto Project manual migration notes.
 
 Key Expansion
 -------------
@@ -688,7 +754,9 @@ share the task.
 This section presents the mechanisms BitBake provides to allow you to
 share functionality between recipes. Specifically, the mechanisms
 include ``include``, ``inherit``, :term:`INHERIT`, and ``require``
-directives.
+directives. There is also a higher-level abstraction called
+``configuration fragments`` that is enabled with ``addfragments``
+directive.
 
 Locating Include and Class Files
 --------------------------------
@@ -704,6 +772,8 @@ current directory for ``include`` and ``require`` directives.
 In order for include and class files to be found by BitBake, they need
 to be located in a "classes" subdirectory that can be found in
 :term:`BBPATH`.
+
+.. _ref-bitbake-user-manual-metadata-inherit:
 
 ``inherit`` Directive
 ---------------------
@@ -743,19 +813,43 @@ An advantage with the inherit directive as compared to both the
 :ref:`include <bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>` and :ref:`require <bitbake-user-manual/bitbake-user-manual-metadata:\`\`require\`\` directive>`
 directives is that you can inherit class files conditionally. You can
 accomplish this by using a variable expression after the ``inherit``
-statement. Here is an example::
+statement.
 
-   inherit ${VARNAME}
+For inheriting classes conditionally, using the :ref:`inherit_defer
+<ref-bitbake-user-manual-metadata-inherit-defer>` directive is advised as
+:ref:`inherit_defer <ref-bitbake-user-manual-metadata-inherit-defer>` is
+evaluated at the end of parsing.
+
+.. _ref-bitbake-user-manual-metadata-inherit-defer:
+
+``inherit_defer`` Directive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`inherit_defer <ref-bitbake-user-manual-metadata-inherit-defer>`
+directive works like the :ref:`inherit
+<ref-bitbake-user-manual-metadata-inherit>` directive, except that it is only
+evaluated at the end of parsing. Its usage is recommended when a conditional
+expression is used.
+
+This allows conditional expressions to be evaluated "late", meaning changes to
+the variable after the line is parsed will take effect. With the :ref:`inherit
+<ref-bitbake-user-manual-metadata-inherit>` directive this is not the case.
+
+Here is an example::
+
+   inherit_defer ${VARNAME}
 
 If ``VARNAME`` is
-going to be set, it needs to be set before the ``inherit`` statement is
+going to be set, it needs to be set before the ``inherit_defer`` statement is
 parsed. One way to achieve a conditional inherit in this case is to use
 overrides::
 
    VARIABLE = ""
    VARIABLE:someoverride = "myclass"
 
-Another method is by using anonymous Python. Here is an example::
+Another method is by using :ref:`anonymous Python
+<bitbake-user-manual/bitbake-user-manual-metadata:Anonymous Python Functions>`.
+Here is an example::
 
    python () {
        if condition == value:
@@ -764,11 +858,14 @@ Another method is by using anonymous Python. Here is an example::
            d.setVar('VARIABLE', '')
    }
 
-Alternatively, you could use an in-line Python expression in the
+Alternatively, you could use an inline Python expression in the
 following form::
 
-   inherit ${@'classname' if condition else ''}
-   inherit ${@functionname(params)}
+   inherit_defer ${@'classname' if condition else ''}
+
+Or::
+
+   inherit_defer ${@bb.utils.contains('VARIABLE', 'something', 'classname', '', d)}
 
 In all cases, if the expression evaluates to an
 empty string, the statement does not trigger a syntax error because it
@@ -802,6 +899,33 @@ definitions::
    expected to exist, you should use :ref:`require <require-inclusion>` instead
    of include . Doing so makes sure that an error is produced if the file cannot
    be found.
+
+``include_all`` Directive
+-------------------------
+
+The ``include_all`` directive works like the :ref:`include
+<bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>`
+directive but will include all of the files that match the specified path in
+the enabled layers (layers part of :term:`BBLAYERS`).
+
+For example, let's say a ``maintainers.inc`` file is present in different layers
+and is conventionally placed in the ``conf/distro/include`` directory of each
+layer. In that case the ``include_all`` directive can be used to include
+the ``maintainers.inc`` file for all of these layers::
+
+   include_all conf/distro/include/maintainers.inc
+
+In other words, the ``maintainers.inc`` file for each layer is included through
+the :ref:`include <bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>`
+directive.
+
+BitBake will iterate through the colon-separated :term:`BBPATH` list to look for
+matching files to include, from left to right. As a consequence, matching files
+are included in that order.
+
+As the ``include_all`` directive uses the :ref:`include
+<bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>`
+directive in the background, no error is produced if no files are matched.
 
 .. _require-inclusion:
 
@@ -867,6 +991,50 @@ the ``autotools`` and ``pkgconfig`` classes::
 
    INHERIT += "autotools pkgconfig"
 
+``addfragments`` Directive
+--------------------------
+
+This directive allows fine-tuning local configurations with configuration
+snippets contained in layers in a structured, controlled way. Typically it would
+go into ``bitbake.conf``, for example::
+
+   addfragments conf/fragments OE_FRAGMENTS OE_FRAGMENTS_METADATA_VARS
+
+``addfragments`` takes three parameters:
+
+-  path prefix for fragment files inside the layer file tree that bitbake
+   uses to construct full paths to the fragment files
+
+-  name of variable that holds the list of enabled fragments in an
+   active build
+
+-  name of variable that contains a list of variable names containing
+   fragment-specific metadata (such as descriptions)
+
+This allows listing enabled configuration fragments in ``OE_FRAGMENTS``
+variable like this::
+
+   OE_FRAGMENTS = "core/domain/somefragment core/someotherfragment anotherlayer/anotherdomain/anotherfragment"
+
+Fragment names listed in this variable must be prefixed by the layer name
+where a fragment file is located, defined by :term:`BBFILE_COLLECTIONS` in ``layer.conf``.
+
+The implementation then expands this list into
+:ref:`require <bitbake-user-manual/bitbake-user-manual-metadata:\`\`require\`\` directive>`
+directives with full paths to respective layers::
+
+   require /path/to/core-layer/conf/fragments/domain/somefragment.conf
+   require /path/to/core-layer/conf/fragments/someotherfragment.conf
+   require /path/to/another-layer/conf/fragments/anotherdomain/anotherfragment.conf
+
+The variable containing a list of fragment metadata variables could look like this::
+
+   OE_FRAGMENTS_METADATA_VARS = "BB_CONF_FRAGMENT_SUMMARY BB_CONF_FRAGMENT_DESCRIPTION"
+
+The implementation will add a flag containing the fragment name to each of those variables
+when parsing fragments, so that the variables are namespaced by fragment name, and do not override
+each other when several fragments are enabled.
+
 Functions
 =========
 
@@ -894,7 +1062,7 @@ Regardless of the type of function, you can only define them in class
 Shell Functions
 ---------------
 
-Functions written in shell script and executed either directly as
+Functions written in shell script are executed either directly as
 functions, tasks, or both. They can also be called by other shell
 functions. Here is an example shell function definition::
 
@@ -944,7 +1112,7 @@ Running ``do_foo`` prints the following::
    Overrides and override-style operators can be applied to any shell
    function, not just :ref:`tasks <bitbake-user-manual/bitbake-user-manual-metadata:tasks>`.
 
-You can use the ``bitbake -e`` recipename command to view the final
+You can use the ``bitbake -e recipename`` command to view the final
 assembled function after all overrides have been applied.
 
 BitBake-Style Python Functions
@@ -996,7 +1164,7 @@ Running ``do_foo`` prints the following::
    recipename do_foo: second
    recipename do_foo: third
 
-You can use the ``bitbake -e`` recipename command to view
+You can use the ``bitbake -e recipename`` command to view
 the final assembled function after all overrides have been applied.
 
 Python Functions
@@ -1237,8 +1405,8 @@ the task and other tasks. Here is an example that shows how to define a
 task and declare some dependencies::
 
    python do_printdate () {
-       import time
-       print time.strftime('%Y%m%d', time.gmtime())
+       import datetime
+       bb.plain('Date: %s' % (datetime.date.today()))
    }
    addtask printdate after do_fetch before do_build
 
@@ -1343,8 +1511,8 @@ the build machine cannot influence the build.
 .. note::
 
    By default, BitBake cleans the environment to include only those
-   things exported or listed in its whitelist to ensure that the build
-   environment is reproducible and consistent. You can prevent this
+   things exported or listed in its passthrough list to ensure that the
+   build environment is reproducible and consistent. You can prevent this
    "cleaning" by setting the :term:`BB_PRESERVE_ENV` variable.
 
 Consequently, if you do want something to get passed into the build task
@@ -1352,14 +1520,14 @@ environment, you must take these two steps:
 
 #. Tell BitBake to load what you want from the environment into the
    datastore. You can do so through the
-   :term:`BB_ENV_WHITELIST` and
-   :term:`BB_ENV_EXTRAWHITE` variables. For
+   :term:`BB_ENV_PASSTHROUGH` and
+   :term:`BB_ENV_PASSTHROUGH_ADDITIONS` variables. For
    example, assume you want to prevent the build system from accessing
-   your ``$HOME/.ccache`` directory. The following command "whitelists"
-   the environment variable ``CCACHE_DIR`` causing BitBake to allow that
-   variable into the datastore::
+   your ``$HOME/.ccache`` directory. The following command adds the
+   the environment variable ``CCACHE_DIR`` to BitBake's passthrough
+   list to allow that variable into the datastore::
 
-      export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE CCACHE_DIR"
+      export BB_ENV_PASSTHROUGH_ADDITIONS="$BB_ENV_PASSTHROUGH_ADDITIONS CCACHE_DIR"
 
 #. Tell BitBake to export what you have loaded into the datastore to the
    task environment of every running task. Loading something from the
@@ -1376,7 +1544,7 @@ environment, you must take these two steps:
       A side effect of the previous steps is that BitBake records the
       variable as a dependency of the build process in things like the
       setscene checksums. If doing so results in unnecessary rebuilds of
-      tasks, you can whitelist the variable so that the setscene code
+      tasks, you can also flag the variable so that the setscene code
       ignores the dependency when it creates checksums.
 
 Sometimes, it is useful to be able to obtain information from the
@@ -1430,11 +1598,34 @@ functionality of the task:
    directory listed is used as the current working directory for the
    task.
 
+- ``[file-checksums]``: Controls the file dependencies for a task. The
+  baseline file list is the set of files associated with
+  :term:`SRC_URI`. May be used to set additional dependencies on
+  files not associated with :term:`SRC_URI`.
+
+  The value set to the list is a file-boolean pair where the first
+  value is the file name and the second is whether or not it
+  physically exists on the filesystem. ::
+
+    do_configure[file-checksums] += "${MY_DIRPATH}/my-file.txt:True"
+
+  It is important to record any paths which the task looked at and
+  which didn't exist. This means that if these do exist at a later
+  time, the task can be rerun with the new additional files. The
+  "exists" True or False value after the path allows this to be
+  handled.
+
 -  ``[lockfiles]``: Specifies one or more lockfiles to lock while the
    task executes. Only one task may hold a lockfile, and any task that
    attempts to lock an already locked file will block until the lock is
    released. You can use this variable flag to accomplish mutual
    exclusion.
+
+-  ``[network]``: When set to "1", allows a task to access the network. By
+   default, only the ``do_fetch`` task is granted network access. Recipes
+   shouldn't access the network outside of ``do_fetch`` as it usually
+   undermines fetcher source mirroring, image and licence manifests, software
+   auditing and supply chain security.
 
 -  ``[noexec]``: When set to "1", marks the task as being empty, with
    no execution required. You can use the ``[noexec]`` flag to set up
@@ -1648,8 +1839,8 @@ user interfaces:
 
 .. _variants-class-extension-mechanism:
 
-Variants - Class Extension Mechanism
-====================================
+Variants --- Class Extension Mechanism
+======================================
 
 BitBake supports multiple incarnations of a recipe file via the
 :term:`BBCLASSEXTEND` variable.
@@ -1883,11 +2074,35 @@ access. Here is a list of available operations:
 Other Functions
 ---------------
 
-You can find many other functions that can be called from Python by
-looking at the source code of the ``bb`` module, which is in
-``bitbake/lib/bb``. For example, ``bitbake/lib/bb/utils.py`` includes
-the commonly used functions ``bb.utils.contains()`` and
-``bb.utils.mkdirhier()``, which come with docstrings.
+Other functions are documented in the
+:doc:`/bitbake-user-manual/bitbake-user-manual-library-functions` document.
+
+Extending Python Library Code
+-----------------------------
+
+If you wish to add your own Python library code (e.g. to provide
+functions/classes you can use from Python functions in the metadata)
+you can do so from any layer using the ``addpylib`` directive.
+This directive is typically added to your layer configuration (
+``conf/layer.conf``) although it will be handled in any ``.conf`` file.
+
+Usage is of the form::
+
+   addpylib <directory> <namespace>
+
+Where <directory> specifies the directory to add to the library path.
+The specified <namespace> is imported automatically, and if the imported
+module specifies an attribute named ``BBIMPORTS``, that list of
+sub-modules is iterated and imported too.
+
+Testing and Debugging BitBake Python code
+-----------------------------------------
+
+The OpenEmbedded build system implements a convenient ``pydevshell`` target which
+you can use to access the BitBake datastore and experiment with your own Python
+code. See :yocto_docs:`Using a Python Development Shell
+</dev-manual/python-development-shell.html#using-a-python-development-shell>` in the Yocto
+Project manual for details.
 
 Task Checksums and Setscene
 ===========================
@@ -1920,12 +2135,6 @@ The following list describes related variables:
 -  :term:`BB_SETSCENE_DEPVALID`:
    Specifies a function BitBake calls that determines whether BitBake
    requires a setscene dependency to be met.
-
--  :term:`BB_STAMP_POLICY`: Defines the mode
-   for comparing timestamps of stamp files.
-
--  :term:`BB_STAMP_WHITELIST`: Lists stamp
-   files that are looked at when the stamp policy is "whitelist".
 
 -  :term:`BB_TASKHASH`: Within an executing task,
    this variable holds the hash of the task as returned by the currently

@@ -7,7 +7,7 @@ DEPENDS += "kern-tools-native virtual/crypt"
 
 # bzip2 applet in busybox is based on lightly-modified bzip2-1.0.4 source
 # the GPL is version 2 only
-LICENSE = "GPLv2 & bzip2-1.0.4"
+LICENSE = "GPL-2.0-only & bzip2-1.0.6"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=de10de48642ab74318e893a61105afbb \
                     file://archival/libarchive/bz/LICENSE;md5=28e3301eae987e8cfe19988e98383dae"
 
@@ -16,6 +16,7 @@ SECTION = "base"
 # Whether to split the suid apps into a seperate binary
 BUSYBOX_SPLIT_SUID ?= "1"
 
+CFLAGS:append:toolchain-clang = " -DBB_GLOBAL_CONST=''"
 export EXTRA_CFLAGS = "${CFLAGS}"
 export EXTRA_LDFLAGS = "${LDFLAGS}"
 
@@ -24,7 +25,14 @@ EXTRA_OEMAKE = "CC='${CC}' LD='${CCLD}' V=1 ARCH=${TARGET_ARCH} CROSS_COMPILE=${
 PACKAGES =+ "${PN}-httpd ${PN}-udhcpd ${PN}-udhcpc ${PN}-syslog ${PN}-mdev ${PN}-hwclock"
 
 FILES:${PN}-httpd = "${sysconfdir}/init.d/busybox-httpd /srv/www"
-FILES:${PN}-syslog = "${sysconfdir}/init.d/syslog* ${sysconfdir}/syslog-startup.conf* ${sysconfdir}/syslog.conf* ${systemd_system_unitdir}/syslog.service ${sysconfdir}/default/busybox-syslog"
+FILES:${PN}-syslog = "\
+    ${sysconfdir}/init.d/syslog* \
+    ${sysconfdir}/syslog-startup.conf* \
+    ${sysconfdir}/syslog.conf* \
+    ${systemd_system_unitdir}/syslog.service \
+    ${systemd_system_unitdir}/busybox-klogd.service \
+    ${sysconfdir}/default/busybox-syslog \
+"
 FILES:${PN}-mdev = "${sysconfdir}/init.d/mdev ${sysconfdir}/mdev.conf ${sysconfdir}/mdev/*"
 FILES:${PN}-udhcpd = "${sysconfdir}/init.d/busybox-udhcpd"
 FILES:${PN}-udhcpc = "${sysconfdir}/udhcpc.d ${datadir}/udhcpc"
@@ -34,6 +42,7 @@ INITSCRIPT_PACKAGES = "${PN}-httpd ${PN}-syslog ${PN}-udhcpd ${PN}-mdev ${PN}-hw
 
 INITSCRIPT_NAME:${PN}-httpd = "busybox-httpd"
 INITSCRIPT_NAME:${PN}-hwclock = "hwclock.sh"
+INITSCRIPT_PARAMS:${PN}-hwclock = "start 40 S . stop 20 0 1 6 ."
 INITSCRIPT_NAME:${PN}-mdev = "mdev"
 INITSCRIPT_PARAMS:${PN}-mdev = "start 04 S ."
 INITSCRIPT_NAME:${PN}-syslog = "syslog"
@@ -110,11 +119,10 @@ python () {
 }
 
 do_prepare_config () {
-	if [ "${BUILD_REPRODUCIBLE_BINARIES}" = "1" ]; then
-		export KCONFIG_NOTIMESTAMP=1
-	fi
+	export KCONFIG_NOTIMESTAMP=1
+
 	sed -e '/CONFIG_STATIC/d' \
-		< ${WORKDIR}/defconfig > ${S}/.config
+		< ${UNPACKDIR}/defconfig > ${S}/.config
 	echo "# CONFIG_STATIC is not set" >> .config
 	for i in 'CROSS' 'DISTRO FEATURES'; do echo "### $i"; done >> \
 		${S}/.config
@@ -139,20 +147,26 @@ do_configure () {
 	do_prepare_config
 	merge_config.sh -m .config ${@" ".join(find_cfgs(d))}
 	cml1_do_configure
+
+	# Save a copy of .config and autoconf.h.
+	cp .config .config.orig
+	cp include/autoconf.h include/autoconf.h.orig
 }
 
 do_compile() {
 	unset CFLAGS CPPFLAGS CXXFLAGS LDFLAGS
-	if [ "${BUILD_REPRODUCIBLE_BINARIES}" = "1" ]; then
-		export KCONFIG_NOTIMESTAMP=1
-	fi
+	export KCONFIG_NOTIMESTAMP=1
+
+	# Ensure we start do_compile with the original .config and autoconf.h.
+	# These files should always have matching timestamps.
+	cp .config.orig .config
+	cp include/autoconf.h.orig include/autoconf.h
+
 	if [ "${BUSYBOX_SPLIT_SUID}" = "1" -a x`grep "CONFIG_FEATURE_INDIVIDUAL=y" .config` = x ]; then
+		# Guard againt interrupted do_compile: clean temporary files.
+		rm -f .config.app.suid .config.app.nosuid .config.disable.apps .config.nonapps
+
 		# split the .config into two parts, and make two busybox binaries
-		if [ -e .config.orig ]; then
-			# Need to guard again an interrupted do_compile - restore any backup
-			cp .config.orig .config
-		fi
-		cp .config .config.orig
 		oe_runmake busybox.cfg.suid
 		oe_runmake busybox.cfg.nosuid
 
@@ -189,15 +203,18 @@ do_compile() {
 			bbfatal "busybox suid binary incorrectly provides /bin/sh"
 		fi
 
-		# copy .config.orig back to .config, because the install process may check this file
-		cp .config.orig .config
 		# cleanup
-		rm .config.orig .config.app.suid .config.app.nosuid .config.disable.apps .config.nonapps
+		rm .config.app.suid .config.app.nosuid .config.disable.apps .config.nonapps
 	else
 		oe_runmake busybox_unstripped
 		cp busybox_unstripped busybox
 		oe_runmake busybox.links
 	fi
+
+	# restore original .config and autoconf.h, because the install process
+	# may check these files
+	cp .config.orig .config
+	cp include/autoconf.h.orig include/autoconf.h
 }
 
 do_install () {
@@ -206,9 +223,13 @@ do_install () {
 	sed -i "s:^/usr/bin/:BINDIR/:" busybox.links*
 	sed -i "s:^/usr/sbin/:SBINDIR/:" busybox.links*
 
-	# Move arch/link to BINDIR to match coreutils
+	# Move arch/base32/link to BINDIR to match coreutils
 	sed -i "s:^BASE_BINDIR/arch:BINDIR/arch:" busybox.links*
+	sed -i "s:^BASE_BINDIR/base32:BINDIR/base32:" busybox.links*
 	sed -i "s:^BASE_BINDIR/link:BINDIR/link:" busybox.links*
+
+	# Move start-stop-daemon to SBINDIR to match dpkg
+	sed -i "s:^BASE_SBINDIR/start-stop-daemon:SBINDIR/start-stop-daemon:" busybox.links*
 
 	sed -i "s:^BASE_BINDIR/:${base_bindir}/:" busybox.links*
 	sed -i "s:^BASE_SBINDIR/:${base_sbindir}/:" busybox.links*
@@ -271,67 +292,67 @@ do_install () {
 	fi
 
 	if grep -q "CONFIG_SYSLOGD=y" ${B}/.config; then
-		install -m 0755 ${WORKDIR}/syslog ${D}${sysconfdir}/init.d/syslog
-		install -m 644 ${WORKDIR}/syslog-startup.conf ${D}${sysconfdir}/syslog-startup.conf
-		install -m 644 ${WORKDIR}/syslog.conf ${D}${sysconfdir}/syslog.conf
+		install -m 0755 ${UNPACKDIR}/syslog ${D}${sysconfdir}/init.d/syslog
+		install -m 644 ${UNPACKDIR}/syslog-startup.conf ${D}${sysconfdir}/syslog-startup.conf
+		install -m 644 ${UNPACKDIR}/syslog.conf ${D}${sysconfdir}/syslog.conf
 	fi
 	if grep -q "CONFIG_CROND=y" ${B}/.config; then
-		install -m 0755 ${WORKDIR}/busybox-cron ${D}${sysconfdir}/init.d/
+		install -m 0755 ${UNPACKDIR}/busybox-cron ${D}${sysconfdir}/init.d/
 	fi
 	if grep -q "CONFIG_HTTPD=y" ${B}/.config; then
-		install -m 0755 ${WORKDIR}/busybox-httpd ${D}${sysconfdir}/init.d/
+		install -m 0755 ${UNPACKDIR}/busybox-httpd ${D}${sysconfdir}/init.d/
 		install -d ${D}/srv/www
 	fi
 	if grep -q "CONFIG_UDHCPD=y" ${B}/.config; then
-		install -m 0755 ${WORKDIR}/busybox-udhcpd ${D}${sysconfdir}/init.d/
+		install -m 0755 ${UNPACKDIR}/busybox-udhcpd ${D}${sysconfdir}/init.d/
 	fi
 	if grep -q "CONFIG_HWCLOCK=y" ${B}/.config; then
-		install -m 0755 ${WORKDIR}/hwclock.sh ${D}${sysconfdir}/init.d/
+		install -m 0755 ${UNPACKDIR}/hwclock.sh ${D}${sysconfdir}/init.d/
 	fi
 	if grep -q "CONFIG_UDHCPC=y" ${B}/.config; then
 		install -d ${D}${sysconfdir}/udhcpc.d
 		install -d ${D}${datadir}/udhcpc
-		install -m 0755 ${WORKDIR}/simple.script ${D}${sysconfdir}/udhcpc.d/50default
+		install -m 0755 ${UNPACKDIR}/simple.script ${D}${sysconfdir}/udhcpc.d/50default
 		sed -i "s:/SBIN_DIR/:${base_sbindir}/:" ${D}${sysconfdir}/udhcpc.d/50default
-		install -m 0755 ${WORKDIR}/default.script ${D}${datadir}/udhcpc/default.script
+		install -m 0755 ${UNPACKDIR}/default.script ${D}${datadir}/udhcpc/default.script
 	fi
 	if grep -q "CONFIG_INETD=y" ${B}/.config; then
-		install -m 0755 ${WORKDIR}/inetd ${D}${sysconfdir}/init.d/inetd.${BPN}
+		install -m 0755 ${UNPACKDIR}/inetd ${D}${sysconfdir}/init.d/inetd.${BPN}
 		sed -i "s:/usr/sbin/:${sbindir}/:" ${D}${sysconfdir}/init.d/inetd.${BPN}
-		install -m 0644 ${WORKDIR}/inetd.conf ${D}${sysconfdir}/
+		install -m 0644 ${UNPACKDIR}/inetd.conf ${D}${sysconfdir}/
 	fi
 	if grep -q "CONFIG_MDEV=y" ${B}/.config; then
-		install -m 0755 ${WORKDIR}/mdev ${D}${sysconfdir}/init.d/mdev
+		install -m 0755 ${UNPACKDIR}/mdev ${D}${sysconfdir}/init.d/mdev
 		if grep "CONFIG_FEATURE_MDEV_CONF=y" ${B}/.config; then
-			install -m 644 ${WORKDIR}/mdev.conf ${D}${sysconfdir}/mdev.conf
+			install -m 644 ${UNPACKDIR}/mdev.conf ${D}${sysconfdir}/mdev.conf
 			install -d ${D}${sysconfdir}/mdev
-			install -m 0755 ${WORKDIR}/find-touchscreen.sh ${D}${sysconfdir}/mdev
-			install -m 0755 ${WORKDIR}/mdev-mount.sh ${D}${sysconfdir}/mdev
+			install -m 0755 ${UNPACKDIR}/find-touchscreen.sh ${D}${sysconfdir}/mdev
+			install -m 0755 ${UNPACKDIR}/mdev-mount.sh ${D}${sysconfdir}/mdev
 		fi
 	fi
 	if grep -q "CONFIG_INIT=y" ${B}/.config && ${@bb.utils.contains('VIRTUAL-RUNTIME_init_manager','busybox','true','false',d)}; then
-		install -D -m 0755 ${WORKDIR}/rcS ${D}${sysconfdir}/init.d/rcS
-		install -D -m 0755 ${WORKDIR}/rcK ${D}${sysconfdir}/init.d/rcK
-		install -D -m 0755 ${WORKDIR}/rcS.default ${D}${sysconfdir}/default/rcS
+		install -D -m 0755 ${UNPACKDIR}/rcS ${D}${sysconfdir}/init.d/rcS
+		install -D -m 0755 ${UNPACKDIR}/rcK ${D}${sysconfdir}/init.d/rcK
+		install -D -m 0755 ${UNPACKDIR}/rcS.default ${D}${sysconfdir}/default/rcS
 	fi
 
 	if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
 		if grep -q "CONFIG_KLOGD=y" ${B}/.config; then
 			install -d ${D}${systemd_system_unitdir}
-			sed 's,@base_sbindir@,${base_sbindir},g' < ${WORKDIR}/busybox-klogd.service.in \
+			sed 's,@base_sbindir@,${base_sbindir},g' < ${UNPACKDIR}/busybox-klogd.service.in \
 			> ${D}${systemd_system_unitdir}/busybox-klogd.service
 		fi
 
 		if grep -q "CONFIG_SYSLOGD=y" ${B}/.config; then
 			install -d ${D}${systemd_system_unitdir}
-			sed 's,@base_sbindir@,${base_sbindir},g' < ${WORKDIR}/busybox-syslog.service.in \
+			sed 's,@base_sbindir@,${base_sbindir},g' < ${UNPACKDIR}/busybox-syslog.service.in \
 			> ${D}${systemd_system_unitdir}/busybox-syslog.service
 			if  [ ! -e ${D}${systemd_system_unitdir}/busybox-klogd.service ] ; then
 				sed -i '/klog/d' ${D}${systemd_system_unitdir}/busybox-syslog.service
 			fi
-			if [ -f ${WORKDIR}/busybox-syslog.default ] ; then
+			if [ -f ${UNPACKDIR}/busybox-syslog.default ] ; then
 				install -d ${D}${sysconfdir}/default
-				install -m 0644 ${WORKDIR}/busybox-syslog.default ${D}${sysconfdir}/default/busybox-syslog
+				install -m 0644 ${UNPACKDIR}/busybox-syslog.default ${D}${sysconfdir}/default/busybox-syslog
 			fi
 		fi
 	fi
@@ -349,7 +370,7 @@ do_install_ptest () {
         # These access the internet which is not guaranteed to work on machines running the tests
         rm -rf ${D}${PTEST_PATH}/testsuite/wget
 	sort ${B}/.config > ${D}${PTEST_PATH}/.config
-	ln -s /bin/busybox   ${D}${PTEST_PATH}/busybox
+	ln -s ${base_bindir}/busybox   ${D}${PTEST_PATH}/busybox
 }
 
 inherit update-alternatives

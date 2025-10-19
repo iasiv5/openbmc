@@ -1,6 +1,6 @@
 DESCRIPTION = "Different utilities from Android"
 SECTION = "console/utils"
-LICENSE = "Apache-2.0 & GPL-2.0 & BSD-2-Clause & BSD-3-Clause"
+LICENSE = "Apache-2.0 & GPL-2.0-only & BSD-2-Clause & BSD-3-Clause"
 LIC_FILES_CHKSUM = " \
     file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10 \
     file://${COMMON_LICENSE_DIR}/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6 \
@@ -39,9 +39,16 @@ SRC_URI = " \
     file://core/0011-Remove-bionic-specific-calls.patch;patchdir=system/core \
     file://core/0012-Fix-implicit-declaration-of-stlcat-strlcopy-function.patch;patchdir=system/core \
     file://core/adb_libssl_11.diff;patchdir=system/core \
+    file://core/b64_pton_function_decl.patch;patchdir=system/core \
     file://core/0013-adb-Support-riscv64.patch;patchdir=system/core \
+    file://core/0014-add-u3-ss-descriptor-support-for-adb.patch;patchdir=system/core \
+    file://core/0015-libsparse-Split-off-most-of-sparse_file_read_normal-.patch;patchdir=system/core \
+    file://core/0016-libsparse-Add-hole-mode-to-sparse_file_read.patch;patchdir=system/core \
+    file://core/0017-img2simg-Add-support-for-converting-holes-to-don-t-c.patch;patchdir=system/core \
+    file://core/0001-memory.h-Always-define-strlcpy-for-glibc-based-syste.patch;patchdir=system/core \
     file://extras/0001-ext4_utils-remove-selinux-extensions.patch;patchdir=system/extras \
     file://extras/0002-ext4_utils-add-o-argument-to-preserve-ownership.patch;patchdir=system/extras \
+    file://extras/0003-ext4_utils-drop-unused-parameter-from-allocate_inode.patch;patchdir=system/extras \
     file://libselinux/0001-Remove-bionic-specific-calls.patch;patchdir=external/libselinux \
     file://libselinux/0001-libselinux-Do-not-define-gettid-if-glibc-2.30-is-use.patch;patchdir=external/libselinux \
     file://android-tools-adbd.service \
@@ -82,11 +89,11 @@ TOOLS:class-native = "fastboot ext4_utils mkbootimg"
 TOOLS:class-nativesdk = "fastboot ext4_utils mkbootimg"
 
 do_compile() {
-    cp ${WORKDIR}/gitignore ${S}/.gitignore
+    cp ${UNPACKDIR}/gitignore ${S}/.gitignore
 
     # Setting both variables below causing our makefiles to not work with
     # implicit make rules
-    unset CFLAGS
+    CFLAGS="-ffile-prefix-map=${S}=${TARGET_DBGSRC_DIR}"
     unset CPPFLAGS
 
     export SRCDIR=${S}
@@ -117,7 +124,7 @@ do_compile() {
 
     for tool in ${TOOLS}; do
       mkdir -p ${B}/${tool}
-      oe_runmake -f ${B}/${tool}.mk -C ${B}/${tool}
+      oe_runmake -f ${UNPACKDIR}/${BPN}/${tool}.mk -C ${B}/${tool}
     done
 }
 
@@ -145,7 +152,7 @@ do_install() {
     fi
 
     # Outside the if statement to avoid errors during do_package
-    install -D -p -m0644 ${WORKDIR}/android-tools-adbd.service \
+    install -D -p -m0644 ${UNPACKDIR}/android-tools-adbd.service \
       ${D}${systemd_unitdir}/system/android-tools-adbd.service
 
     if echo ${TOOLS} | grep -q "fastboot" ; then
@@ -182,8 +189,7 @@ FILES:${PN}-fstools = "\
 
 BBCLASSEXTEND = "native"
 
-android_tools_enable_devmode() {
-    touch ${IMAGE_ROOTFS}/var/usb-debugging-enabled
-}
-
-ROOTFS_POSTPROCESS_COMMAND_${PN}-adbd += "${@bb.utils.contains("USB_DEBUGGING_ENABLED", "1", "android_tools_enable_devmode;", "", d)}"
+# http://errors.yoctoproject.org/Errors/Details/766881/
+# android-tools/5.1.1.r37/git/system/core/adb/adb_auth_host.c:86:23: error: passing argument 2 of 'RSA_get0_key' from incompatible pointer type [-Wincompatible-pointer-types]
+# android-tools/5.1.1.r37/git/system/core/adb/adb_auth_host.c:86:27: error: passing argument 3 of 'RSA_get0_key' from incompatible pointer type [-Wincompatible-pointer-types]
+CC += "-Wno-error=incompatible-pointer-types"

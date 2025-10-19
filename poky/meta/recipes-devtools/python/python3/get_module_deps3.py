@@ -32,7 +32,7 @@ def fix_path(dep_path):
     dep_path = dep_path[dep_path.find(pivot)+len(pivot):]
 
     if '/usr/bin' in dep_path:
-        dep_path = dep_path.replace('/usr/bin''${bindir}')
+        dep_path = dep_path.replace('/usr/bin','${bindir}')
 
     # Handle multilib, is there a better way?
     if '/usr/lib32' in dep_path:
@@ -56,7 +56,7 @@ if debug == True:
 try:
     m = importlib.import_module(current_module)
     # handle python packages which may not include all modules in the __init__
-    if os.path.basename(m.__file__) == "__init__.py":
+    if hasattr(m, '__file__') and os.path.basename(m.__file__) == "__init__.py":
         modulepath = os.path.dirname(m.__file__)
         for i in os.listdir(modulepath):
             if i.startswith("_") or not(i.endswith(".py")):

@@ -6,7 +6,7 @@ DESCRIPTION = "eCryptfs is a stacked cryptographic filesystem \
 HOMEPAGE = "https://launchpad.net/ecryptfs"
 SECTION = "base"
 
-LICENSE = "GPL-2.0"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=8ca43cbc842c2336e835926c2166c28b"
 
 DEPENDS = "keyutils libgcrypt intltool-native glib-2.0-native"
@@ -21,6 +21,8 @@ SRC_URI = "\
 
 SRC_URI[md5sum] = "83513228984f671930752c3518cac6fd"
 SRC_URI[sha256sum] = "112cb3e37e81a1ecd8e39516725dec0ce55c5f3df6284e0f4cc0f118750a987f"
+
+UPSTREAM_CHECK_URI = "https://launchpad.net/ecryptfs/+download"
 
 inherit autotools pkgconfig systemd
 
@@ -60,11 +62,14 @@ do_install:append() {
            -e 's:-L${STAGING_LIBDIR}::' ${D}/${libdir}/pkgconfig/libecryptfs.pc
     sed -i -e "s: ${base_sbindir}/cryptsetup: ${sbindir}/cryptsetup:" ${D}${bindir}/ecryptfs-setup-swap
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-        install -D -m 0644 ${WORKDIR}/ecryptfs.service ${D}${systemd_system_unitdir}/ecryptfs.service
+        install -D -m 0644 ${UNPACKDIR}/ecryptfs.service ${D}${systemd_system_unitdir}/ecryptfs.service
     fi
 }
 
 FILES:${PN} += "${base_libdir}/security/* ${base_libdir}/ecryptfs/*"
 
 RDEPENDS:${PN} += "cryptsetup"
-RRECOMMENDS:${PN} = "gettext-runtime"
+RRECOMMENDS:${PN} = " \
+    gettext-runtime \
+    kernel-module-ecryptfs \
+"

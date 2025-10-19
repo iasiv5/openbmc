@@ -3,12 +3,12 @@ DESCRIPTION = "GNU Gzip is a popular data compression program originally written
 project. Mark Adler wrote the decompression part"
 HOMEPAGE = "http://www.gnu.org/software/gzip/"
 SECTION = "console/utils"
-# change to GPLv3+ in 2007/07. Previous GPLv2 version is 1.3.12
 
 inherit autotools texinfo
-export DEFS="NO_ASM"
+export DEFS = "NO_ASM"
 
 EXTRA_OEMAKE:class-target = "GREP=${base_bindir}/grep"
+EXTRA_OEMAKE:append:class-nativesdk = " GREP=grep"
 EXTRA_OECONF:append:libc-musl = " gl_cv_func_fflush_stdin=yes "
 
 do_install:append () {
@@ -30,4 +30,4 @@ ALTERNATIVE_LINK_NAME[gunzip] = "${base_bindir}/gunzip"
 ALTERNATIVE_LINK_NAME[gzip] = "${base_bindir}/gzip"
 ALTERNATIVE_LINK_NAME[zcat] = "${base_bindir}/zcat"
 
-export CONFIG_SHELL="/bin/sh"
+export CONFIG_SHELL = "/bin/sh"

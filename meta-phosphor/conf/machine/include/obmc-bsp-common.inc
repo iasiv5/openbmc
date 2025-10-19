@@ -3,27 +3,16 @@
 #@DESCRIPTION: Common machine configuration for OpenBMC chips
 
 KERNEL_CLASSES ?= "kernel-fitimage"
-KERNEL_IMAGETYPES ?= "fitImage"
+KERNEL_IMAGETYPES ?= "fitImage vmlinux"
 
-# Static images. This is the default if no other layout is specified.
-IMAGE_FSTYPES += "${@bb.utils.contains_any('DISTRO_FEATURES', \
-        'obmc-ubi-fs phosphor-mmc', \
-        '', \
-        'mtd-static mtd-static-tar mtd-static-alltar', d)}"
+FLASH_SIZE ?= "32768"
 
-# UBI images.
-IMAGE_FSTYPES += "${@bb.utils.contains('DISTRO_FEATURES', \
-        'obmc-ubi-fs', \
-        'mtd-ubi mtd-ubi-tar', \
-        '', d)}"
+OBMC_IMAGE_INCLUDE = "static"
+OBMC_IMAGE_INCLUDE:df-obmc-static-norootfs = "static-norootfs"
+OBMC_IMAGE_INCLUDE:df-obmc-ubi-fs = "ubi-fs"
+OBMC_IMAGE_INCLUDE:df-phosphor-mmc = "mmc"
 
-# eMMC images.
-IMAGE_FSTYPES += "${@bb.utils.contains('DISTRO_FEATURES', \
-        'phosphor-mmc', \
-        'wic.xz mmc-ext4-tar', \
-        '', d)}"
+require conf/machine/include/image-type/${OBMC_IMAGE_INCLUDE}.inc
 
 INITRAMFS_CTYPE ?= "xz"
 INITRAMFS_FSTYPES = "cpio.${INITRAMFS_CTYPE}"
-INITRAMFS_IMAGE = "obmc-phosphor-initramfs"
-INITRAMFS_IMAGE:df-obmc-ubi-fs = ""

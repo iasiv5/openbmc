@@ -13,14 +13,15 @@ COMPATIBLE_MACHINE = "^rpi$"
 
 SRCBRANCH = "master"
 SRCFORK = "raspberrypi"
-SRCREV = "97bc8180ad682b004ea224d1db7b8e108eda4397"
+SRCREV = "cc1ca18fb0689b01cc2ca2aa4b400dcee624a213"
 
 # Use the date of the above commit as the package version. Update this when
 # SRCREV is changed.
-PV = "20210623"
+PV = "20230419"
 
 SRC_URI = "\
-    git://github.com/${SRCFORK}/userland.git;protocol=git;branch=${SRCBRANCH} \
+    git://github.com/${SRCFORK}/userland.git;protocol=https;branch=${SRCBRANCH} \
+    file://0001-mmal-Do-not-use-Werror.patch \
     file://0001-Allow-applications-to-set-next-resource-handle.patch \
     file://0002-wayland-Add-support-for-the-Wayland-winsys.patch \
     file://0003-wayland-Add-Wayland-example.patch \
@@ -45,6 +46,7 @@ SRC_URI = "\
     file://0022-all-host_applications-remove-non-existent-projects.patch \
     file://0023-hello_pi-optionally-build-wayland-specific-app.patch \
     file://0024-userland-Sync-needed-defines-for-weston-build.patch \
+    file://0025-CMakeLists.txt-.pc-respect-CMAKE_INSTALL_LIBDIR.patch \
 "
 
 SRC_URI:remove:toolchain-clang = "file://0021-cmake-Disable-format-overflow-warning-as-error.patch"
@@ -67,7 +69,7 @@ PACKAGECONFIG ?= "${@bb.utils.contains('DISTRO_FEATURES', 'wayland', 'wayland', 
 PACKAGECONFIG[wayland] = "-DBUILD_WAYLAND=TRUE -DWAYLAND_SCANNER_EXECUTABLE:FILEPATH=${STAGING_BINDIR_NATIVE}/wayland-scanner,,wayland-native wayland"
 PACKAGECONFIG[allapps] = "-DALL_APPS=true,,,"
 
-CFLAGS:append = " -fPIC"
+CFLAGS:append = " -fPIC -Wno-unused-but-set-variable"
 
 do_install:append () {
 	for f in `find ${D}${includedir}/interface/vcos/ -name "*.h"`; do

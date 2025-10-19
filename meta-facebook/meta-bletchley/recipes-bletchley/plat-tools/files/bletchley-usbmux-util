@@ -1,0 +1,133 @@
+#!/bin/bash
+# shellcheck source=meta-facebook/meta-bletchley/recipes-bletchley/plat-tools/files/bletchley-common-functions
+source /usr/libexec/bletchley-common-functions
+
+CMD=$1
+if [ "$#" -ge 2 ]; then
+    SLED_INDEX=$(sled_mapping "$2")
+fi
+
+DEVMEM_MUX_REG=0x1e780088
+
+declare -A MUX_NIBBLES=(
+    ["1"]="C"    # 1100 -> C
+    ["2"]="D"    # 1101 -> D
+    ["3"]="E"    # 1110 -> E
+    ["4"]="3"    # 0011 -> 3
+    ["5"]="7"    # 0111 -> 7
+    ["6"]="B"    # 1011 -> B
+    ["off"]="F"  # 1111 -> F
+)
+
+get_third_byte_upper_nibble() {
+    local value=$1
+    value=$(echo "$value" | sed -E 's/^(0x|0X)//i')
+    value=$(printf "%08s" "$value")
+    # Extract upper nibble of third byte (5th character from left)
+    echo "${value:4:1}" | tr '[:lower:]' '[:upper:]'
+}
+
+set_upper_nibble() {
+    local target_nibble=$1
+
+    current_value=$(devmem $DEVMEM_MUX_REG)
+    current_nibble=$(get_third_byte_upper_nibble "$current_value")
+
+    echo "Current register value: $current_value"
+
+    # Check if we need to change anything
+    if [ "$current_nibble" = "$target_nibble" ]; then
+        #echo "Upper nibble already set to 0x$target_nibble, no change needed"
+        exit 0
+    fi
+
+    current_value=$(echo "$current_value" | sed -E 's/^(0x|0X)//i')
+    current_value=$(printf "%08s" "$current_value")
+    # Replace only the upper nibble of third byte (5th character from left)
+    # Keep everything else the same: XXXX[N]YZZ -> XXXX[target]YZZ
+    new_value="0x${current_value:0:4}${target_nibble}${current_value:5:3}"
+    devmem "$DEVMEM_MUX_REG" 32 "$new_value"
+    echo "Register $DEVMEM_MUX_REG written with $new_value"
+}
+
+print_help()
+{
+    echo "Usage:"
+    echo "    bletchley-usbmux-util off"
+    echo "    bletchley-usbmux-util on <SLED_INDEX>"
+    echo ""
+    echo "SLED_INDEX: 1 - $MAX_SLED_NUM"
+    echo ""
+}
+
+usb_mux_off()
+{
+    set_upper_nibble "${MUX_NIBBLES[off]}"
+}
+
+usb_mux_sled1()
+{
+    set_upper_nibble "${MUX_NIBBLES[1]}"
+}
+
+usb_mux_sled2()
+{
+    set_upper_nibble "${MUX_NIBBLES[2]}"
+}
+
+usb_mux_sled3()
+{
+    set_upper_nibble "${MUX_NIBBLES[3]}"
+}
+
+usb_mux_sled4()
+{
+    set_upper_nibble "${MUX_NIBBLES[4]}"
+}
+
+usb_mux_sled5()
+{
+    set_upper_nibble "${MUX_NIBBLES[5]}"
+}
+
+usb_mux_sled6()
+{
+    set_upper_nibble "${MUX_NIBBLES[6]}"
+}
+
+if [ "$CMD" == "off" ]; then
+    usb_mux_off
+elif [ "$CMD" == "on" ]; then
+    if [ "$SLED_INDEX" -eq 1 ]; then
+        usb_mux_sled1
+    elif [ "$SLED_INDEX" -eq 2 ]; then
+        usb_mux_sled2
+    elif [ "$SLED_INDEX" -eq 3 ]; then
+        usb_mux_sled3
+    elif [ "$SLED_INDEX" -eq 4 ]; then
+        usb_mux_sled4
+    elif [ "$SLED_INDEX" -eq 5 ]; then
+        usb_mux_sled5
+    elif [ "$SLED_INDEX" -eq 6 ]; then
+        usb_mux_sled6
+    else
+        echo "Invalid SLED index: $2"
+        print_help
+        exit 1
+    fi
+else
+    echo "Invalid command: $CMD"
+    print_help
+    exit 1
+fi
+
+sleep 3
+
+if [ ! -d "/sys/bus/usb/devices/1-1" ]; then
+    # echo "sled$2 usb hub not found, rebinding usb hub..."
+    echo 1e6a1000.usb > /sys/bus/platform/drivers/ehci-platform/unbind
+    sleep 3
+    echo 1e6a1000.usb > /sys/bus/platform/drivers/ehci-platform/bind
+fi
+
+exit 0

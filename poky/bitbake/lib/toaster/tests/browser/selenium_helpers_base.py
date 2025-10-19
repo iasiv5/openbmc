@@ -19,11 +19,15 @@ import os
 import time
 import unittest
 
+import pytest
 from selenium import webdriver
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import NoSuchElementException, \
-        StaleElementReferenceException, TimeoutException
+        StaleElementReferenceException, TimeoutException, \
+        SessionNotCreatedException, WebDriverException
 
 def create_selenium_driver(cls,browser='chrome'):
     # set default browser string based on env (if available)
@@ -32,9 +36,32 @@ def create_selenium_driver(cls,browser='chrome'):
         browser = env_browser
 
     if browser == 'chrome':
-        return webdriver.Chrome(
-            service_args=["--verbose", "--log-path=selenium.log"]
-        )
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('--disable-infobars')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--remote-debugging-port=9222')
+        try:
+            return webdriver.Chrome(options=options)
+        except SessionNotCreatedException as e:
+            exit_message = "Halting tests prematurely to avoid cascading errors."
+            # check if chrome / chromedriver exists
+            chrome_path = os.popen("find ~/.cache/selenium/chrome/ -name 'chrome' -type f -print -quit").read().strip()
+            if not chrome_path:
+                pytest.exit(f"Failed to install/find chrome.\n{exit_message}")
+            chromedriver_path = os.popen("find ~/.cache/selenium/chromedriver/ -name 'chromedriver' -type f -print -quit").read().strip()
+            if not chromedriver_path:
+                pytest.exit(f"Failed to install/find chromedriver.\n{exit_message}")
+            # check if depends on each are fulfilled
+            depends_chrome = os.popen(f"ldd {chrome_path} | grep 'not found'").read().strip()
+            if depends_chrome:
+                pytest.exit(f"Missing chrome dependencies.\n{depends_chrome}\n{exit_message}")
+            depends_chromedriver = os.popen(f"ldd {chromedriver_path} | grep 'not found'").read().strip()
+            if depends_chromedriver:
+                pytest.exit(f"Missing chromedriver dependencies.\n{depends_chromedriver}\n{exit_message}")
+            # print original error otherwise
+            pytest.exit(f"Failed to start chromedriver.\n{e}\n{exit_message}")
     elif browser == 'firefox':
         return webdriver.Firefox()
     elif browser == 'marionette':
@@ -63,10 +90,12 @@ class Wait(WebDriverWait):
     Subclass of WebDriverWait with predetermined timeout and poll
     frequency. Also deals with a wider variety of exceptions.
     """
-    _TIMEOUT = 10
+    _TIMEOUT = 20
     _POLL_FREQUENCY = 0.5
 
-    def __init__(self, driver):
+    def __init__(self, driver, timeout=_TIMEOUT, poll=_POLL_FREQUENCY):
+        self._TIMEOUT = timeout
+        self._POLL_FREQUENCY = poll
         super(Wait, self).__init__(driver, self._TIMEOUT, self._POLL_FREQUENCY)
 
     def until(self, method, message=''):
@@ -84,6 +113,9 @@ class Wait(WebDriverWait):
             except NoSuchElementException:
                 pass
             except StaleElementReferenceException:
+                pass
+            except WebDriverException:
+                # selenium.common.exceptions.WebDriverException: Message: unknown error: unhandled inspector error: {"code":-32000,"message":"Node with given id does not belong to the document"}
                 pass
 
             time.sleep(self._poll)
@@ -138,6 +170,8 @@ class SeleniumTestCaseBase(unittest.TestCase):
         """ Clean up webdriver driver """
 
         cls.driver.quit()
+        # Allow driver resources to be properly freed before proceeding with further tests
+        time.sleep(5)
         super(SeleniumTestCaseBase, cls).tearDownClass()
 
     def get(self, url):
@@ -151,13 +185,20 @@ class SeleniumTestCaseBase(unittest.TestCase):
         abs_url = '%s%s' % (self.live_server_url, url)
         self.driver.get(abs_url)
 
+        try:  # Ensure page is loaded before proceeding
+            self.wait_until_visible("#global-nav")
+        except NoSuchElementException:
+            self.driver.implicitly_wait(3)
+        except TimeoutException:
+            self.driver.implicitly_wait(3)
+
     def find(self, selector):
         """ Find single element by CSS selector """
-        return self.driver.find_element_by_css_selector(selector)
+        return self.driver.find_element(By.CSS_SELECTOR, selector)
 
     def find_all(self, selector):
         """ Find all elements matching CSS selector """
-        return self.driver.find_elements_by_css_selector(selector)
+        return self.driver.find_elements(By.CSS_SELECTOR, selector)
 
     def element_exists(self, selector):
         """
@@ -170,19 +211,42 @@ class SeleniumTestCaseBase(unittest.TestCase):
         """ Return the element which currently has focus on the page """
         return self.driver.switch_to.active_element
 
-    def wait_until_present(self, selector):
+    def wait_until_present(self, selector, timeout=Wait._TIMEOUT):
         """ Wait until element matching CSS selector is on the page """
         is_present = lambda driver: self.find(selector)
         msg = 'An element matching "%s" should be on the page' % selector
-        element = Wait(self.driver).until(is_present, msg)
+        element = Wait(self.driver, timeout=timeout).until(is_present, msg)
         return element
 
-    def wait_until_visible(self, selector):
+    def wait_until_visible(self, selector, timeout=Wait._TIMEOUT):
         """ Wait until element matching CSS selector is visible on the page """
         is_visible = lambda driver: self.find(selector).is_displayed()
         msg = 'An element matching "%s" should be visible' % selector
-        Wait(self.driver).until(is_visible, msg)
+        Wait(self.driver, timeout=timeout).until(is_visible, msg)
         return self.find(selector)
+
+    def wait_until_not_visible(self, selector, timeout=Wait._TIMEOUT):
+        """ Wait until element matching CSS selector is not visible on the page """
+        is_visible = lambda driver: self.find(selector).is_displayed()
+        msg = 'An element matching "%s" should be visible' % selector
+        Wait(self.driver, timeout=timeout).until_not(is_visible, msg)
+        return self.find(selector)
+
+    def wait_until_clickable(self, selector, timeout=Wait._TIMEOUT):
+        """ Wait until element matching CSS selector is visible on the page """
+        WebDriverWait(self.driver, timeout=timeout).until(lambda driver: self.driver.execute_script("return jQuery.active == 0"))
+        is_clickable = lambda driver: (self.find(selector).is_displayed() and self.find(selector).is_enabled())
+        msg = 'An element matching "%s" should be clickable' % selector
+        Wait(self.driver, timeout=timeout).until(is_clickable, msg)
+        return self.find(selector)
+
+    def wait_until_element_clickable(self, finder, timeout=Wait._TIMEOUT):
+        """ Wait until element is clickable """
+        WebDriverWait(self.driver, timeout=timeout).until(lambda driver: self.driver.execute_script("return jQuery.active == 0"))
+        is_clickable = lambda driver: (finder(driver).is_displayed() and finder(driver).is_enabled())
+        msg = 'A matching element never became be clickable'
+        Wait(self.driver, timeout=timeout).until(is_clickable, msg)
+        return finder(self.driver)
 
     def wait_until_focused(self, selector):
         """ Wait until element matching CSS selector has focus """

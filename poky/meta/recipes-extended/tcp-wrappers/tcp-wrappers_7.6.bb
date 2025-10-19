@@ -6,9 +6,6 @@ SECTION = "console/network"
 
 LICENSE = "BSD-1-Clause"
 LIC_FILES_CHKSUM = "file://DISCLAIMER;md5=071bd69cb78b18888ea5e3da5c3127fa"
-PR ="r10"
-
-DEPENDS += "libnsl2"
 
 PACKAGES = "${PN}-dbg libwrap libwrap-doc libwrap-dev libwrap-staticdev ${PN} ${PN}-doc"
 FILES:libwrap = "${base_libdir}/lib*${SOLIBS}"
@@ -50,12 +47,14 @@ SRC_URI = "http://ftp.porcupine.org/pub/security/tcp_wrappers_${PV}.tar.gz \
            file://fix_warnings.patch \
            file://fix_warnings2.patch \
            file://0001-Remove-fgets-extern-declaration.patch \
+           file://0001-Fix-implicit-function-declaration-warnings.patch \
            "
 
-SRC_URI[md5sum] = "e6fa25f71226d090f34de3f6b122fb5a"
 SRC_URI[sha256sum] = "9543d7adedf78a6de0b221ccbbd1952e08b5138717f4ade814039bb489a4315d"
 
 S = "${WORKDIR}/tcp_wrappers_${PV}"
+
+CFLAGS += "-std=gnu17"
 
 EXTRA_OEMAKE = "'CC=${CC}' \
                 'AR=${AR}' \
@@ -122,8 +121,8 @@ do_install () {
 		install -m 0644 $m.8 ${D}${mandir}/man8/ || exit 1
 	done
 
-	install -m 0644 ${WORKDIR}/try-from.8 ${D}${mandir}/man8/
-	install -m 0644 ${WORKDIR}/safe_finger.8 ${D}${mandir}/man8/
+	install -m 0644 ${UNPACKDIR}/try-from.8 ${D}${mandir}/man8/
+	install -m 0644 ${UNPACKDIR}/safe_finger.8 ${D}${mandir}/man8/
 
 	install -d ${D}${includedir}
 	install -m 0644 tcpd.h ${D}${includedir}/

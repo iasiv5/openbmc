@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2317
 # Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cd "$(dirname "$0")"
-source gbmc-ip-monitor.sh
+cd "$(dirname "$0")" || exit
 if [ -e ../gbmc-ip-monitor.bb ]; then
+  # shellcheck source=meta-google/recipes-google/test/test-sh/lib.sh
   source '../../test/test-sh/lib.sh'
 else
+  # shellcheck source=meta-google/recipes-google/test/test-sh/lib.sh
   source "$SYSROOT/usr/share/test/lib.sh"
 fi
+# shellcheck source=meta-google/recipes-google/networking/files/gbmc-ip-monitor.sh
+source gbmc-ip-monitor.sh
 
 test_init_empty() {
   ip() {
@@ -86,12 +90,12 @@ EOF
 
 test_init_route_populated() {
   ip() {
-    if [ "$1" = "-4" -a "${2-}" = 'route' ]; then
+    if [[ "$1" == "-4" && "${2-}" == 'route' ]]; then
       cat <<EOF
 default via 192.168.243.254 dev eno2 proto dhcp metric 100
 192.168.242.0/23 dev eno2 proto kernel scope link src 192.168.242.57 metric 100
 EOF
-    elif [ "$1" = "-6" -a "${2-}" = 'route' ]; then
+    elif [[ "$1" == "-6" && "${2-}" == 'route' ]]; then
       cat <<EOF
 ::1 dev lo proto kernel metric 256 pref medium
 fd01:ff2:5687:4::/64 dev eno2 proto ra metric 100 pref medium
@@ -125,7 +129,7 @@ testParseInit() {
 }
 
 testParseAddrAdd() {
-  expect_err 0 gbmc_ip_monitor_parse_line '[ADDR]2: eno2 inet6 fd01:ff2:5687:4:cf03:45f3:983a:96eb/128 scope global temporary dynamic'
+  expect_err 0 gbmc_ip_monitor_parse_line '[ADDR]2: eno2@extra inet6 fd01:ff2:5687:4:cf03:45f3:983a:96eb/128 metric 1024 scope global temporary dynamic'
   expect_streq "$change" 'addr'
   expect_streq "$action" 'add'
   expect_streq "$intf" 'eno2'
@@ -161,12 +165,13 @@ testParseRouteDel() {
 }
 
 testParseLinkAdd() {
-  expect_err 0 gbmc_ip_monitor_parse_line "[LINK]2: eno2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000" \
+  expect_err 0 gbmc_ip_monitor_parse_line "[LINK]2: eno2@extra: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000" \
     < <(echo 'link/ether aa:aa:aa:aa:aa:aa brd ff:ff:ff:ff:ff:ff')
   expect_streq "$change" 'link'
   expect_streq "$action" 'add'
   expect_streq "$intf" 'eno2'
   expect_streq "$mac" 'aa:aa:aa:aa:aa:aa'
+  expect_streq "$carrier" 'UP'
 }
 
 testParseLinkDel() {
@@ -176,6 +181,17 @@ testParseLinkDel() {
   expect_streq "$action" 'del'
   expect_streq "$intf" 'eno2'
   expect_streq "$mac" 'aa:aa:aa:aa:aa:aa'
+  expect_streq "$carrier" 'UP'
+}
+
+testParseLinkUsb() {
+  expect_err 0 gbmc_ip_monitor_parse_line "[LINK]20: gusbem0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 master gbmcbr state UP" \
+    < <(echo 'link/ether aa:aa:aa:aa:aa:aa brd ff:ff:ff:ff:ff:ff')
+  expect_streq "$change" 'link'
+  expect_streq "$action" 'add'
+  expect_streq "$intf" 'gusbem0'
+  expect_streq "$mac" 'aa:aa:aa:aa:aa:aa'
+  expect_streq "$carrier" 'UP'
 }
 
 main

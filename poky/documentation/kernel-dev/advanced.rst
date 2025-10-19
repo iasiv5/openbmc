@@ -69,8 +69,7 @@ to indicate the branch.
    You can use the :term:`KBRANCH` value to define an alternate branch typically
    with a machine override as shown here from the ``meta-yocto-bsp`` layer::
 
-           KBRANCH:edgerouter = "standard/edgerouter"
-
+      KBRANCH:beaglebone-yocto = "standard/beaglebone"
 
 The linux-yocto style recipes can optionally define the following
 variables:
@@ -183,7 +182,7 @@ the structure:
    order to define a base kernel policy or major kernel type to be
    reused across multiple BSPs, place the file in ``ktypes`` directory.
 
-These distinctions can easily become blurred - especially as out-of-tree
+These distinctions can easily become blurred --- especially as out-of-tree
 features slowly merge upstream over time. Also, remember that how the
 description files are placed is a purely logical organization and has no
 impact on the functionality of the kernel Metadata. There is no impact
@@ -304,8 +303,8 @@ The following listings show the ``build.scc`` file and part of the
                         .
                         .
                         .
- 	        char *dump_write = NULL, *files_source = NULL;
- 	        int opt;
+                char *dump_write = NULL, *files_source = NULL;
+                int opt;
       --
       2.10.1
 
@@ -352,17 +351,15 @@ in the manual.
 Kernel Types
 ------------
 
-A kernel type defines a high-level kernel policy by aggregating
-non-hardware configuration fragments with patches you want to use when
-building a Linux kernel of a specific type (e.g. a real-time kernel).
-Syntactically, kernel types are no different than features as described
-in the ":ref:`kernel-dev/advanced:features`" section. The
-:term:`LINUX_KERNEL_TYPE`
-variable in the kernel recipe selects the kernel type. For example, in
-the ``linux-yocto_4.12.bb`` kernel recipe found in
-``poky/meta/recipes-kernel/linux``, a
-:ref:`require <bitbake:bitbake-user-manual/bitbake-user-manual-metadata:\`\`require\`\` directive>` directive
-includes the ``poky/meta/recipes-kernel/linux/linux-yocto.inc`` file,
+A kernel type defines a high-level kernel policy by aggregating non-hardware
+configuration fragments with patches you want to use when building a Linux
+kernel of a specific type (e.g. a real-time kernel). Syntactically, kernel
+types are no different than features as described in the
+":ref:`kernel-dev/advanced:features`" section. The :term:`LINUX_KERNEL_TYPE`
+variable in the kernel recipe selects the kernel type. For example, in the
+``linux-yocto_4.12.bb`` kernel recipe found in ``poky/meta/recipes-kernel/linux``, a
+:ref:`require <bitbake-user-manual/bitbake-user-manual-metadata:\`\`require\`\` directive>`
+directive includes the ``poky/meta/recipes-kernel/linux/linux-yocto.inc`` file,
 which has the following statement that defines the default kernel type::
 
    LINUX_KERNEL_TYPE ??= "standard"
@@ -566,15 +563,7 @@ Example
 Many real-world examples are more complex. Like any other ``.scc`` file,
 BSP descriptions can aggregate features. Consider the Minnow BSP
 definition given the ``linux-yocto-4.4`` branch of the
-``yocto-kernel-cache`` (i.e.
-``yocto-kernel-cache/bsp/minnow/minnow.scc``):
-
-.. note::
-
-   Although the Minnow Board BSP is unused, the Metadata remains and is
-   being used here just as an example.
-
-::
+``yocto-kernel-cache`` (i.e. ``yocto-kernel-cache/bsp/minnow/minnow.scc``)::
 
    include cfg/x86.scc
    include features/eg20t/eg20t.scc
@@ -596,6 +585,11 @@ definition given the ``linux-yocto-4.4`` branch of the
 
    kconf hardware minnow.cfg
    kconf hardware minnow-dev.cfg
+
+.. note::
+
+   Although the Minnow Board BSP is unused, the Metadata remains and is
+   being used here just as an example.
 
 The ``minnow.scc`` description file includes a hardware configuration
 fragment (``minnow.cfg``) specific to the Minnow BSP as well as several
@@ -688,12 +682,11 @@ Recipe-Space Metadata
 ---------------------
 
 When stored in recipe-space, the kernel Metadata files reside in a
-directory hierarchy below
-:term:`FILESEXTRAPATHS`. For
-a linux-yocto recipe or for a Linux kernel recipe derived by copying and
-modifying
-``oe-core/meta-skeleton/recipes-kernel/linux/linux-yocto-custom.bb`` to
-a recipe in your layer, :term:`FILESEXTRAPATHS` is typically set to
+directory hierarchy below :term:`FILESEXTRAPATHS`. For
+a linux-yocto recipe or for a Linux kernel recipe derived by copying
+:oe_git:`meta-skeleton/recipes-kernel/linux/linux-yocto-custom.bb
+</openembedded-core/tree/meta-skeleton/recipes-kernel/linux/linux-yocto-custom.bb>`
+into your layer and modifying it, :term:`FILESEXTRAPATHS` is typically set to
 ``${``\ :term:`THISDIR`\ ``}/${``\ :term:`PN`\ ``}``.
 See the ":ref:`kernel-dev/common:modifying an existing recipe`"
 section for more information.
@@ -736,11 +729,10 @@ reside in a separate repository. The OpenEmbedded build system adds the
 Metadata to the build as a "type=kmeta" repository through the
 :term:`SRC_URI` variable. As an
 example, consider the following :term:`SRC_URI` statement from the
-``linux-yocto_4.12.bb`` kernel recipe::
+``linux-yocto_5.15.bb`` kernel recipe::
 
-   SRC_URI = "git://git.yoctoproject.org/linux-yocto-4.12.git;name=machine;branch=${KBRANCH}; \
-              git://git.yoctoproject.org/yocto-kernel-cache;type=kmeta;name=meta;branch=yocto-4.12;destsuffix=${KMETA}"
-
+   SRC_URI = "git://git.yoctoproject.org/linux-yocto.git;name=machine;branch=${KBRANCH};protocol=https \
+              git://git.yoctoproject.org/yocto-kernel-cache;type=kmeta;name=meta;branch=yocto-5.15;destsuffix=${KMETA};protocol=https"
 
 ``${KMETA}``, in this context, is simply used to name the directory into
 which the Git fetcher places the Metadata. This behavior is no different
@@ -764,7 +756,7 @@ Organizing Your Source
 ======================
 
 Many recipes based on the ``linux-yocto-custom.bb`` recipe use Linux
-kernel sources that have only a single branch - "master". This type of
+kernel sources that have only a single branch. This type of
 repository structure is fine for linear development supporting a single
 machine and architecture. However, if you work with multiple boards and
 architectures, a kernel source repository with multiple branches is more
@@ -773,7 +765,7 @@ board to boot. Sometimes, these patches are works-in-progress or
 fundamentally wrong, yet they are still necessary for specific boards.
 In these situations, you most likely do not want to include these
 patches in every kernel you build (i.e. have the patches as part of the
-lone "master" branch). It is situations like these that give rise to
+default branch). It is situations like these that give rise to
 multiple branches used within a Linux kernel sources Git repository.
 
 Here are repository organization strategies maximizing source reuse,
@@ -813,7 +805,7 @@ Machine Branches
 When you have multiple machines and architectures to support, or you are
 actively working on board support, it is more efficient to create
 branches in the repository based on individual machines. Having machine
-branches allows common source to remain in the "master" branch with any
+branches allows common source to remain in the development branch with any
 features specific to a machine stored in the appropriate machine branch.
 This organization method frees you from continually reintegrating your
 patches into a feature.

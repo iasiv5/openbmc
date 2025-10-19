@@ -1,6 +1,6 @@
 # Setup extra CFLAGS and LDFLAGS which have 'security' benefits. These
 # don't work universally, there are recipes which can't use one, the other
-# or both so a blacklist is maintained here. The idea would be over
+# or both so an override is maintained here. The idea would be over
 # time to reduce this list to nothing.
 # From a Yocto Project perspective, this file is included and tested
 # in the DISTRO="poky" configuration.
@@ -31,12 +31,6 @@ SECURITY_NO_PIE_CFLAGS ?= "${SECURITY_STACK_PROTECTOR} ${lcl_maybe_fortify} ${SE
 SECURITY_LDFLAGS ?= "-Wl,-z,relro,-z,now"
 SECURITY_X_LDFLAGS ?= "-Wl,-z,relro"
 
-# powerpc does not get on with pie for reasons not looked into as yet
-GCCPIE:powerpc = ""
-GLIBCPIE:powerpc = ""
-SECURITY_CFLAGS:remove:powerpc = "${SECURITY_PIE_CFLAGS}"
-SECURITY_CFLAGS:pn-libgcc:powerpc = ""
-
 SECURITY_CFLAGS:pn-glibc = ""
 SECURITY_CFLAGS:pn-glibc-testsuite = ""
 SECURITY_CFLAGS:pn-gcc-runtime = ""
@@ -61,6 +55,7 @@ TARGET_LDFLAGS:append:class-cross-canadian = " ${SECURITY_LDFLAGS}"
 SECURITY_STACK_PROTECTOR:pn-gcc-runtime = ""
 SECURITY_STACK_PROTECTOR:pn-glibc = ""
 SECURITY_STACK_PROTECTOR:pn-glibc-testsuite = ""
+SECURITY_STACK_PROTECTOR:pn-ltp = ""
 # All xorg module drivers need to be linked this way as well and are
 # handled in recipes-graphics/xorg-driver/xorg-driver-common.inc
 SECURITY_LDFLAGS:pn-xserver-xorg = "${SECURITY_X_LDFLAGS}"
@@ -68,4 +63,3 @@ SECURITY_LDFLAGS:pn-xserver-xorg = "${SECURITY_X_LDFLAGS}"
 TARGET_CC_ARCH:append:pn-binutils = " ${SELECTED_OPTIMIZATION}"
 TARGET_CC_ARCH:append:pn-gcc = " ${SELECTED_OPTIMIZATION}"
 TARGET_CC_ARCH:append:pn-gdb = " ${SELECTED_OPTIMIZATION}"
-TARGET_CC_ARCH:append:pn-perf = " ${SELECTED_OPTIMIZATION}"

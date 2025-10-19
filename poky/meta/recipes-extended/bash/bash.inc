@@ -7,7 +7,7 @@ DEPENDS = "ncurses bison-native virtual/libiconv"
 
 inherit autotools gettext texinfo update-alternatives ptest
 
-EXTRA_AUTORECONF += "--exclude=autoheader"
+EXTRA_AUTORECONF += "--exclude=autoheader,aclocal"
 EXTRA_OECONF = "--enable-job-control --without-bash-malloc bash_cv_wexitstatus_offset=8"
 
 # If NON_INTERACTIVE_LOGIN_SHELLS is defined, all login shells read the
@@ -46,12 +46,6 @@ RDEPENDS:${PN}-ptest:append:libc-glibc = " \
 
 CACHED_CONFIGUREVARS += "headersdir=${includedir}/${PN}"
 
-do_configure:prepend () {
-    if [ ! -e ${S}/acinclude.m4 ]; then
-       cat ${S}/aclocal.m4 > ${S}/acinclude.m4
-    fi
-}
-
 do_compile:prepend() {
     # Remove any leftover .build files. This ensures that bash always has the
     # same version number and keeps builds reproducible
@@ -74,7 +68,8 @@ do_install:append () {
 		mv ${D}${bindir}/bash ${D}${base_bindir}
 	fi
 }
-do_install:append:class-target () {
+
+fix_absolute_paths () {
 	# Clean buildhost references in bashbug
 	sed -i -e "s,--sysroot=${STAGING_DIR_TARGET},,g" \
 		-e "s,-I${WORKDIR}/\S* ,,g" \
@@ -93,15 +88,24 @@ do_install:append:class-target () {
 		${D}${libdir}/bash/Makefile.inc
 }
 
+do_install:append:class-target () {
+	fix_absolute_paths
+}
+
+do_install:append:class-nativesdk () {
+	fix_absolute_paths
+}
+
 do_install_ptest () {
 	make INSTALL_TEST_DIR=${D}${PTEST_PATH}/tests install-test
 	cp ${B}/Makefile ${D}${PTEST_PATH}
 	cp ${B}/config.h ${D}${PTEST_PATH}
 	cp ${B}/version.h ${D}${PTEST_PATH}
 	cp ${S}/y.tab.[ch] ${D}${PTEST_PATH}
-	install -D ${WORKDIR}/run-bash-ptests ${D}${PTEST_PATH}/run-bash-ptests
+	install -D ${UNPACKDIR}/run-bash-ptests ${D}${PTEST_PATH}/run-bash-ptests
         sed -i -e 's/^Makefile/_Makefile/' -e "s,--sysroot=${STAGING_DIR_TARGET},,g" \
 	    -e 's|${DEBUG_PREFIX_MAP}||g' \
+	    -e 's|${BUILD_LDFLAGS}||g' \
 	    -e "s,${S},,g" -e "s,${B},,g" -e "s,${STAGING_DIR_NATIVE},,g" \
 	    -e 's:${HOSTTOOLS_DIR}/::g' \
 	    -e 's:${UNINATIVE_LOADER}:${base_bindir}/false:g' \
@@ -128,4 +132,6 @@ PACKAGE_BEFORE_PN += "${PN}-loadable"
 RDEPENDS:${PN}-loadable += "${PN}"
 FILES:${PN}-loadable += "${libdir}/bash/*"
 
-RPROVIDES:${PN} += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '/bin/sh /bin/bash', '', d)}"
+# Limit the RPROVIDES here to class target so that if usrmerge is enabled for nativesdk, it does not
+# include host system paths in /bin/
+RPROVIDES:${PN}:append:class-target = " ${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '/bin/sh /bin/bash', '', d)}"

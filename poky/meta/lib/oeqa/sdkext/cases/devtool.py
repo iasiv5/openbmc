@@ -69,10 +69,9 @@ class DevtoolTest(OESDKExtTestCase):
         self._test_devtool_build(self.myapp_cmake_dst)
 
     def test_extend_autotools_recipe_creation(self):
-        req = 'https://github.com/rdfa/librdfa'
-        recipe = "librdfa"
-        self._run('devtool sdk-install libxml2')
-        self._run('devtool add %s %s' % (recipe, req) )
+        recipe = "test-dbus-wait"
+        self._run('devtool sdk-install dbus')
+        self._run('devtool add %s https://git.yoctoproject.org/git/dbus-wait' % (recipe) )
         try:
             self._run('devtool build %s' % recipe)
         finally:
@@ -112,7 +111,7 @@ class SdkUpdateTest(OESDKExtTestCase):
         cmd = 'oe-publish-sdk %s %s' % (tcname_new, self.publish_dir)
         subprocess.check_output(cmd, shell=True)
 
-        self.http_service = HTTPService(self.publish_dir)
+        self.http_service = HTTPService(self.publish_dir, logger=self.logger)
         self.http_service.start()
 
         self.http_url = "http://127.0.0.1:%d" % self.http_service.port

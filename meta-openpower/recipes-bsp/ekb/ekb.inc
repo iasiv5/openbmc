@@ -1,6 +1,6 @@
 EKB_BRANCH = "main-p10"
-EKB_URI = "git://git@github.com/open-power/pub-ekb;branch=${EKB_BRANCH}"
-EKB_REV = "a9996cb6861198688010522baed369b0af0e6aca"
+EKB_URI = "git://git@github.com/open-power/pub-ekb;branch=${EKB_BRANCH};protocol=https"
+EKB_REV = "b372d39235fff24439b827e8507ad14ed2bfa868"
 
 REQ_ATTRS_XMLS = "hwpf/fapi2/xml/attribute_info/chip_attributes.xml \
            hwpf/fapi2/xml/attribute_info/common_attributes.xml \
@@ -20,4 +20,5 @@ REQ_ATTRS_XMLS = "hwpf/fapi2/xml/attribute_info/chip_attributes.xml \
            chips/p10/procedures/xml/attribute_info/p10_qme_attributes.xml \
            chips/p10/procedures/xml/attribute_info/p10_runn_attributes.xml \
            chips/p10/procedures/xml/attribute_info/p10_sbe_load_bootloader_attributes.xml \
-           chips/p10/procedures/xml/attribute_info/p10_sbe_attributes.xml"
+           chips/p10/procedures/xml/attribute_info/p10_sbe_attributes.xml \
+           chips/p10/procedures/xml/attribute_info/pm_plat_attributes.xml"

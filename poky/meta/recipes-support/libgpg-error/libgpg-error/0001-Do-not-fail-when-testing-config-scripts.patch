@@ -1,4 +1,4 @@
-From 137805890951b6b585c1d23097e0a51e8c7a8a50 Mon Sep 17 00:00:00 2001
+From b1b6c28b4753c027052aeb6275a73eed06f0bf49 Mon Sep 17 00:00:00 2001
 From: Alexander Kanavin <alex.kanavin@gmail.com>
 Date: Fri, 28 Feb 2020 09:19:56 +0000
 Subject: [PATCH] Do not fail when testing config scripts
@@ -14,14 +14,13 @@ Signed-off-by: Alexander Kanavin <alex.kanavin@gmail.com>
  1 file changed, 1 deletion(-)
 
 diff --git a/src/Makefile.am b/src/Makefile.am
-index 9303954..7630540 100644
+index e56bb23..8c3ba7b 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -344,7 +344,6 @@ gpg-error-config: gpgrt-config gpg-error-config-old
+@@ -326,6 +326,5 @@ gpg-error-config: gpgrt-config gpg-error-config-old gpg-error-config-test.sh
  	else                                                   \
  	  echo "no";                                           \
  	  echo "***  Please report to <https://bugs.gnupg.org> with gpg-error-config-test.log"; \
 -	  exit 1; \
  	fi
  	cp gpg-error-config-old $@
- 

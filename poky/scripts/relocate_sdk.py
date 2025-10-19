@@ -30,9 +30,16 @@ else:
 old_prefix = re.compile(b("##DEFAULT_INSTALL_DIR##"))
 
 def get_arch():
+    global endian_prefix
     f.seek(0)
     e_ident =f.read(16)
-    ei_mag0,ei_mag1_3,ei_class = struct.unpack("<B3sB11x", e_ident)
+    ei_mag0,ei_mag1_3,ei_class,ei_data,ei_version = struct.unpack("<B3sBBB9x", e_ident)
+
+    # ei_data = 1 for little-endian & 0 for big-endian
+    if ei_data == 1:
+        endian_prefix = '<'
+    else:
+        endian_prefix = '>'
 
     if (ei_mag0 != 0x7f and ei_mag1_3 != "ELF") or ei_class == 0:
         return 0
@@ -41,6 +48,34 @@ def get_arch():
         return 32
     elif ei_class == 2:
         return 64
+
+def get_dl_arch(dl_path):
+    try:
+        with open(dl_path, "r+b") as f:
+            e_ident =f.read(16)
+    except IOError:
+        exctype, ioex = sys.exc_info()[:2]
+        if ioex.errno == errno.ETXTBSY:
+            print("Could not open %s. File used by another process.\nPlease "\
+                  "make sure you exit all processes that might use any SDK "\
+                  "binaries." % e)
+        else:
+            print("Could not open %s: %s(%d)" % (e, ioex.strerror, ioex.errno))
+        sys.exit(-1)
+
+    ei_mag0,ei_mag1_3,ei_class,ei_data,ei_version = struct.unpack("<B3sBBB9x", e_ident)
+
+    if (ei_mag0 != 0x7f and ei_mag1_3 != "ELF") or ei_class == 0:
+        print("ERROR: unknow %s" % dl_path)
+        sys.exit(-1)
+
+    if ei_class == 1:
+        arch = 32
+    elif ei_class == 2:
+        arch = 64
+
+    return arch
+
 
 def parse_elf_header():
     global e_type, e_machine, e_version, e_entry, e_phoff, e_shoff, e_flags,\
@@ -51,11 +86,11 @@ def parse_elf_header():
 
     if arch == 32:
         # 32bit
-        hdr_fmt = "<HHILLLIHHHHHH"
+        hdr_fmt = endian_prefix + "HHILLLIHHHHHH"
         hdr_size = 52
     else:
         # 64bit
-        hdr_fmt = "<HHIQQQIHHHHHH"
+        hdr_fmt = endian_prefix + "HHIQQQIHHHHHH"
         hdr_size = 64
 
     e_type, e_machine, e_version, e_entry, e_phoff, e_shoff, e_flags,\
@@ -64,9 +99,9 @@ def parse_elf_header():
 
 def change_interpreter(elf_file_name):
     if arch == 32:
-        ph_fmt = "<IIIIIIII"
+        ph_fmt = endian_prefix + "IIIIIIII"
     else:
-        ph_fmt = "<IIQQQQQQ"
+        ph_fmt = endian_prefix + "IIQQQQQQ"
 
     """ look for PT_INTERP section """
     for i in range(0,e_phnum):
@@ -97,25 +132,26 @@ def change_interpreter(elf_file_name):
             if (len(new_dl_path) >= p_filesz):
                 print("ERROR: could not relocate %s, interp size = %i and %i is needed." \
                     % (elf_file_name, p_memsz, len(new_dl_path) + 1))
-                break
+                return False
             dl_path = new_dl_path + b("\0") * (p_filesz - len(new_dl_path))
             f.seek(p_offset)
             f.write(dl_path)
             break
+    return True
 
 def change_dl_sysdirs(elf_file_name):
     if arch == 32:
-        sh_fmt = "<IIIIIIIIII"
+        sh_fmt = endian_prefix + "IIIIIIIIII"
     else:
-        sh_fmt = "<IIQQQQIIQQ"
+        sh_fmt = endian_prefix + "IIQQQQIIQQ"
 
     """ read section string table """
     f.seek(e_shoff + e_shstrndx * e_shentsize)
     sh_hdr = f.read(e_shentsize)
     if arch == 32:
-        sh_offset, sh_size = struct.unpack("<16xII16x", sh_hdr)
+        sh_offset, sh_size = struct.unpack(endian_prefix + "16xII16x", sh_hdr)
     else:
-        sh_offset, sh_size = struct.unpack("<24xQQ24x", sh_hdr)
+        sh_offset, sh_size = struct.unpack(endian_prefix + "24xQQ24x", sh_hdr)
 
     f.seek(sh_offset)
     sh_strtab = f.read(sh_size)
@@ -215,6 +251,9 @@ else:
 
 executables_list = sys.argv[3:]
 
+dl_arch = get_dl_arch(new_dl_path)
+
+errors = False
 for e in executables_list:
     perms = os.stat(e)[stat.ST_MODE]
     if os.access(e, os.W_OK|os.R_OK):
@@ -238,9 +277,10 @@ for e in executables_list:
     old_size = os.path.getsize(e)
     if old_size >= 64:
         arch = get_arch()
-        if arch:
+        if arch and arch == dl_arch:
             parse_elf_header()
-            change_interpreter(e)
+            if not change_interpreter(e):
+                errors = True
             change_dl_sysdirs(e)
 
     """ change permissions back """
@@ -253,3 +293,6 @@ for e in executables_list:
         print("New file size for %s is different. Looks like a relocation error!", e)
         sys.exit(-1)
 
+if errors:
+    print("Relocation of one or more executables failed.")
+    sys.exit(-1)

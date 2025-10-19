@@ -9,9 +9,6 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=e3fc50a88d0a364313df4b21ef20c29e"
 inherit meson pkgconfig
 inherit obmc-phosphor-dbus-service
 
-RPROVIDES:${PN} += "virtual/obmc-watchdog"
-PROVIDES += "virtual/obmc-watchdog"
-
 DEPENDS += "cli11"
 DEPENDS += "sdbusplus"
 DEPENDS += "sdeventplus"
@@ -19,8 +16,8 @@ DEPENDS += "phosphor-dbus-interfaces"
 DEPENDS += "phosphor-logging"
 DEPENDS += "systemd"
 
-SRC_URI += "git://github.com/openbmc/phosphor-watchdog"
-SRCREV = "658527bbdde8b88ca798527f03c3c67ad7f1c080"
+SRC_URI = "git://github.com/openbmc/phosphor-watchdog;branch=master;protocol=https"
+SRCREV = "489c97dbaf709eab3a691a6f3fca09504f3415f3"
 S = "${WORKDIR}/git"
 
 EXTRA_OEMESON = " \
@@ -28,7 +25,7 @@ EXTRA_OEMESON = " \
         "
 
 # Copies config file having arguments for host watchdog
-SYSTEMD_ENVIRONMENT_FILE:${PN} +="obmc/watchdog/poweron"
+SYSTEMD_ENVIRONMENT_FILE:${PN} += "obmc/watchdog/poweron"
 
 # Install the override to set up a Conflicts relation
 SYSTEMD_OVERRIDE:${PN} += "poweron.conf:phosphor-watchdog@poweron.service.d/poweron.conf"
@@ -53,3 +50,4 @@ ENABLE_WATCHDOG_FMT = "../${ENABLE_WATCHDOG_TMPL}:obmc-host-startmin@{0}.target.
 
 SYSTEMD_LINK:${PN} += "${@compose_list(d, 'WATCHDOG_FMT', 'OBMC_HOST_WATCHDOG_INSTANCES', 'OBMC_HOST_INSTANCES')}"
 SYSTEMD_LINK:${PN} += "${@compose_list(d, 'ENABLE_WATCHDOG_FMT', 'OBMC_HOST_INSTANCES')}"
+SYSTEMD_LINK[vardeps] += "OBMC_HOST_INSTANCES OBMC_HOST_WATCHDOG_INSTANCES"

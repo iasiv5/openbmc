@@ -8,23 +8,19 @@ inherit phosphor-dbus-monitor
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${BPN}:"
 
-SRC_URI += "file://air-cooled.yaml"
+SRC_URI:append:df-openpower = " file://air-cooled.yaml"
 SRC_URI:append:ibm-ac-server = " file://water-cooled.yaml"
-SRC_URI += "file://fan-errors.yaml"
+SRC_URI:append:df-openpower = " file://fan-errors.yaml"
 
 SRC_URI:remove:p10bmc = "file://air-cooled.yaml"
 SRC_URI:remove:p10bmc = "file://fan-errors.yaml"
 
 do_install:append:ibm-ac-server() {
-        install -D ${WORKDIR}/air-cooled.yaml ${D}${config_dir}/air-cooled.yaml
-        install -D ${WORKDIR}/water-cooled.yaml ${D}${config_dir}/water-cooled.yaml
-        install -D ${WORKDIR}/fan-errors.yaml ${D}${config_dir}/fan-errors.yaml
+        install -D ${UNPACKDIR}/air-cooled.yaml ${D}${config_dir}/air-cooled.yaml
+        install -D ${UNPACKDIR}/water-cooled.yaml ${D}${config_dir}/water-cooled.yaml
+        install -D ${UNPACKDIR}/fan-errors.yaml ${D}${config_dir}/fan-errors.yaml
 }
 
-do_install:append:mihawk() {
-        install -D ${WORKDIR}/air-cooled.yaml ${D}${config_dir}/air-cooled.yaml
-        install -D ${WORKDIR}/fan-errors.yaml ${D}${config_dir}/fan-errors.yaml
-}
 
 FILES:${PN} += "${config_dir}/air-cooled.yaml"
 FILES:${PN}:append:ibm-ac-server = " ${config_dir}/water-cooled.yaml"

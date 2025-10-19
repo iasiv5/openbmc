@@ -1,4 +1,4 @@
-From 2fa52d61b1abdf4a3f3b153c771fb2081666430c Mon Sep 17 00:00:00 2001
+From d59d6fd13e4a7fe3fdca2a4ce1cd2def36356bb4 Mon Sep 17 00:00:00 2001
 From: Mingli Yu <Mingli.Yu@windriver.com>
 Date: Tue, 21 May 2019 15:20:34 +0800
 Subject: [PATCH] skip the test when gcc not deployed
@@ -6,10 +6,9 @@ Subject: [PATCH] skip the test when gcc not deployed
 Skip the tests which depend on gcc when
 gcc not deployed.
 
-Upstream-Status: Submitted[https://sourceware.org/ml/elfutils-devel/2019-q2/msg00091.html]
+Upstream-Status: Submitted [https://sourceware.org/ml/elfutils-devel/2019-q2/msg00091.html]
 
 Signed-off-by: Mingli Yu <Mingli.Yu@windriver.com>
-
 ---
  tests/run-disasm-x86-64.sh | 2 ++
  tests/run-disasm-x86.sh    | 2 ++

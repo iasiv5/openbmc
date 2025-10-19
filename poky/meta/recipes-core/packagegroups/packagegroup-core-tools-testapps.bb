@@ -4,7 +4,6 @@
 
 SUMMARY = "Testing tools/applications"
 
-PR = "r2"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
@@ -14,9 +13,18 @@ inherit packagegroup
 KEXECTOOLS ?= "kexec"
 KEXECTOOLS:e5500-64b ?= ""
 KEXECTOOLS:microblaze ?= ""
+KEXECTOOLS:mipsarcho32 ?= ""
 KEXECTOOLS:nios2 ?= ""
 KEXECTOOLS:riscv64 ?= ""
 KEXECTOOLS:riscv32 ?= ""
+KEXECTOOLS:loongarch64 ?= ""
+
+# go does not support ppc32, only ppc64
+# https://github.com/golang/go/issues/22885
+# gccgo may do better
+GOTOOLS ?= "go-helloworld"
+GOTOOLS:powerpc ?= ""
+GOTOOLS:riscv32 ?= ""
 
 GSTEXAMPLES ?= "gst-examples"
 GSTEXAMPLES:riscv64 = ""
@@ -38,7 +46,6 @@ X11TOOLS = "\
     "
 
 RDEPENDS:${PN} = "\
-    blktool \
     ${KEXECTOOLS} \
     alsa-utils-amixer \
     alsa-utils-aplay \
@@ -49,4 +56,5 @@ RDEPENDS:${PN} = "\
     ${@bb.utils.contains('DISTRO_FEATURES', 'x11', "${X11TOOLS}", "", d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'x11 opengl', "${X11GLTOOLS}", "", d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', '3g', "${3GTOOLS}", "", d)} \
+    ${GOTOOLS} \
     "

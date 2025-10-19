@@ -1122,7 +1122,6 @@ class LRParser:
 # manipulate the rules that make up a grammar. 
 # -----------------------------------------------------------------------------
 
-import re
 
 # regex matching identifiers
 _is_identifier = re.compile(r'^[a-zA-Z0-9_-]+$')
@@ -2797,11 +2796,15 @@ class ParserReflect(object):
     # Compute a signature over the grammar
     def signature(self):
         try:
-            from hashlib import md5
+            import hashlib
         except ImportError:
-            from md5 import md5
+            raise RuntimeError("Unable to import hashlib")
         try:
-            sig = md5()
+            sig = hashlib.new('MD5', usedforsecurity=False)
+        except TypeError:
+            # Some configurations don't appear to support two arguments
+            sig = hashlib.new('MD5')
+        try:
             if self.start:
                 sig.update(self.start.encode('latin-1'))
             if self.prec:

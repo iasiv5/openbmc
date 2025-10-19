@@ -1,7 +1,7 @@
 DESCRIPTION = "Utilities for testing Power Management"
 HOMEPAGE = "https://wiki.linaro.org/WorkingGroups/PowerManagement/Resources/TestSuite/PmQa"
 
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
 PV = "0.5.2"
@@ -10,11 +10,16 @@ BRANCH ?= "master"
 
 SRCREV = "05710ec5032be4c8edafb4109d4d908d31243906"
 
-SRC_URI = "git://git.linaro.org/power/pm-qa.git;protocol=git;branch=${BRANCH}"
+SRC_URI = " \
+    git://git.linaro.org/power/pm-qa.git;protocol=git;branch=${BRANCH} \
+    file://0001-fix-build-with-gcc-15-Wincompatible-pointer-types-er.patch \
+"
 
 S = "${WORKDIR}/git"
 
 CFLAGS += "-pthread"
+
+PATCHTOOL = "git"
 
 do_compile () {
     # Find all the .c files in this project and build them.
@@ -63,7 +68,7 @@ do_install () {
         install -m 0755 $script ${D}${bindir}/${script_basename}
     done
 }
-RDEPENDS:${PN} +="bash"
+RDEPENDS:${PN} += "bash"
 
 # http://errors.yoctoproject.org/Errors/Details/186956/
 COMPATIBLE_HOST:libc-musl = 'null'

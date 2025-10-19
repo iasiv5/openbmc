@@ -22,8 +22,9 @@ RPROVIDES:${PN}-fan-mgmt += "virtual-obmc-fan-mgmt"
 
 SUMMARY:${PN}-kudo-chassis = "kudo chassis"
 RDEPENDS:${PN}-kudo-chassis = " \
-    phosphor-hostlogger \
-    obmc-op-control-power \
+    phosphor-skeleton-control-power \
+    obmc-phosphor-buttons-signals \
+    obmc-phosphor-buttons-handler \
     "
 
 SUMMARY:${PN}-kudo-system = "kudo System"
@@ -48,7 +49,7 @@ RDEPENDS:${PN}-kudo-system = " \
 SUMMARY:${PN}-kudo-fw = "kudo Firmware"
 RDEPENDS:${PN}-kudo-fw = " \
     kudo-fw \
-    kudo-bios-update \
+    ${VIRTUAL-RUNTIME_bios-update} \
     kudo-bmc-update \
     kudo-cpld-update \
     kudo-scp-update \

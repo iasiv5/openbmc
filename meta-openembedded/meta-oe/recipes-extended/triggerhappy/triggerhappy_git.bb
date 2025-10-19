@@ -1,17 +1,17 @@
 SUMMARY = "A lightweight hotkey daemon"
 HOMEPAGE = "https://github.com/wertarbyte/triggerhappy"
 
-LICENSE = "GPLv3"
+LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504"
 
 # matches debian/0.5.0-1 tag
 SRCREV = "44a173195986d0d853316cb02a58785ded66c12b"
-PV = "0.5.0+git${SRCPV}"
-SRC_URI = "git://github.com/wertarbyte/${BPN}.git;branch=debian"
+PV = "0.5.0+git"
+SRC_URI = "git://github.com/wertarbyte/${BPN}.git;branch=debian;protocol=https"
 
 S = "${WORKDIR}/git"
 
-inherit autotools-brokensep pkgconfig perlnative update-rc.d systemd
+inherit pkgconfig perlnative update-rc.d systemd
 
 PACKAGECONFIG = "${@bb.utils.contains('DISTRO_FEATURES','systemd','systemd','',d)}"
 PACKAGECONFIG[systemd] = ",,systemd"
@@ -30,7 +30,9 @@ FILES:${PN} = "\
 "
 CONFFILES:${PN} = "${sysconfdir}/udev/rules.d/80-triggerhappy.rules"
 
-do_install:append() {
+do_install() {
+    oe_runmake 'DESTDIR=${D}' 'BINDIR=${D}${sbindir}' install
+
     install -d ${D}${sysconfdir}/triggerhappy/triggers.d
 
     install -d ${D}${nonarch_base_libdir}/udev/rules.d

@@ -34,14 +34,11 @@ RDEPENDS:${PN}-fans = " \
 
 SUMMARY:${PN}-flash = "Intel Flash"
 RDEPENDS:${PN}-flash = " \
-        obmc-control-bmc \
         "
 
 SUMMARY:${PN}-system = "Intel System"
 RDEPENDS:${PN}-system = " \
-        bmcweb \
         entity-manager \
         intel-ipmi-oem \
         dbus-sensors \
-        webui-vue \
         "

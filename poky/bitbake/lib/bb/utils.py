@@ -11,24 +11,29 @@ import re, fcntl, os, string, stat, shutil, time
 import sys
 import errno
 import logging
-import bb
-import bb.msg
+import locale
 import multiprocessing
-import fcntl
 import importlib
-from importlib import machinery
+import importlib.machinery
+import importlib.util
 import itertools
 import subprocess
 import glob
 import fnmatch
 import traceback
-import errno
 import signal
 import collections
 import copy
+import ctypes
+import random
+import socket
+import struct
+import tempfile
 from subprocess import getstatusoutput
 from contextlib import contextmanager
 from ctypes import cdll
+import bb
+import bb.msg
 
 logger = logging.getLogger("BitBake.Util")
 python_extensions = importlib.machinery.all_suffixes()
@@ -43,7 +48,7 @@ def clean_context():
 
 def get_context():
     return _context
-    
+
 
 def set_context(ctx):
     _context = ctx
@@ -77,7 +82,16 @@ def explode_version(s):
     return r
 
 def split_version(s):
-    """Split a version string into its constituent parts (PE, PV, PR)"""
+    """Split a version string into its constituent parts (PE, PV, PR).
+
+    Arguments:
+
+    -  ``s``: version string. The format of the input string should be::
+
+          ${PE}:${PV}-${PR}
+
+    Returns a tuple ``(pe, pv, pr)``.
+    """
     s = s.strip(" <>=")
     e = 0
     if s.count(':'):
@@ -129,16 +143,30 @@ def vercmp(ta, tb):
     return r
 
 def vercmp_string(a, b):
-    """ Split version strings and compare them """
+    """ Split version strings using ``bb.utils.split_version()`` and compare
+    them with ``bb.utils.vercmp().``
+
+    Arguments:
+
+    -  ``a``: left version string operand.
+    -  ``b``: right version string operand.
+
+    Returns what ``bb.utils.vercmp()`` returns."""
     ta = split_version(a)
     tb = split_version(b)
     return vercmp(ta, tb)
 
 def vercmp_string_op(a, b, op):
     """
-    Compare two versions and check if the specified comparison operator matches the result of the comparison.
-    This function is fairly liberal about what operators it will accept since there are a variety of styles
-    depending on the context.
+    Takes the return value ``bb.utils.vercmp()`` and returns the operation
+    defined by ``op`` between the return value and 0.
+
+    Arguments:
+
+    -  ``a``: left version string operand.
+    -  ``b``: right version string operand.
+    -  ``op``: operator string. Can be one of ``=``, ``==``, ``<=``, ``>=``,
+       ``>``, ``>>``, ``<``, ``<<`` or ``!=``.
     """
     res = vercmp_string(a, b)
     if op in ('=', '=='):
@@ -158,9 +186,16 @@ def vercmp_string_op(a, b, op):
 
 def explode_deps(s):
     """
-    Take an RDEPENDS style string of format:
-    "DEPEND1 (optional version) DEPEND2 (optional version) ..."
-    and return a list of dependencies.
+    Takes an RDEPENDS style string of format::
+
+      DEPEND1 (optional version) DEPEND2 (optional version) ...
+
+    Arguments:
+
+    -  ``s``: input RDEPENDS style string
+
+    Returns a list of dependencies.
+
     Version information is ignored.
     """
     r = []
@@ -182,9 +217,17 @@ def explode_deps(s):
 
 def explode_dep_versions2(s, *, sort=True):
     """
-    Take an RDEPENDS style string of format:
-    "DEPEND1 (optional version) DEPEND2 (optional version) ..."
-    and return a dictionary of dependencies and versions.
+    Takes an RDEPENDS style string of format::
+
+       DEPEND1 (optional version) DEPEND2 (optional version) ...
+
+    Arguments:
+
+    -  ``s``: input RDEPENDS style string
+    -  ``*``: *Unused*.
+    -  ``sort``: whether to sort the output or not.
+
+    Returns a dictionary of dependencies and versions.
     """
     r = collections.OrderedDict()
     l = s.replace(",", "").split()
@@ -205,8 +248,8 @@ def explode_dep_versions2(s, *, sort=True):
             inversion = True
             # This list is based on behavior and supported comparisons from deb, opkg and rpm.
             #
-            # Even though =<, <<, ==, !=, =>, and >> may not be supported, 
-            # we list each possibly valid item. 
+            # Even though =<, <<, ==, !=, =>, and >> may not be supported,
+            # we list each possibly valid item.
             # The build system is responsible for validation of what it supports.
             if i.startswith(('<=', '=<', '<<', '==', '!=', '>=', '=>', '>>')):
                 lastcmp = i[0:2]
@@ -249,10 +292,17 @@ def explode_dep_versions2(s, *, sort=True):
 
 def explode_dep_versions(s):
     """
-    Take an RDEPENDS style string of format:
-    "DEPEND1 (optional version) DEPEND2 (optional version) ..."
-    skip null value and items appeared in dependancy string multiple times
-    and return a dictionary of dependencies and versions.
+    Take an RDEPENDS style string of format::
+
+      DEPEND1 (optional version) DEPEND2 (optional version) ...
+
+    Skips null values and items appeared in dependency string multiple times.
+
+    Arguments:
+
+    -  ``s``: input RDEPENDS style string
+
+    Returns a dictionary of dependencies and versions.
     """
     r = explode_dep_versions2(s)
     for d in r:
@@ -266,7 +316,17 @@ def explode_dep_versions(s):
 
 def join_deps(deps, commasep=True):
     """
-    Take the result from explode_dep_versions and generate a dependency string
+    Take a result from ``bb.utils.explode_dep_versions()`` and generate a
+    dependency string.
+
+    Arguments:
+
+    -  ``deps``: dictionary of dependencies and versions.
+    -  ``commasep``: makes the return value separated by commas if ``True``,
+       separated by spaces otherwise.
+
+    Returns a comma-separated (space-separated if ``comma-sep`` is ``False``)
+    string of dependencies and versions.
     """
     result = []
     for dep in deps:
@@ -340,7 +400,7 @@ def _print_exception(t, value, tb, realfile, text, context):
         exception = traceback.format_exception_only(t, value)
         error.append('Error executing a python function in %s:\n' % realfile)
 
-        # Strip 'us' from the stack (better_exec call) unless that was where the 
+        # Strip 'us' from the stack (better_exec call) unless that was where the
         # error came from
         if tb.tb_next is not None:
             tb = tb.tb_next
@@ -379,7 +439,7 @@ def _print_exception(t, value, tb, realfile, text, context):
 
         error.append("Exception: %s" % ''.join(exception))
 
-        # If the exception is from spwaning a task, let's be helpful and display
+        # If the exception is from spawning a task, let's be helpful and display
         # the output (which hopefully includes stderr).
         if isinstance(value, subprocess.CalledProcessError) and value.output:
             error.append("Subprocess output:")
@@ -400,7 +460,7 @@ def better_exec(code, context, text = None, realfile = "<code>", pythonexception
         code = better_compile(code, realfile, realfile)
     try:
         exec(code, get_context(), context)
-    except (bb.BBHandledException, bb.parse.SkipRecipe, bb.data_smart.ExpansionError):
+    except (bb.BBHandledException, bb.parse.SkipRecipe, bb.data_smart.ExpansionError, bb.process.ExecutionError):
         # Error already shown so passthrough, no need for traceback
         raise
     except Exception as e:
@@ -427,32 +487,55 @@ def better_eval(source, locals, extraglobals = None):
     return eval(source, ctx, locals)
 
 @contextmanager
-def fileslocked(files):
-    """Context manager for locking and unlocking file locks."""
+def fileslocked(files, *args, **kwargs):
+    """Context manager for locking and unlocking file locks. Uses
+    ``bb.utils.lockfile()`` and ``bb.utils.unlockfile()`` to lock and unlock
+    files.
+
+    No return value."""
     locks = []
     if files:
         for lockfile in files:
-            locks.append(bb.utils.lockfile(lockfile))
+            l = bb.utils.lockfile(lockfile, *args, **kwargs)
+            if l is not None:
+                locks.append(l)
 
     try:
         yield
     finally:
+        locks.reverse()
         for lock in locks:
             bb.utils.unlockfile(lock)
 
 def lockfile(name, shared=False, retry=True, block=False):
     """
-    Use the specified file as a lock file, return when the lock has
-    been acquired. Returns a variable to pass to unlockfile().
-    Parameters:
-        retry: True to re-try locking if it fails, False otherwise
-        block: True to block until the lock succeeds, False otherwise
+    Use the specified file (with filename ``name``) as a lock file, return when
+    the lock has been acquired. Returns a variable to pass to unlockfile().
+
+    Arguments:
+
+    -  ``shared``: sets the lock as a shared lock instead of an
+       exclusive lock.
+    -  ``retry``: ``True`` to re-try locking if it fails, ``False``
+       otherwise.
+    -  ``block``: ``True`` to block until the lock succeeds,
+       ``False`` otherwise.
+
     The retry and block parameters are kind of equivalent unless you
     consider the possibility of sending a signal to the process to break
     out - at which point you want block=True rather than retry=True.
+
+    Returns the locked file descriptor in case of success, ``None`` otherwise.
     """
+    basename = os.path.basename(name)
+    if len(basename) > 255:
+        root, ext = os.path.splitext(basename)
+        basename = root[:255 - len(ext)] + ext
+
     dirname = os.path.dirname(name)
     mkdirhier(dirname)
+
+    name = os.path.join(dirname, basename)
 
     if not os.access(dirname, os.W_OK):
         logger.error("Unable to acquire lock '%s', directory is not writable",
@@ -487,7 +570,7 @@ def lockfile(name, shared=False, retry=True, block=False):
                     return lf
             lf.close()
         except OSError as e:
-            if e.errno == errno.EACCES:
+            if e.errno == errno.EACCES or e.errno == errno.ENAMETOOLONG:
                 logger.error("Unable to acquire lock '%s', %s",
                              e.strerror, name)
                 sys.exit(1)
@@ -501,7 +584,13 @@ def lockfile(name, shared=False, retry=True, block=False):
 
 def unlockfile(lf):
     """
-    Unlock a file locked using lockfile()
+    Unlock a file locked using ``bb.utils.lockfile()``.
+
+    Arguments:
+
+    -  ``lf``: the locked file descriptor.
+
+    No return value.
     """
     try:
         # If we had a shared lock, we need to promote to exclusive before
@@ -529,43 +618,97 @@ def _hasher(method, filename):
 
 def md5_file(filename):
     """
-    Return the hex string representation of the MD5 checksum of filename.
+    Arguments:
+
+    -  ``filename``: path to the input file.
+
+    Returns the hexadecimal string representation of the MD5 checksum of filename.
     """
     import hashlib
-    return _hasher(hashlib.md5(), filename)
+    try:
+        sig = hashlib.new('MD5', usedforsecurity=False)
+    except TypeError:
+        # Some configurations don't appear to support two arguments
+        sig = hashlib.new('MD5')
+    return _hasher(sig, filename)
 
 def sha256_file(filename):
     """
-    Return the hex string representation of the 256-bit SHA checksum of
+    Returns the hexadecimal representation of the 256-bit SHA checksum of
     filename.
+
+    Arguments:
+
+    -  ``filename``: path to the file.
     """
     import hashlib
     return _hasher(hashlib.sha256(), filename)
 
 def sha1_file(filename):
     """
-    Return the hex string representation of the SHA1 checksum of the filename
+    Returns the hexadecimal representation of the SHA1 checksum of the filename
+
+    Arguments:
+
+    -  ``filename``: path to the file.
     """
     import hashlib
     return _hasher(hashlib.sha1(), filename)
 
 def sha384_file(filename):
     """
-    Return the hex string representation of the SHA384 checksum of the filename
+    Returns the hexadecimal representation of the SHA384 checksum of the filename
+
+    Arguments:
+
+    -  ``filename``: path to the file.
     """
     import hashlib
     return _hasher(hashlib.sha384(), filename)
 
 def sha512_file(filename):
     """
-    Return the hex string representation of the SHA512 checksum of the filename
+    Returns the hexadecimal representation of the SHA512 checksum of the filename
+
+    Arguments:
+
+    -  ``filename``: path to the file.
     """
     import hashlib
     return _hasher(hashlib.sha512(), filename)
 
+def goh1_file(filename):
+    """
+    Returns the hexadecimal string representation of the Go mod h1 checksum of the
+    filename. The Go mod h1 checksum uses the Go dirhash package. The package
+    defines hashes over directory trees and is used by go mod for mod files and
+    zip archives.
+
+    Arguments:
+
+    -  ``filename``: path to the file.
+    """
+    import hashlib
+    import zipfile
+
+    lines = []
+    if zipfile.is_zipfile(filename):
+        with zipfile.ZipFile(filename) as archive:
+            for fn in sorted(archive.namelist()):
+                method = hashlib.sha256()
+                method.update(archive.read(fn))
+                hash = method.hexdigest()
+                lines.append("%s  %s\n" % (hash, fn))
+    else:
+        hash = _hasher(hashlib.sha256(), filename)
+        lines.append("%s  go.mod\n" % hash)
+    method = hashlib.sha256()
+    method.update("".join(lines).encode('utf-8'))
+    return method.hexdigest()
+
 def preserved_envvars_exported():
-    """Variables which are taken from the environment and placed in and exported
-    from the metadata"""
+    """Returns the list of variables which are taken from the environment and
+    placed in and exported from the metadata."""
     return [
         'BB_TASKHASH',
         'HOME',
@@ -579,19 +722,42 @@ def preserved_envvars_exported():
     ]
 
 def preserved_envvars():
-    """Variables which are taken from the environment and placed in the metadata"""
+    """Returns the list of variables which are taken from the environment and
+    placed in the metadata."""
     v = [
         'BBPATH',
         'BB_PRESERVE_ENV',
-        'BB_ENV_WHITELIST',
-        'BB_ENV_EXTRAWHITE',
+        'BB_ENV_PASSTHROUGH_ADDITIONS',
     ]
     return v + preserved_envvars_exported()
+
+def check_system_locale():
+    """Make sure the required system locale are available and configured.
+
+    No return value."""
+    default_locale = locale.getlocale(locale.LC_CTYPE)
+
+    try:
+        locale.setlocale(locale.LC_CTYPE, ("en_US", "UTF-8"))
+    except:
+        sys.exit("Please make sure locale 'en_US.UTF-8' is available on your system")
+    else:
+        locale.setlocale(locale.LC_CTYPE, default_locale)
+
+    if sys.getfilesystemencoding() != "utf-8":
+        sys.exit("Please use a locale setting which supports UTF-8 (such as LANG=en_US.UTF-8).\n"
+                 "Python can't change the filesystem locale after loading so we need a UTF-8 when Python starts or things won't work.")
 
 def filter_environment(good_vars):
     """
     Create a pristine environment for bitbake. This will remove variables that
     are not known and may influence the build in a negative way.
+
+    Arguments:
+
+    -  ``good_vars``: list of variable to exclude from the filtering.
+
+    No return value.
     """
 
     removed_vars = {}
@@ -615,27 +781,29 @@ def filter_environment(good_vars):
 
 def approved_variables():
     """
-    Determine and return the list of whitelisted variables which are approved
+    Determine and return the list of variables which are approved
     to remain in the environment.
     """
     if 'BB_PRESERVE_ENV' in os.environ:
         return os.environ.keys()
     approved = []
-    if 'BB_ENV_WHITELIST' in os.environ:
-        approved = os.environ['BB_ENV_WHITELIST'].split()
-        approved.extend(['BB_ENV_WHITELIST'])
+    if 'BB_ENV_PASSTHROUGH' in os.environ:
+        approved = os.environ['BB_ENV_PASSTHROUGH'].split()
+        approved.extend(['BB_ENV_PASSTHROUGH'])
     else:
         approved = preserved_envvars()
-    if 'BB_ENV_EXTRAWHITE' in os.environ:
-        approved.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
-        if 'BB_ENV_EXTRAWHITE' not in approved:
-            approved.extend(['BB_ENV_EXTRAWHITE'])
+    if 'BB_ENV_PASSTHROUGH_ADDITIONS' in os.environ:
+        approved.extend(os.environ['BB_ENV_PASSTHROUGH_ADDITIONS'].split())
+        if 'BB_ENV_PASSTHROUGH_ADDITIONS' not in approved:
+            approved.extend(['BB_ENV_PASSTHROUGH_ADDITIONS'])
     return approved
 
 def clean_environment():
     """
     Clean up any spurious environment variables. This will remove any
     variables the user hasn't chosen to preserve.
+
+    No return value.
     """
     if 'BB_PRESERVE_ENV' not in os.environ:
         good_vars = approved_variables()
@@ -646,6 +814,8 @@ def clean_environment():
 def empty_environment():
     """
     Remove all variables from the environment.
+
+    No return value.
     """
     for s in list(os.environ.keys()):
         os.unsetenv(s)
@@ -654,6 +824,12 @@ def empty_environment():
 def build_environment(d):
     """
     Build an environment from all exported variables.
+
+    Arguments:
+
+    -  ``d``: the data store.
+
+    No return value.
     """
     import bb.data
     for var in bb.data.keys(d):
@@ -678,13 +854,23 @@ def _check_unsafe_delete_path(path):
     return False
 
 def remove(path, recurse=False, ionice=False):
-    """Equivalent to rm -f or rm -rf"""
+    """Equivalent to rm -f or rm -rf.
+
+    Arguments:
+
+    -  ``path``: path to file/directory to remove.
+    -  ``recurse``: deletes recursively if ``True``.
+    -  ``ionice``: prepends ``ionice -c 3`` to the ``rm`` command. See ``man
+       ionice``.
+
+    No return value.
+    """
     if not path:
         return
     if recurse:
         for name in glob.glob(path):
-            if _check_unsafe_delete_path(path):
-                raise Exception('bb.utils.remove: called with dangerous path "%s" and recurse=True, refusing to delete!' % path)
+            if _check_unsafe_delete_path(name):
+                raise Exception('bb.utils.remove: called with dangerous path "%s" and recurse=True, refusing to delete!' % name)
         # shutil.rmtree(name) would be ideal but its too slow
         cmd = []
         if ionice:
@@ -699,7 +885,17 @@ def remove(path, recurse=False, ionice=False):
                 raise
 
 def prunedir(topdir, ionice=False):
-    """ Delete everything reachable from the directory named in 'topdir'. """
+    """
+    Delete everything reachable from the directory named in ``topdir``.
+
+    Arguments:
+
+    -  ``topdir``: directory path.
+    -  ``ionice``: prepends ``ionice -c 3`` to the ``rm`` command. See ``man
+       ionice``.
+
+    No return value.
+    """
     # CAUTION:  This is dangerous!
     if _check_unsafe_delete_path(topdir):
         raise Exception('bb.utils.prunedir: called with dangerous path "%s", refusing to delete!' % topdir)
@@ -710,9 +906,16 @@ def prunedir(topdir, ionice=False):
 # but thats possibly insane and suffixes is probably going to be small
 #
 def prune_suffix(var, suffixes, d):
-    """ 
-    See if var ends with any of the suffixes listed and
-    remove it if found 
+    """
+    Check if ``var`` ends with any of the suffixes listed in ``suffixes`` and
+    remove it if found.
+
+    Arguments:
+
+    -  ``var``: string to check for suffixes.
+    -  ``suffixes``: list of strings representing suffixes to check for.
+
+    Returns the string ``var`` without the suffix.
     """
     for suffix in suffixes:
         if suffix and var.endswith(suffix):
@@ -721,9 +924,16 @@ def prune_suffix(var, suffixes, d):
 
 def mkdirhier(directory):
     """Create a directory like 'mkdir -p', but does not complain if
-    directory already exists like os.makedirs
-    """
+    directory already exists like ``os.makedirs()``.
 
+    Arguments:
+
+    -  ``directory``: path to the directory.
+
+    No return value.
+    """
+    if '${' in str(directory):
+        bb.fatal("Directory name {} contains unexpanded bitbake variable. This may cause build failures and WORKDIR polution.".format(directory))
     try:
         os.makedirs(directory)
     except OSError as e:
@@ -731,10 +941,24 @@ def mkdirhier(directory):
             raise e
 
 def movefile(src, dest, newmtime = None, sstat = None):
-    """Moves a file from src to dest, preserving all permissions and
+    """Moves a file from ``src`` to ``dest``, preserving all permissions and
     attributes; mtime will be preserved even when moving across
-    filesystems.  Returns true on success and false on failure. Move is
+    filesystems.  Returns ``True`` on success and ``False`` on failure. Move is
     atomic.
+
+    Arguments:
+
+    -  ``src`` -- Source file.
+    -  ``dest`` -- Destination file.
+    -  ``newmtime`` -- new mtime to be passed as float seconds since the epoch.
+    -  ``sstat`` -- os.stat_result to use for the destination file.
+
+    Returns an ``os.stat_result`` of the destination file if the
+    source file is a symbolic link or the ``sstat`` argument represents a
+    symbolic link - in which case the destination file will also be created as
+    a symbolic link.
+
+    Otherwise, returns ``newmtime`` on success and ``False`` on failure.
     """
 
     #print "movefile(" + src + "," + dest + "," + str(newmtime) + "," + str(sstat) + ")"
@@ -742,7 +966,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
         if not sstat:
             sstat = os.lstat(src)
     except Exception as e:
-        print("movefile: Stating source file failed...", e)
+        logger.warning("movefile: Stating source file failed...", e)
         return None
 
     destexists = 1
@@ -770,7 +994,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
             os.unlink(src)
             return os.lstat(dest)
         except Exception as e:
-            print("movefile: failed to properly create symlink:", dest, "->", target, e)
+            logger.warning("movefile: failed to properly create symlink:", dest, "->", target, e)
             return None
 
     renamefailed = 1
@@ -787,7 +1011,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
         except Exception as e:
             if e.errno != errno.EXDEV:
                 # Some random error.
-                print("movefile: Failed to move", src, "to", dest, e)
+                logger.warning("movefile: Failed to move", src, "to", dest, e)
                 return None
             # Invalid cross-device-link 'bind' mounted or actually Cross-Device
 
@@ -799,13 +1023,13 @@ def movefile(src, dest, newmtime = None, sstat = None):
                 bb.utils.rename(destpath + "#new", destpath)
                 didcopy = 1
             except Exception as e:
-                print('movefile: copy', src, '->', dest, 'failed.', e)
+                logger.warning('movefile: copy', src, '->', dest, 'failed.', e)
                 return None
         else:
             #we don't yet handle special, so we need to fall back to /bin/mv
             a = getstatusoutput("/bin/mv -f " + "'" + src + "' '" + dest + "'")
             if a[0] != 0:
-                print("movefile: Failed to move special file:" + src + "' to '" + dest + "'", a)
+                logger.warning("movefile: Failed to move special file:" + src + "' to '" + dest + "'", a)
                 return None # failure
         try:
             if didcopy:
@@ -813,7 +1037,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
                 os.chmod(destpath, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
                 os.unlink(src)
         except Exception as e:
-            print("movefile: Failed to chown/chmod/unlink", dest, e)
+            logger.warning("movefile: Failed to chown/chmod/unlink", dest, e)
             return None
 
     if newmtime:
@@ -825,9 +1049,24 @@ def movefile(src, dest, newmtime = None, sstat = None):
 
 def copyfile(src, dest, newmtime = None, sstat = None):
     """
-    Copies a file from src to dest, preserving all permissions and
+    Copies a file from ``src`` to ``dest``, preserving all permissions and
     attributes; mtime will be preserved even when moving across
-    filesystems.  Returns true on success and false on failure.
+    filesystems.
+
+    Arguments:
+
+    -  ``src``: Source file.
+    -  ``dest``: Destination file.
+    -  ``newmtime``: new mtime to be passed as float seconds since the epoch.
+    -  ``sstat``: os.stat_result to use for the destination file.
+
+    Returns an ``os.stat_result`` of the destination file if the
+    source file is a symbolic link or the ``sstat`` argument represents a
+    symbolic link - in which case the destination file will also be created as
+    a symbolic link.
+
+    Otherwise, returns ``newmtime`` on success and ``False`` on failure.
+
     """
     #print "copyfile(" + src + "," + dest + "," + str(newmtime) + "," + str(sstat) + ")"
     try:
@@ -905,10 +1144,16 @@ def copyfile(src, dest, newmtime = None, sstat = None):
 
 def break_hardlinks(src, sstat = None):
     """
-    Ensures src is the only hardlink to this file.  Other hardlinks,
+    Ensures ``src`` is the only hardlink to this file.  Other hardlinks,
     if any, are not affected (other than in their st_nlink value, of
-    course).  Returns true on success and false on failure.
+    course).
 
+    Arguments:
+
+    -  ``src``: source file path.
+    -  ``sstat``: os.stat_result to use when checking if the file is a link.
+
+    Returns ``True`` on success and ``False`` on failure.
     """
     try:
         if not sstat:
@@ -922,11 +1167,24 @@ def break_hardlinks(src, sstat = None):
 
 def which(path, item, direction = 0, history = False, executable=False):
     """
-    Locate `item` in the list of paths `path` (colon separated string like $PATH).
-    If `direction` is non-zero then the list is reversed.
-    If `history` is True then the list of candidates also returned as result,history.
-    If `executable` is True then the candidate has to be an executable file,
-    otherwise the candidate simply has to exist.
+    Locate ``item`` in the list of paths ``path`` (colon separated string like
+    ``$PATH``).
+
+    Arguments:
+
+    -  ``path``: list of colon-separated paths.
+    -  ``item``: string to search for.
+    -  ``direction``: if non-zero then the list is reversed.
+    -  ``history``: if ``True`` then the list of candidates also returned as
+       ``result,history`` where ``history`` is the list of previous path
+       checked.
+    -  ``executable``: if ``True`` then the candidate defined by ``path`` has
+       to be an executable file, otherwise if ``False`` the candidate simply
+       has to exist.
+
+    Returns the item if found in the list of path, otherwise an empty string.
+    If ``history`` is ``True``, return the list of previous path checked in a
+    tuple with the found (or not found) item as ``(item, history)``.
     """
 
     if executable:
@@ -957,6 +1215,8 @@ def which(path, item, direction = 0, history = False, executable=False):
 def umask(new_mask):
     """
     Context manager to set the umask to a specific mask, and restore it afterwards.
+
+    No return value.
     """
     current_mask = os.umask(new_mask)
     try:
@@ -965,12 +1225,25 @@ def umask(new_mask):
         os.umask(current_mask)
 
 def to_boolean(string, default=None):
-    """ 
+    """
     Check input string and return boolean value True/False/None
-    depending upon the checks 
+    depending upon the checks.
+
+    Arguments:
+
+    -  ``string``: input string.
+    -  ``default``: default return value if the input ``string`` is ``None``,
+       ``0``, ``False`` or an empty string.
+
+    Returns ``True`` if the string is one of "y", "yes", "1", "true", ``False``
+    if the string is one of "n", "no", "0", or "false". Return ``default`` if
+    the input ``string`` is ``None``, ``0``, ``False`` or an empty string.
     """
     if not string:
         return default
+
+    if isinstance(string, int):
+        return string != 0
 
     normalized = string.lower()
     if normalized in ("y", "yes", "1", "true"):
@@ -985,18 +1258,17 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
 
     Arguments:
 
-    variable -- the variable name. This will be fetched and expanded (using
-    d.getVar(variable)) and then split into a set().
+    -  ``variable``: the variable name. This will be fetched and expanded (using
+       d.getVar(variable)) and then split into a set().
+    -  ``checkvalues``: if this is a string it is split on whitespace into a set(),
+       otherwise coerced directly into a set().
+    -  ``truevalue``: the value to return if checkvalues is a subset of variable.
+    -  ``falsevalue``: the value to return if variable is empty or if checkvalues is
+       not a subset of variable.
+    -  ``d``: the data store.
 
-    checkvalues -- if this is a string it is split on whitespace into a set(),
-    otherwise coerced directly into a set().
-
-    truevalue -- the value to return if checkvalues is a subset of variable.
-
-    falsevalue -- the value to return if variable is empty or if checkvalues is
-    not a subset of variable.
-
-    d -- the data store.
+    Returns ``True`` if the variable contains the values specified, ``False``
+    otherwise.
     """
 
     val = d.getVar(variable)
@@ -1016,18 +1288,17 @@ def contains_any(variable, checkvalues, truevalue, falsevalue, d):
 
     Arguments:
 
-    variable -- the variable name. This will be fetched and expanded (using
-    d.getVar(variable)) and then split into a set().
+    -  ``variable``: the variable name. This will be fetched and expanded (using
+       d.getVar(variable)) and then split into a set().
+    -  ``checkvalues``: if this is a string it is split on whitespace into a set(),
+       otherwise coerced directly into a set().
+    -  ``truevalue``: the value to return if checkvalues is a subset of variable.
+    -  ``falsevalue``: the value to return if variable is empty or if checkvalues is
+       not a subset of variable.
+    -  ``d``: the data store.
 
-    checkvalues -- if this is a string it is split on whitespace into a set(),
-    otherwise coerced directly into a set().
-
-    truevalue -- the value to return if checkvalues is a subset of variable.
-
-    falsevalue -- the value to return if variable is empty or if checkvalues is
-    not a subset of variable.
-
-    d -- the data store.
+    Returns ``True`` if the variable contains any of the values specified,
+    ``False`` otherwise.
     """
     val = d.getVar(variable)
     if not val:
@@ -1042,17 +1313,17 @@ def contains_any(variable, checkvalues, truevalue, falsevalue, d):
     return falsevalue
 
 def filter(variable, checkvalues, d):
-    """Return all words in the variable that are present in the checkvalues.
+    """Return all words in the variable that are present in the ``checkvalues``.
 
     Arguments:
 
-    variable -- the variable name. This will be fetched and expanded (using
-    d.getVar(variable)) and then split into a set().
+    -  ``variable``: the variable name. This will be fetched and expanded (using
+       d.getVar(variable)) and then split into a set().
+    -  ``checkvalues``: if this is a string it is split on whitespace into a set(),
+       otherwise coerced directly into a set().
+    -  ``d``: the data store.
 
-    checkvalues -- if this is a string it is split on whitespace into a set(),
-    otherwise coerced directly into a set().
-
-    d -- the data store.
+    Returns a list of string.
     """
 
     val = d.getVar(variable)
@@ -1068,8 +1339,27 @@ def filter(variable, checkvalues, d):
 
 def get_referenced_vars(start_expr, d):
     """
-    :return: names of vars referenced in start_expr (recursively), in quasi-BFS order (variables within the same level
-    are ordered arbitrarily)
+    Get the names of the variables referenced in a given expression.
+
+    Arguments:
+
+      -  ``start_expr``: the expression where to look for variables references.
+
+         For example::
+
+            ${VAR_A} string ${VAR_B}
+
+         Or::
+
+            ${@d.getVar('VAR')}
+
+         If a variables makes references to other variables, the latter are also
+         returned recursively.
+
+      -  ``d``: the data store.
+
+    Returns the names of vars referenced in ``start_expr`` (recursively), in
+    quasi-BFS order (variables within the same level are ordered arbitrarily).
     """
 
     seen = set()
@@ -1103,7 +1393,10 @@ def get_referenced_vars(start_expr, d):
 
 
 def cpu_count():
-    return multiprocessing.cpu_count()
+    try:
+        return len(os.sched_getaffinity(0))
+    except OSError:
+        return multiprocessing.cpu_count()
 
 def nonblockingfd(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -1146,7 +1439,9 @@ def multiprocessingpool(*args, **kwargs):
     return multiprocessing.Pool(*args, **kwargs)
 
 def exec_flat_python_func(func, *args, **kwargs):
-    """Execute a flat python function (defined with def funcname(args):...)"""
+    """Execute a flat python function (defined with ``def funcname(args): ...``)
+
+    Returns the return value of the function."""
     # Prepare a small piece of python code which calls the requested function
     # To do this we need to prepare two things - a set of variables we can use to pass
     # the values of arguments into the calling function, and the list of arguments for
@@ -1172,48 +1467,57 @@ def edit_metadata(meta_lines, variables, varfunc, match_overrides=False):
     """Edit lines from a recipe or config file and modify one or more
     specified variable values set in the file using a specified callback
     function. Lines are expected to have trailing newlines.
-    Parameters:
-        meta_lines: lines from the file; can be a list or an iterable
-            (e.g. file pointer)
-        variables: a list of variable names to look for. Functions
-            may also be specified, but must be specified with '()' at
-            the end of the name. Note that the function doesn't have
-            any intrinsic understanding of :append, :prepend, :remove,
-            or overrides, so these are considered as part of the name.
-            These values go into a regular expression, so regular
-            expression syntax is allowed.
-        varfunc: callback function called for every variable matching
-            one of the entries in the variables parameter. The function
-            should take four arguments:
-                varname: name of variable matched
-                origvalue: current value in file
-                op: the operator (e.g. '+=')
-                newlines: list of lines up to this point. You can use
-                    this to prepend lines before this variable setting
-                    if you wish.
-            and should return a four-element tuple:
-                newvalue: new value to substitute in, or None to drop
-                    the variable setting entirely. (If the removal
-                    results in two consecutive blank lines, one of the
-                    blank lines will also be dropped).
-                newop: the operator to use - if you specify None here,
-                    the original operation will be used.
-                indent: number of spaces to indent multi-line entries,
-                    or -1 to indent up to the level of the assignment
-                    and opening quote, or a string to use as the indent.
-                minbreak: True to allow the first element of a
-                    multi-line value to continue on the same line as
-                    the assignment, False to indent before the first
-                    element.
-            To clarify, if you wish not to change the value, then you
-            would return like this: return origvalue, None, 0, True
-        match_overrides: True to match items with _overrides on the end,
-            False otherwise
+
+    Arguments:
+
+    -  ``meta_lines``: lines from the file; can be a list or an iterable
+       (e.g. file pointer)
+    -  ``variables``: a list of variable names to look for. Functions
+       may also be specified, but must be specified with ``()`` at
+       the end of the name. Note that the function doesn't have
+       any intrinsic understanding of ``:append``, ``:prepend``, ``:remove``,
+       or overrides, so these are considered as part of the name.
+       These values go into a regular expression, so regular
+       expression syntax is allowed.
+    -  ``varfunc``: callback function called for every variable matching
+       one of the entries in the variables parameter.
+
+       The function should take four arguments:
+
+       -  ``varname``: name of variable matched
+       -  ``origvalue``: current value in file
+       -  ``op``: the operator (e.g. ``+=``)
+       -  ``newlines``: list of lines up to this point. You can use
+          this to prepend lines before this variable setting
+          if you wish.
+
+       And should return a four-element tuple:
+
+       -  ``newvalue``: new value to substitute in, or ``None`` to drop
+          the variable setting entirely. (If the removal
+          results in two consecutive blank lines, one of the
+          blank lines will also be dropped).
+       -  ``newop``: the operator to use - if you specify ``None`` here,
+          the original operation will be used.
+       -  ``indent``: number of spaces to indent multi-line entries,
+          or ``-1`` to indent up to the level of the assignment
+          and opening quote, or a string to use as the indent.
+       -  ``minbreak``: ``True`` to allow the first element of a
+          multi-line value to continue on the same line as
+          the assignment, ``False`` to indent before the first
+          element.
+
+       To clarify, if you wish not to change the value, then you
+       would return like this::
+
+          return origvalue, None, 0, True
+    -  ``match_overrides``: True to match items with _overrides on the end,
+       False otherwise
+
     Returns a tuple:
-        updated:
-            True if changes were made, False otherwise.
-        newlines:
-            Lines after processing
+
+    -  ``updated``: ``True`` if changes were made, ``False`` otherwise.
+    -  ``newlines``: Lines after processing.
     """
 
     var_res = {}
@@ -1357,12 +1661,13 @@ def edit_metadata(meta_lines, variables, varfunc, match_overrides=False):
 
 
 def edit_metadata_file(meta_file, variables, varfunc):
-    """Edit a recipe or config file and modify one or more specified
+    """Edit a recipe or configuration file and modify one or more specified
     variable values set in the file using a specified callback function.
     The file is only written to if the value(s) actually change.
-    This is basically the file version of edit_metadata(), see that
+    This is basically the file version of ``bb.utils.edit_metadata()``, see that
     function's description for parameter/usage information.
-    Returns True if the file was written to, False otherwise.
+
+    Returns ``True`` if the file was written to, ``False`` otherwise.
     """
     with open(meta_file, 'r') as f:
         (updated, newlines) = edit_metadata(f, variables, varfunc)
@@ -1373,23 +1678,25 @@ def edit_metadata_file(meta_file, variables, varfunc):
 
 
 def edit_bblayers_conf(bblayers_conf, add, remove, edit_cb=None):
-    """Edit bblayers.conf, adding and/or removing layers
-    Parameters:
-        bblayers_conf: path to bblayers.conf file to edit
-        add: layer path (or list of layer paths) to add; None or empty
-            list to add nothing
-        remove: layer path (or list of layer paths) to remove; None or
-            empty list to remove nothing
-        edit_cb: optional callback function that will be called after
-            processing adds/removes once per existing entry.
-    Returns a tuple:
-        notadded: list of layers specified to be added but weren't
-            (because they were already in the list)
-        notremoved: list of layers that were specified to be removed
-            but weren't (because they weren't in the list)
-    """
+    """Edit ``bblayers.conf``, adding and/or removing layers.
 
-    import fnmatch
+    Arguments:
+
+    -  ``bblayers_conf``: path to ``bblayers.conf`` file to edit
+    -  ``add``: layer path (or list of layer paths) to add; ``None`` or empty
+       list to add nothing
+    -  ``remove``: layer path (or list of layer paths) to remove; ``None`` or
+       empty list to remove nothing
+    -  ``edit_cb``: optional callback function that will be called
+       after processing adds/removes once per existing entry.
+
+    Returns a tuple:
+
+    -  ``notadded``: list of layers specified to be added but weren't
+       (because they were already in the list)
+    -  ``notremoved``: list of layers that were specified to be removed
+       but weren't (because they weren't in the list)
+    """
 
     def remove_trailing_sep(pth):
         if pth and pth[-1] == os.sep:
@@ -1508,7 +1815,22 @@ def get_collection_res(d):
 
 
 def get_file_layer(filename, d, collection_res={}):
-    """Determine the collection (as defined by a layer's layer.conf file) containing the specified file"""
+    """Determine the collection (or layer name, as defined by a layer's
+    ``layer.conf`` file) containing the specified file.
+
+    Arguments:
+
+    -  ``filename``: the filename to look for.
+    -  ``d``: the data store.
+    -  ``collection_res``: dictionary with the layer names as keys and file
+       patterns to match as defined with the BBFILE_COLLECTIONS and
+       BBFILE_PATTERN variables respectively. The return value of
+       ``bb.utils.get_collection_res()`` is the default if this variable is
+       not specified.
+
+    Returns the layer name containing the file. If multiple layers contain the
+    file, the last matching layer name from collection_res is returned.
+    """
     if not collection_res:
         collection_res = get_collection_res(d)
 
@@ -1546,7 +1868,13 @@ class PrCtlError(Exception):
 
 def signal_on_parent_exit(signame):
     """
-    Trigger signame to be sent when the parent process dies
+    Trigger ``signame`` to be sent when the parent process dies.
+
+    Arguments:
+
+    -  ``signame``: name of the signal. See ``man signal``.
+
+    No return value.
     """
     signum = getattr(signal, signame)
     # http://linux.die.net/man/2/prctl
@@ -1581,7 +1909,7 @@ def ioprio_set(who, cls, value):
         bb.warn("Unable to set IO Prio for arch %s" % _unamearch)
 
 def set_process_name(name):
-    from ctypes import cdll, byref, create_string_buffer
+    from ctypes import byref, create_string_buffer
     # This is nice to have for debugging, not essential
     try:
         libc = cdll.LoadLibrary('libc.so.6')
@@ -1590,33 +1918,96 @@ def set_process_name(name):
     except:
         pass
 
+def enable_loopback_networking():
+    # From bits/ioctls.h
+    SIOCGIFFLAGS = 0x8913
+    SIOCSIFFLAGS = 0x8914
+    SIOCSIFADDR = 0x8916
+    SIOCSIFNETMASK = 0x891C
+
+    # if.h
+    IFF_UP = 0x1
+    IFF_RUNNING = 0x40
+
+    # bits/socket.h
+    AF_INET = 2
+
+    # char ifr_name[IFNAMSIZ=16]
+    ifr_name = struct.pack("@16s", b"lo")
+    def netdev_req(fd, req, data = b""):
+        # Pad and add interface name
+        data = ifr_name + data + (b'\x00' * (16 - len(data)))
+        # Return all data after interface name
+        return fcntl.ioctl(fd, req, data)[16:]
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_IP) as sock:
+        fd = sock.fileno()
+
+        # struct sockaddr_in ifr_addr { unsigned short family; uint16_t sin_port ; uint32_t in_addr; }
+        req = struct.pack("@H", AF_INET) + struct.pack("=H4B", 0, 127, 0, 0, 1)
+        netdev_req(fd, SIOCSIFADDR, req)
+
+        # short ifr_flags
+        flags = struct.unpack_from('@h', netdev_req(fd, SIOCGIFFLAGS))[0]
+        flags |= IFF_UP | IFF_RUNNING
+        netdev_req(fd, SIOCSIFFLAGS, struct.pack('@h', flags))
+
+        # struct sockaddr_in ifr_netmask
+        req = struct.pack("@H", AF_INET) + struct.pack("=H4B", 0, 255, 0, 0, 0)
+        netdev_req(fd, SIOCSIFNETMASK, req)
+
+def disable_network(uid=None, gid=None):
+    """
+    Disable networking in the current process if the kernel supports it, else
+    just return after logging to debug. To do this we need to create a new user
+    namespace, then map back to the original uid/gid.
+
+    Arguments:
+
+    -  ``uid``: original user id.
+    -  ``gid``: original user group id.
+
+    No return value.
+    """
+    libc = ctypes.CDLL('libc.so.6')
+
+    # From sched.h
+    # New user namespace
+    CLONE_NEWUSER = 0x10000000
+    # New network namespace
+    CLONE_NEWNET = 0x40000000
+
+    if uid is None:
+        uid = os.getuid()
+    if gid is None:
+        gid = os.getgid()
+
+    ret = libc.unshare(CLONE_NEWNET | CLONE_NEWUSER)
+    if ret != 0:
+        logger.debug("System doesn't support disabling network without admin privs")
+        return
+    with open("/proc/self/uid_map", "w") as f:
+        f.write("%s %s 1" % (uid, uid))
+    with open("/proc/self/setgroups", "w") as f:
+        f.write("deny")
+    with open("/proc/self/gid_map", "w") as f:
+        f.write("%s %s 1" % (gid, gid))
+
 def export_proxies(d):
+    from bb.fetch2 import get_fetcher_environment
     """ export common proxies variables from datastore to environment """
-    import os
-
-    variables = ['http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY',
-                    'ftp_proxy', 'FTP_PROXY', 'no_proxy', 'NO_PROXY',
-                    'GIT_PROXY_COMMAND']
-    exported = False
-
-    for v in variables:
-        if v in os.environ.keys():
-            exported = True
-        else:
-            v_proxy = d.getVar(v)
-            if v_proxy is not None:
-                os.environ[v] = v_proxy
-                exported = True
-
-    return exported
-
+    newenv = get_fetcher_environment(d)
+    for v in newenv:
+        os.environ[v] = newenv[v]
 
 def load_plugins(logger, plugins, pluginpath):
     def load_plugin(name):
         logger.debug('Loading plugin %s' % name)
         spec = importlib.machinery.PathFinder.find_spec(name, path=[pluginpath] )
         if spec:
-            return spec.loader.load_module()
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            return mod
 
     logger.debug('Loading plugins from %s...' % pluginpath)
 
@@ -1646,9 +2037,14 @@ class LogCatcher(logging.Handler):
 
 def is_semver(version):
     """
-        Is the version string following the semver semantic?
+    Arguments:
 
-        https://semver.org/spec/v2.0.0.html
+    -  ``version``: the version string.
+
+    Returns ``True`` if the version string follow semantic versioning, ``False``
+    otherwise.
+
+    See https://semver.org/spec/v2.0.0.html.
     """
     regex = re.compile(
     r"""
@@ -1686,6 +2082,8 @@ def rename(src, dst):
 def environment(**envvars):
     """
     Context manager to selectively update the environment with the specified mapping.
+
+    No return value.
     """
     backup = dict(os.environ)
     try:
@@ -1695,5 +2093,122 @@ def environment(**envvars):
         for var in envvars:
             if var in backup:
                 os.environ[var] = backup[var]
-            else:
+            elif var in os.environ:
                 del os.environ[var]
+
+def is_local_uid(uid=''):
+    """
+    Check whether uid is a local one or not.
+    Can't use pwd module since it gets all UIDs, not local ones only.
+
+    Arguments:
+
+    -  ``uid``: user id. If not specified the user id is determined from
+       ``os.getuid()``.
+
+    Returns ``True`` is the user id is local, ``False`` otherwise.
+    """
+    if not uid:
+        uid = os.getuid()
+    with open('/etc/passwd', 'r') as f:
+        for line in f:
+            line_split = line.split(':')
+            if len(line_split) < 3:
+                continue
+            if str(uid) == line_split[2]:
+                return True
+    return False
+
+def mkstemp(suffix=None, prefix=None, dir=None, text=False):
+    """
+    Generates a unique temporary file, independent of time.
+
+    mkstemp() in glibc (at least) generates unique file names based on the
+    current system time. When combined with highly parallel builds, and
+    operating over NFS (e.g. shared sstate/downloads) this can result in
+    conflicts and race conditions.
+
+    This function adds additional entropy to the file name so that a collision
+    is independent of time and thus extremely unlikely.
+
+    Arguments:
+
+    -  ``suffix``: filename suffix.
+    -  ``prefix``: filename prefix.
+    -  ``dir``: directory where the file will be created.
+    -  ``text``: if ``True``, the file is opened in text mode.
+
+    Returns a tuple containing:
+
+    -  the file descriptor for the created file
+    -  the name of the file.
+    """
+    entropy = "".join(random.choices("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", k=20))
+    if prefix:
+        prefix = prefix + entropy
+    else:
+        prefix = tempfile.gettempprefix() + entropy
+    return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=dir, text=text)
+
+def path_is_descendant(descendant, ancestor):
+    """
+    Returns ``True`` if the path ``descendant`` is a descendant of ``ancestor``
+    (including being equivalent to ``ancestor`` itself). Otherwise returns
+    ``False``.
+
+    Correctly accounts for symlinks, bind mounts, etc. by using
+    ``os.path.samestat()`` to compare paths.
+
+    May raise any exception that ``os.stat()`` raises.
+
+    Arguments:
+
+    -  ``descendant``: path to check for being an ancestor.
+    -  ``ancestor``: path to the ancestor ``descendant`` will be checked
+       against.
+    """
+
+    ancestor_stat = os.stat(ancestor)
+
+    # Recurse up each directory component of the descendant to see if it is
+    # equivalent to the ancestor
+    check_dir = os.path.abspath(descendant).rstrip("/")
+    while check_dir:
+        check_stat = os.stat(check_dir)
+        if os.path.samestat(check_stat, ancestor_stat):
+            return True
+        check_dir = os.path.dirname(check_dir).rstrip("/")
+
+    return False
+
+# If we don't have a timeout of some kind and a process/thread exits badly (for example
+# OOM killed) and held a lock, we'd just hang in the lock futex forever. It is better
+# we exit at some point than hang. 5 minutes with no progress means we're probably deadlocked.
+# This function can still deadlock python since it can't signal the other threads to exit
+# (signals are handled in the main thread) and even os._exit() will wait on non-daemon threads
+# to exit.
+@contextmanager
+def lock_timeout(lock):
+    try:
+        s = signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals())
+        held = lock.acquire(timeout=5*60)
+        if not held:
+            bb.server.process.serverlog("Couldn't get the lock for 5 mins, timed out, exiting.\n%s" % traceback.format_stack())
+            os._exit(1)
+        yield held
+    finally:
+        lock.release()
+        signal.pthread_sigmask(signal.SIG_SETMASK, s)
+
+# A version of lock_timeout without the check that the lock was locked and a shorter timeout
+@contextmanager
+def lock_timeout_nocheck(lock):
+    l = False
+    try:
+        s = signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals())
+        l = lock.acquire(timeout=10)
+        yield l
+    finally:
+        if l:
+            lock.release()
+        signal.pthread_sigmask(signal.SIG_SETMASK, s)

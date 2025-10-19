@@ -4,11 +4,14 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=520e45e59fc2cf94aa53850f46b86436"
 
 SRC_URI[sha256sum] = "3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb"
 
-inherit pypi setuptools3 ptest
+inherit pypi setuptools3 ptest-python-pytest
+
+PTEST_PYTEST_DIR = "test"
 
 do_install:append() {
     rm -f ${D}${bindir}/pyserial-miniterm
     rm -f ${D}${bindir}/pyserial-ports
+    rm -rf ${D}${bindir}/__pycache__
     rmdir ${D}${bindir}
 }
 
@@ -36,27 +39,15 @@ FILES:${PN}-win32 = " \
 "
 
 RDEPENDS:${PN} = "\
-    ${PYTHON_PN}-fcntl \
-    ${PYTHON_PN}-io \
-    ${PYTHON_PN}-logging \
-    ${PYTHON_PN}-netclient \
-    ${PYTHON_PN}-numbers \
-    ${PYTHON_PN}-shell \
-    ${PYTHON_PN}-stringold \
-    ${PYTHON_PN}-threading \
+    python3-fcntl \
+    python3-io \
+    python3-logging \
+    python3-netclient \
+    python3-numbers \
+    python3-shell \
+    python3-stringold \
+    python3-threading \
 "
 
 BBCLASSEXTEND = "native nativesdk"
 
-SRC_URI += " \
-	file://run-ptest \
-"
-
-RDEPENDS:${PN}-ptest += " \
-	${PYTHON_PN}-pytest \
-"
-
-do_install_ptest() {
-	install -d ${D}${PTEST_PATH}/test
-	cp -rf ${S}/test/* ${D}${PTEST_PATH}/test/
-}

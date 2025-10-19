@@ -8,7 +8,8 @@ inherit systemd
 DEPENDS = "systemd"
 RDEPENDS:${PN} = "bash"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://pwm_init.service \
@@ -22,8 +23,8 @@ SYSTEMD_SERVICE:${PN} += "pwm_init.service"
 FILES:${PN} += "${bindir}/* ${systemd_system_unitdir}/*"
 
 do_install:append() {
-    install -d ${D}${bindir}
-    install -m 0755 ${S}/bin/* ${D}${bindir}/
+    install -d ${D}${libexecdir}/${PN}
+    install -m 0755 ${S}/bin/* ${D}${libexecdir}/${PN}/
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${S}/*.service ${D}${systemd_system_unitdir}
 }

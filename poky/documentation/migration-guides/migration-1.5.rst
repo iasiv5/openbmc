@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: CC-BY-SA-2.0-UK
+
 Release 1.5 (dora)
 ==================
 
@@ -26,8 +28,7 @@ provide packages for these, you can install and use the Buildtools
 tarball, which provides an SDK-like environment containing them.
 
 For more information on this requirement, see the
-":ref:`ref-manual/system-requirements:required git, tar, python and gcc versions`"
-section.
+":ref:`system-requirements-buildtools`" section.
 
 .. _migration-1.5-atom-pc-bsp:
 
@@ -87,22 +88,20 @@ The following changes have been made to the package QA checks:
    item not mentioned in :term:`ERROR_QA` or :term:`WARN_QA` would be treated as
    a warning. Consequently, several important items were not already in
    the default value of :term:`WARN_QA`. All of the possible QA checks are
-   now documented in the ":ref:`insane.bbclass <ref-classes-insane>`"
-   section.
+   now documented in the ":ref:`ref-classes-insane`" section.
 
 -  An additional QA check has been added to check if
    ``/usr/share/info/dir`` is being installed. Your recipe should delete
    this file within :ref:`ref-tasks-install` if "make
    install" is installing it.
 
--  If you are using the ``buildhistory`` class, the check for the package
-   version going backwards is now controlled using a standard QA check.
+-  If you are using the :ref:`ref-classes-buildhistory` class, the check for the
+   package version going backwards is now controlled using a standard QA check.
    Thus, if you have customized your :term:`ERROR_QA` or :term:`WARN_QA` values
    and still wish to have this check performed, you should add
    "version-going-backwards" to your value for one or the other
    variables depending on how you wish it to be handled. See the
-   documented QA checks in the
-   ":ref:`insane.bbclass <ref-classes-insane>`" section.
+   documented QA checks in the ":ref:`ref-classes-insane`" section.
 
 .. _migration-1.5-directory-layout-changes:
 
@@ -127,10 +126,14 @@ The following directory changes exist:
    :term:`DEPLOY_DIR_IMAGE` variable in the external environment.
 
 -  When buildhistory is enabled, its output is now written under the
-   :term:`Build Directory` rather than
-   :term:`TMPDIR`. Doing so makes it easier to delete
-   :term:`TMPDIR` and preserve the build history. Additionally, data for
-   produced SDKs is now split by :term:`IMAGE_NAME`.
+   :term:`Build Directory` rather than :term:`TMPDIR`. Doing so makes
+   it easier to delete :term:`TMPDIR` and preserve the build history.
+   Additionally, data for produced SDKs is now split by :term:`IMAGE_NAME`.
+
+-  When :ref:`ref-classes-buildhistory` is enabled, its output
+   is now written under the :term:`Build Directory` rather than :term:`TMPDIR`.
+   Doing so makes it easier to delete :term:`TMPDIR` and preserve the build
+   history. Additionally, data for produced SDKs is now split by :term:`IMAGE_NAME`.
 
 -  The ``pkgdata`` directory produced as part of the packaging process
    has been collapsed into a single machine-specific directory. This
@@ -218,11 +221,10 @@ Task Recipes
 
 The previously deprecated ``task.bbclass`` has now been dropped. For
 recipes that previously inherited from this class, you should rename
-them from ``task-*`` to ``packagegroup-*`` and inherit packagegroup
-instead.
+them from ``task-*`` to ``packagegroup-*`` and inherit
+:ref:`ref-classes-packagegroup` instead.
 
-For more information, see the
-":ref:`packagegroup.bbclass <ref-classes-packagegroup>`" section.
+For more information, see the ":ref:`ref-classes-packagegroup`" section.
 
 .. _migration-1.5-busybox:
 
@@ -242,19 +244,19 @@ Automated Image Testing
 -----------------------
 
 A new automated image testing framework has been added through the
-:ref:`testimage.bbclass <ref-classes-testimage*>` class. This
+:ref:`ref-classes-testimage` classes. This
 framework replaces the older ``imagetest-qemu`` framework.
 
 You can learn more about performing automated image tests in the
-":ref:`dev-manual/common-tasks:performing automated runtime testing`"
-section in the Yocto Project Development Tasks Manual.
+":ref:`test-manual/runtime-testing:performing automated runtime testing`"
+section in the Yocto Project Test Environment Manual.
 
 .. _migration-1.5-build-history:
 
 Build History
 -------------
 
-Following are changes to Build History:
+The changes to Build History are:
 
 -  Installed package sizes: ``installed-package-sizes.txt`` for an image
    now records the size of the files installed by each package instead
@@ -269,7 +271,7 @@ Following are changes to Build History:
    option for each utility for more information on the new syntax.
 
 For more information on Build History, see the
-":ref:`dev-manual/common-tasks:maintaining build output quality`"
+":ref:`dev-manual/build-quality:maintaining build output quality`"
 section in the Yocto Project Development Tasks Manual.
 
 .. _migration-1.5-udev:
@@ -277,7 +279,7 @@ section in the Yocto Project Development Tasks Manual.
 ``udev``
 --------
 
-Following are changes to ``udev``:
+The changes to ``udev`` are:
 
 -  ``udev`` no longer brings in ``udev-extraconf`` automatically through
    :term:`RRECOMMENDS`, since this was originally
@@ -321,7 +323,7 @@ Removed and Renamed Recipes
 Other Changes
 -------------
 
-Following is a list of short entries describing other changes:
+Here is a list of short entries describing other changes:
 
 -  ``run-postinsts``: Make this generic.
 
@@ -343,7 +345,7 @@ Following is a list of short entries describing other changes:
 
 -  ``libpam``: Deny all services for the ``OTHER`` entries.
 
--  ``image.bbclass``: Move ``runtime_mapping_rename`` to avoid conflict
+-  :ref:`ref-classes-image`: Move ``runtime_mapping_rename`` to avoid conflict
    with ``multilib``. See :yocto_bugs:`YOCTO #4993 </show_bug.cgi?id=4993>`
    in Bugzilla for more information.
 

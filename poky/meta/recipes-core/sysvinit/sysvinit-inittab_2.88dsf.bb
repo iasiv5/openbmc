@@ -1,13 +1,13 @@
 SUMMARY = "Inittab configuration for SysVinit"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6"
 
-PR = "r10"
 
 SRC_URI = "file://inittab \
            file://start_getty"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/sources"
+UNPACKDIR = "${S}"
 
 INHIBIT_DEFAULT_DEPS = "1"
 
@@ -17,19 +17,19 @@ do_compile() {
 
 do_install() {
     install -d ${D}${sysconfdir}
-    install -m 0644 ${WORKDIR}/inittab ${D}${sysconfdir}/inittab
+    install -m 0644 ${S}/inittab ${D}${sysconfdir}/inittab
     install -d ${D}${base_bindir}
-    install -m 0755 ${WORKDIR}/start_getty ${D}${base_bindir}/start_getty
+    install -m 0755 ${S}/start_getty ${D}${base_bindir}/start_getty
     sed -e 's,/usr/bin,${bindir},g' -i ${D}${base_bindir}/start_getty
 
-    set -x
-    tmp="${SERIAL_CONSOLES}"
-    for i in $tmp
+    CONSOLES="${SERIAL_CONSOLES}"
+    for s in $CONSOLES
     do
-	j=`echo ${i} | sed s/\;/\ /g`
-	l=`echo ${i} | sed -e 's/tty//' -e 's/^.*;//' -e 's/;.*//'`
-	label=`echo $l | sed 's/.*\(....\)/\1/'`
-	echo "$label:12345:respawn:${base_bindir}/start_getty ${j} vt102" >> ${D}${sysconfdir}/inittab
+        speed=$(echo $s | cut -d\; -f 1)
+        device=$(echo $s | cut -d\; -f 2)
+        label=$(echo $device | sed -e 's/tty//' | tail --bytes=5)
+
+        echo "$label:12345:respawn:${sbindir}/ttyrun $device ${base_bindir}/start_getty $speed $device vt102" >> ${D}${sysconfdir}/inittab
     done
 
     if [ "${USE_VT}" = "1" ]; then
@@ -53,33 +53,6 @@ EOF
     fi
 }
 
-pkg_postinst:${PN} () {
-# run this on host and on target
-if [ "${SERIAL_CONSOLES_CHECK}" = "" ]; then
-       exit 0
-fi
-}
-
-pkg_postinst_ontarget:${PN} () {
-# run this on the target
-if [ -e /proc/consoles ]; then
-	tmp="${SERIAL_CONSOLES_CHECK}"
-	for i in $tmp
-	do
-		j=`echo ${i} | sed -e s/^.*\;//g -e s/\:.*//g`
-		k=`echo ${i} | sed s/^.*\://g`
-		if [ -z "`grep ${j} /proc/consoles`" ]; then
-			if [ -z "${k}" ] || [ -z "`grep ${k} /proc/consoles`" ] || [ ! -e /dev/${j} ]; then
-				sed -i -e /^.*${j}\ /d -e /^.*${j}$/d /etc/inittab
-			fi
-		fi
-	done
-	kill -HUP 1
-else
-	exit 1
-fi
-}
-
 # USE_VT and SERIAL_CONSOLES are generally defined by the MACHINE .conf.
 # Set PACKAGE_ARCH appropriately.
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -90,4 +63,5 @@ CONFFILES:${PN} = "${sysconfdir}/inittab"
 USE_VT ?= "1"
 SYSVINIT_ENABLED_GETTYS ?= "1"
 
+RDEPENDS:${PN} = "ttyrun"
 RCONFLICTS:${PN} = "busybox-inittab"

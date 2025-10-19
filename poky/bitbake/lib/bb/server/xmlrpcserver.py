@@ -11,8 +11,11 @@ import hashlib
 import time
 import inspect
 from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+import bb.server.xmlrpcclient
 
 import bb
+import bb.cooker
+import bb.event
 
 # This request handler checks if the request has a "Bitbake-token" header
 # field (this comes from the client side) and compares it with its internal
@@ -53,7 +56,7 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
 
     def __init__(self, interface, cooker, parent):
         # Use auto port configuration
-        if (interface[1] == -1):
+        if interface[1] == -1:
             interface = (interface[0], 0)
         SimpleXMLRPCServer.__init__(self, interface,
                                     requestHandler=BitBakeXMLRPCRequestHandler,
@@ -86,11 +89,12 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
     def handle_requests(self):
         self._handle_request_noblock()
 
-class BitBakeXMLRPCServerCommands():
+class BitBakeXMLRPCServerCommands:
 
     def __init__(self, server):
         self.server = server
         self.has_client = False
+        self.event_handle = None
 
     def registerEventHandler(self, host, port):
         """
@@ -99,8 +103,8 @@ class BitBakeXMLRPCServerCommands():
         s, t = bb.server.xmlrpcclient._create_server(host, port)
 
         # we don't allow connections if the cooker is running
-        if (self.server.cooker.state in [bb.cooker.state.parsing, bb.cooker.state.running]):
-            return None, "Cooker is busy: %s" % bb.cooker.state.get_name(self.server.cooker.state)
+        if self.server.cooker.state in [bb.cooker.State.PARSING, bb.cooker.State.RUNNING]:
+            return None, f"Cooker is busy: {self.server.cooker.state.name}"
 
         self.event_handle = bb.event.register_UIHhandler(s, True)
         return self.event_handle, 'OK'
@@ -117,7 +121,7 @@ class BitBakeXMLRPCServerCommands():
         """
         Run a cooker command on the server
         """
-        return self.server.cooker.command.runCommand(command, self.server.readonly)
+        return self.server.cooker.command.runCommand(command, self.server.parent, self.server.readonly)
 
     def getEventHandle(self):
         return self.event_handle

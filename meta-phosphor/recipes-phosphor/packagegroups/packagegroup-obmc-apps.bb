@@ -13,7 +13,6 @@ PACKAGES = " \
         ${PN}-extras \
         ${PN}-devtools \
         ${PN}-fan-control \
-        ${PN}-fru-ipmi \
         ${PN}-health-monitor \
         ${PN}-host-state-mgmt \
         ${PN}-ikvm \
@@ -31,13 +30,14 @@ PACKAGES = " \
         ${PN}-telemetry \
         ${PN}-user-mgmt \
         ${PN}-user-mgmt-ldap \
+        ${PN}-dmtf-pmci \
+        ${PN}-webui \
         "
 
 SUMMARY:${PN}-bmc-state-mgmt = "BMC state management"
 RDEPENDS:${PN}-bmc-state-mgmt = " \
         ${VIRTUAL-RUNTIME_obmc-bmc-state-manager} \
         phosphor-state-manager-systemd-target-monitor \
-        obmc-targets \
         "
 
 SUMMARY:${PN}-bmcweb = "bmcweb support"
@@ -69,6 +69,12 @@ RDEPENDS:${PN}-devtools = " \
         libgpiod-tools \
         lrzsz \
         rsync \
+        trace-enable \
+        "
+
+EXTRA_DEV_DEBUG_TOOLS = "gdbserver strace opkg curl"
+RDEPENDS:${PN}-devtools:append = " \
+        ${@bb.utils.contains('DISTRO_FEATURES', 'extra-dev-debug-tools', '${EXTRA_DEV_DEBUG_TOOLS}', '', d)} \
         "
 
 SUMMARY:${PN}-dbus-monitor = "Support for dbus monitoring"
@@ -84,11 +90,6 @@ SUMMARY:${PN}-fan-control = "Fan control"
 RDEPENDS:${PN}-fan-control = " \
         ${VIRTUAL-RUNTIME_obmc-fan-control} \
         phosphor-fan-monitor \
-        "
-
-SUMMARY:${PN}-fru-ipmi = "Support for EEPROMS with IPMI FRU"
-RDEPENDS:${PN}-fru-ipmi = " \
-        fru-device \
         "
 
 SUMMARY:${PN}-health-monitor = "Support for health monitoring"
@@ -115,9 +116,9 @@ RDEPENDS:${PN}-inventory = " \
 
 SUMMARY:${PN}-leds = "LED applications"
 RDEPENDS:${PN}-leds = " \
-        ${VIRTUAL-RUNTIME_obmc-leds-manager} \
-        ${VIRTUAL-RUNTIME_obmc-leds-sysfs} \
-        ${VIRTUAL-RUNTIME_obmc-led-monitor} \
+        phosphor-led-manager \
+        phosphor-led-sysfs \
+        phosphor-led-manager-faultmonitor \
         "
 
 SUMMARY:${PN}-logging = "Logging applications"
@@ -131,38 +132,28 @@ RDEPENDS:${PN}-remote-logging = " \
         phosphor-rsyslog-config \
         "
 
-SUMMARY:${PN}-rng = "Random Number Generator support"
-RDEPENDS:${PN}-rng = " \
-        rng-tools \
-        "
-
 SUMMARY:${PN}-sensors = "Sensor applications"
 RDEPENDS:${PN}-sensors = " \
         ${VIRTUAL-RUNTIME_obmc-sensors-hwmon} \
         "
 
-${PN}-software-extras = ""
-
-${PN}-software-extras:df-obmc-ubi-fs = " \
-        phosphor-software-manager-updater-ubi \
-        "
-
-${PN}-software-extras:df-phosphor-mmc = " \
-        phosphor-software-manager-updater-mmc \
-        "
-
 SUMMARY:${PN}-software = "Software applications"
 RDEPENDS:${PN}-software = " \
-        ${VIRTUAL-RUNTIME_obmc-bmc-download-mgr} \
-        ${VIRTUAL-RUNTIME_obmc-bmc-updater} \
-        ${VIRTUAL-RUNTIME_obmc-bmc-version} \
-        ${${PN}-software-extras} \
+        phosphor-software-manager-download-mgr \
+        phosphor-software-manager-updater \
+        phosphor-software-manager-version \
+        "
+RDEPENDS:${PN}-software:append:df-obmc-ubi-fs = " \
+        phosphor-software-manager-updater-ubi \
+        "
+RDEPENDS:${PN}-software:append:df-phosphor-mmc = " \
+        phosphor-software-manager-updater-mmc \
         "
 
 SUMMARY:${PN}-debug-collector = "BMC debug collector"
 RDEPENDS:${PN}-debug-collector = " \
-        ${VIRTUAL-RUNTIME_obmc-dump-manager} \
-        ${VIRTUAL-RUNTIME_obmc-dump-monitor} \
+        phosphor-debug-collector-manager \
+        phosphor-debug-collector-monitor \
         phosphor-debug-collector-dreport \
         phosphor-debug-collector-scripts \
         "
@@ -174,7 +165,7 @@ RDEPENDS:${PN}-settings = " \
 
 SUMMARY:${PN}-network = "BMC Network Manager"
 RDEPENDS:${PN}-network = " \
-        ${VIRTUAL-RUNTIME_obmc-network-manager} \
+        phosphor-network \
         "
 
 SUMMARY:${PN}-telemetry = "Telemetry solution"
@@ -184,15 +175,27 @@ RDEPENDS:${PN}-telemetry = " \
 
 SUMMARY:${PN}-user-mgmt = "User management applications"
 RDEPENDS:${PN}-user-mgmt = " \
-        ${VIRTUAL-RUNTIME_obmc-user-mgmt} \
+        phosphor-user-manager \
         "
 RRECOMMENDS:${PN}-user-mgmt = " \
         pam-plugin-access \
         "
 
 SUMMARY:${PN}-user-mgmt-ldap = "LDAP users and groups support"
-RDEPENDS:${PN}-user-mgmt-ldap = " \
+LDAP_PACKAGE_SET = " \
         ${PN}-user-mgmt \
         nss-pam-ldapd \
         phosphor-ldap \
         "
+RDEPENDS:${PN}-user-mgmt-ldap = " \
+        ${@bb.utils.contains('DISTRO_FEATURES', 'ldap', '${LDAP_PACKAGE_SET}', '', d)} \
+        "
+
+SUMMARY:${PN}-dmtf-pmci = "DMTF PMCI Protocol Implementations"
+RDEPENDS:${PN}-dmtf-pmci = ""
+RDEPENDS:${PN}-dmtf-pmci:append:df-pldm = " pldm"
+RDEPENDS:${PN}-dmtf-pmci:append:df-mctp = " mctp"
+
+SUMMARY:${PN}-webui = "Web User Interface support"
+RDEPENDS:${PN}-webui = "webui-vue"
+RDEPENDS:${PN}-webui:df-phosphor-no-webui = ""

@@ -1,0 +1,836 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+// Copyright (C) 2024 IASI Technology
+
+#include <dt-bindings/pinctrl/aspeed-pinctrl.h>
+
+&pinctrl {
+	pinctrl_i2c0_default: i2c0_default {
+		function = "i2c0";
+		groups = "i2c0";
+	};
+
+	pinctrl_i2c1_default: i2c1_default {
+		function = "i2c1";
+		groups = "i2c1";
+	};
+
+	pinctrl_i2c2_default: i2c2_default {
+		function = "i2c2";
+		groups = "i2c2";
+	};
+
+	pinctrl_i2c3_default: i2c3_default {
+		function = "i2c3";
+		groups = "i2c3";
+	};
+
+	pinctrl_i2c4_default: i2c4_default {
+		function = "i2c4";
+		groups = "i2c4";
+	};
+
+	pinctrl_i2c5_default: i2c5_default {
+		function = "i2c5";
+		groups = "i2c5";
+	};
+
+	pinctrl_i2c6_default: i2c6_default {
+		function = "i2c6";
+		groups = "i2c6";
+	};
+
+	pinctrl_i2c7_default: i2c7_default {
+		function = "i2c7";
+		groups = "i2c7";
+	};
+
+	pinctrl_i2c8_default: i2c8_default {
+		function = "i2c8";
+		groups = "i2c8";
+	};
+
+	pinctrl_i2c9_default: i2c9_default {
+		function = "i2c9";
+		groups = "i2c9";
+	};
+
+	pinctrl_i2c10_default: i2c10_default {
+		function = "i2c10";
+		groups = "i2c10";
+	};
+
+	pinctrl_i2c11_default: i2c11_default {
+		function = "i2c11";
+		groups = "i2c11";
+	};
+
+	pinctrl_i2c12_default: i2c12_default {
+		function = "i2c12";
+		groups = "i2c12";
+	};
+
+	pinctrl_i2c13_default: i2c13_default {
+		function = "i2c13";
+		groups = "i2c13";
+	};
+
+	pinctrl_i2c14_default: i2c14_default {
+		function = "i2c14";
+		groups = "i2c14";
+	};
+
+	pinctrl_i2c15_default: i2c15_default {
+		function = "i2c15";
+		groups = "i2c15";
+	};
+
+	pinctrl_mdio1_default: mdio1_default {
+		function = "mdio1";
+		groups = "mdio1";
+	};
+
+	pinctrl_mdio2_default: mdio2_default {
+		function = "mdio2";
+		groups = "mdio2";
+	};
+
+	pinctrl_mdio3_default: mdio3_default {
+		function = "mdio3";
+		groups = "mdio3";
+	};
+
+	pinctrl_mdio4_default: mdio4_default {
+		function = "mdio4";
+		groups = "mdio4";
+	};
+
+	pinctrl_rgmii1_default: rgmii1_default {
+		function = "rgmii1";
+		groups = "rgmii1";
+	};
+
+	pinctrl_rgmii2_default: rgmii2_default {
+		function = "rgmii2";
+		groups = "rgmii2";
+	};
+
+	pinctrl_rgmii3_default: rgmii3_default {
+		function = "rgmii3";
+		groups = "rgmii3";
+	};
+
+	pinctrl_rgmii4_default: rgmii4_default {
+		function = "rgmii4";
+		groups = "rgmii4";
+	};
+
+	pinctrl_rmii1_default: rmii1_default {
+		function = "rmii1";
+		groups = "rmii1";
+	};
+
+	pinctrl_rmii2_default: rmii2_default {
+		function = "rmii2";
+		groups = "rmii2";
+	};
+
+	pinctrl_rmii3_default: rmii3_default {
+		function = "rmii3";
+		groups = "rmii3";
+	};
+
+	pinctrl_rmii4_default: rmii4_default {
+		function = "rmii4";
+		groups = "rmii4";
+	};
+
+	pinctrl_sd1_default: sd1_default {
+		function = "sd1";
+		groups = "sd1";
+	};
+
+	pinctrl_sd2_default: sd2_default {
+		function = "sd2";
+		groups = "sd2";
+	};
+
+	pinctrl_emmc_default: emmc_default {
+		function = "emmc";
+		groups = "emmc";
+	};
+
+	pinctrl_lpc_default: lpc_default {
+		function = "lpc";
+		groups = "lpc";
+	};
+
+	pinctrl_espi_default: espi_default {
+		function = "espi";
+		groups = "espi";
+	};
+
+	pinctrl_peci_default: peci_default {
+		function = "peci";
+		groups = "peci";
+	};
+
+	pinctrl_pwm0_default: pwm0_default {
+		function = "pwm0";
+		groups = "pwm0";
+	};
+
+	pinctrl_pwm1_default: pwm1_default {
+		function = "pwm1";
+		groups = "pwm1";
+	};
+
+	pinctrl_pwm2_default: pwm2_default {
+		function = "pwm2";
+		groups = "pwm2";
+	};
+
+	pinctrl_pwm3_default: pwm3_default {
+		function = "pwm3";
+		groups = "pwm3";
+	};
+
+	pinctrl_pwm4_default: pwm4_default {
+		function = "pwm4";
+		groups = "pwm4";
+	};
+
+	pinctrl_pwm5_default: pwm5_default {
+		function = "pwm5";
+		groups = "pwm5";
+	};
+
+	pinctrl_pwm6_default: pwm6_default {
+		function = "pwm6";
+		groups = "pwm6";
+	};
+
+	pinctrl_pwm7_default: pwm7_default {
+		function = "pwm7";
+		groups = "pwm7";
+	};
+
+	pinctrl_pwm8_default: pwm8_default {
+		function = "pwm8";
+		groups = "pwm8";
+	};
+
+	pinctrl_pwm9_default: pwm9_default {
+		function = "pwm9";
+		groups = "pwm9";
+	};
+
+	pinctrl_pwm10_default: pwm10_default {
+		function = "pwm10";
+		groups = "pwm10";
+	};
+
+	pinctrl_pwm11_default: pwm11_default {
+		function = "pwm11";
+		groups = "pwm11";
+	};
+
+	pinctrl_pwm12_default: pwm12_default {
+		function = "pwm12";
+		groups = "pwm12";
+	};
+
+	pinctrl_pwm13_default: pwm13_default {
+		function = "pwm13";
+		groups = "pwm13";
+	};
+
+	pinctrl_pwm14_default: pwm14_default {
+		function = "pwm14";
+		groups = "pwm14";
+	};
+
+	pinctrl_pwm15_default: pwm15_default {
+		function = "pwm15";
+		groups = "pwm15";
+	};
+
+	pinctrl_tach0_default: tach0_default {
+		function = "tach0";
+		groups = "tach0";
+	};
+
+	pinctrl_tach1_default: tach1_default {
+		function = "tach1";
+		groups = "tach1";
+	};
+
+	pinctrl_tach2_default: tach2_default {
+		function = "tach2";
+		groups = "tach2";
+	};
+
+	pinctrl_tach3_default: tach3_default {
+		function = "tach3";
+		groups = "tach3";
+	};
+
+	pinctrl_tach4_default: tach4_default {
+		function = "tach4";
+		groups = "tach4";
+	};
+
+	pinctrl_tach5_default: tach5_default {
+		function = "tach5";
+		groups = "tach5";
+	};
+
+	pinctrl_tach6_default: tach6_default {
+		function = "tach6";
+		groups = "tach6";
+	};
+
+	pinctrl_tach7_default: tach7_default {
+		function = "tach7";
+		groups = "tach7";
+	};
+
+	pinctrl_tach8_default: tach8_default {
+		function = "tach8";
+		groups = "tach8";
+	};
+
+	pinctrl_tach9_default: tach9_default {
+		function = "tach9";
+		groups = "tach9";
+	};
+
+	pinctrl_tach10_default: tach10_default {
+		function = "tach10";
+		groups = "tach10";
+	};
+
+	pinctrl_tach11_default: tach11_default {
+		function = "tach11";
+		groups = "tach11";
+	};
+
+	pinctrl_tach12_default: tach12_default {
+		function = "tach12";
+		groups = "tach12";
+	};
+
+	pinctrl_tach13_default: tach13_default {
+		function = "tach13";
+		groups = "tach13";
+	};
+
+	pinctrl_tach14_default: tach14_default {
+		function = "tach14";
+		groups = "tach14";
+	};
+
+	pinctrl_tach15_default: tach15_default {
+		function = "tach15";
+		groups = "tach15";
+	};
+
+	pinctrl_uart1_default: uart1_default {
+		function = "uart1";
+		groups = "uart1";
+	};
+
+	pinctrl_uart2_default: uart2_default {
+		function = "uart2";
+		groups = "uart2";
+	};
+
+	pinctrl_uart3_default: uart3_default {
+		function = "uart3";
+		groups = "uart3";
+	};
+
+	pinctrl_uart4_default: uart4_default {
+		function = "uart4";
+		groups = "uart4";
+	};
+
+	pinctrl_uart5_default: uart5_default {
+		function = "uart5";
+		groups = "uart5";
+	};
+
+	pinctrl_uart6_default: uart6_default {
+		function = "uart6";
+		groups = "uart6";
+	};
+
+	pinctrl_uart7_default: uart7_default {
+		function = "uart7";
+		groups = "uart7";
+	};
+
+	pinctrl_uart8_default: uart8_default {
+		function = "uart8";
+		groups = "uart8";
+	};
+
+	pinctrl_uart9_default: uart9_default {
+		function = "uart9";
+		groups = "uart9";
+	};
+
+	pinctrl_uart10_default: uart10_default {
+		function = "uart10";
+		groups = "uart10";
+	};
+
+	pinctrl_uart11_default: uart11_default {
+		function = "uart11";
+		groups = "uart11";
+	};
+
+	pinctrl_uart12_default: uart12_default {
+		function = "uart12";
+		groups = "uart12";
+	};
+
+	pinctrl_spi1_default: spi1_default {
+		function = "spi1";
+		groups = "spi1";
+	};
+
+	pinctrl_spi1abr_default: spi1abr_default {
+		function = "spi1abr";
+		groups = "spi1abr";
+	};
+
+	pinctrl_spi1cs1_default: spi1cs1_default {
+		function = "spi1cs1";
+		groups = "spi1cs1";
+	};
+
+	pinctrl_spi2_default: spi2_default {
+		function = "spi2";
+		groups = "spi2";
+	};
+
+	pinctrl_spi2abr_default: spi2abr_default {
+		function = "spi2abr";
+		groups = "spi2abr";
+	};
+
+	pinctrl_spi2cs1_default: spi2cs1_default {
+		function = "spi2cs1";
+		groups = "spi2cs1";
+	};
+
+	pinctrl_spi3_default: spi3_default {
+		function = "spi3";
+		groups = "spi3";
+	};
+
+	pinctrl_spi3abr_default: spi3abr_default {
+		function = "spi3abr";
+		groups = "spi3abr";
+	};
+
+	pinctrl_spi3cs1_default: spi3cs1_default {
+		function = "spi3cs1";
+		groups = "spi3cs1";
+	};
+
+	pinctrl_spi4_default: spi4_default {
+		function = "spi4";
+		groups = "spi4";
+	};
+
+	pinctrl_spi4abr_default: spi4abr_default {
+		function = "spi4abr";
+		groups = "spi4abr";
+	};
+
+	pinctrl_spi4cs1_default: spi4cs1_default {
+		function = "spi4cs1";
+		groups = "spi4cs1";
+	};
+
+	pinctrl_ncts1_default: ncts1_default {
+		function = "ncts1";
+		groups = "ncts1";
+	};
+
+	pinctrl_ndcd1_default: ndcd1_default {
+		function = "ndcd1";
+		groups = "ndcd1";
+	};
+
+	pinctrl_ndsr1_default: ndsr1_default {
+		function = "ndsr1";
+		groups = "ndsr1";
+	};
+
+	pinctrl_nri1_default: nri1_default {
+		function = "nri1";
+		groups = "nri1";
+	};
+
+	pinctrl_ndtr1_default: ndtr1_default {
+		function = "ndtr1";
+		groups = "ndtr1";
+	};
+
+	pinctrl_nrts1_default: nrts1_default {
+		function = "nrts1";
+		groups = "nrts1";
+	};
+
+	pinctrl_sgps1_default: sgps1_default {
+		function = "sgps1";
+		groups = "sgps1";
+	};
+
+	pinctrl_sgps2_default: sgps2_default {
+		function = "sgps2";
+		groups = "sgps2";
+	};
+
+	pinctrl_sgps3_default: sgps3_default {
+		function = "sgps3";
+		groups = "sgps3";
+	};
+
+	pinctrl_sgps4_default: sgps4_default {
+		function = "sgps4";
+		groups = "sgps4";
+	};
+
+	pinctrl_sgps5_default: sgps5_default {
+		function = "sgps5";
+		groups = "sgps5";
+	};
+
+	pinctrl_sgps6_default: sgps6_default {
+		function = "sgps6";
+		groups = "sgps6";
+	};
+
+	pinctrl_sgps7_default: sgps7_default {
+		function = "sgps7";
+		groups = "sgps7";
+	};
+
+	pinctrl_sgps8_default: sgps8_default {
+		function = "sgps8";
+		groups = "sgps8";
+	};
+
+	pinctrl_sgps9_default: sgps9_default {
+		function = "sgps9";
+		groups = "sgps9";
+	};
+
+	pinctrl_sgps10_default: sgps10_default {
+		function = "sgps10";
+		groups = "sgps10";
+	};
+
+	pinctrl_sgps11_default: sgps11_default {
+		function = "sgps11";
+		groups = "sgps11";
+	};
+
+	pinctrl_sgps12_default: sgps12_default {
+		function = "sgps12";
+		groups = "sgps12";
+	};
+
+	pinctrl_sgps13_default: sgps13_default {
+		function = "sgps13";
+		groups = "sgps13";
+	};
+
+	pinctrl_sgps14_default: sgps14_default {
+		function = "sgps14";
+		groups = "sgps14";
+	};
+
+	pinctrl_sgps15_default: sgps15_default {
+		function = "sgps15";
+		groups = "sgps15";
+	};
+
+	pinctrl_sgps16_default: sgps16_default {
+		function = "sgps16";
+		groups = "sgps16";
+	};
+
+	pinctrl_sgps17_default: sgps17_default {
+		function = "sgps17";
+		groups = "sgps17";
+	};
+
+	pinctrl_sgps18_default: sgps18_default {
+		function = "sgps18";
+		groups = "sgps18";
+	};
+
+	pinctrl_sgps19_default: sgps19_default {
+		function = "sgps19";
+		groups = "sgps19";
+	};
+
+	pinctrl_sgps20_default: sgps20_default {
+		function = "sgps20";
+		groups = "sgps20";
+	};
+
+	pinctrl_sgps21_default: sgps21_default {
+		function = "sgps21";
+		groups = "sgps21";
+	};
+
+	pinctrl_sgps22_default: sgps22_default {
+		function = "sgps22";
+		groups = "sgps22";
+	};
+
+	pinctrl_sgps23_default: sgps23_default {
+		function = "sgps23";
+		groups = "sgps23";
+	};
+
+	pinctrl_sgps24_default: sgps24_default {
+		function = "sgps24";
+		groups = "sgps24";
+	};
+
+	pinctrl_sgps25_default: sgps25_default {
+		function = "sgps25";
+		groups = "sgps25";
+	};
+
+	pinctrl_sgps26_default: sgps26_default {
+		function = "sgps26";
+		groups = "sgps26";
+	};
+
+	pinctrl_sgps27_default: sgps27_default {
+		function = "sgps27";
+		groups = "sgps27";
+	};
+
+	pinctrl_sgps28_default: sgps28_default {
+		function = "sgps28";
+		groups = "sgps28";
+	};
+
+	pinctrl_sgps29_default: sgps29_default {
+		function = "sgps29";
+		groups = "sgps29";
+	};
+
+	pinctrl_sgps30_default: sgps30_default {
+		function = "sgps30";
+		groups = "sgps30";
+	};
+
+	pinctrl_sgps31_default: sgps31_default {
+		function = "sgps31";
+		groups = "sgps31";
+	};
+
+	pinctrl_osgps1_default: osgps1_default {
+		function = "osgps1";
+		groups = "osgps1";
+	};
+
+	pinctrl_osgps2_default: osgps2_default {
+		function = "osgps2";
+		groups = "osgps2";
+	};
+
+	pinctrl_osgps3_default: osgps3_default {
+		function = "osgps3";
+		groups = "osgps3";
+	};
+
+	pinctrl_osgps4_default: osgps4_default {
+		function = "osgps4";
+		groups = "osgps4";
+	};
+
+	pinctrl_osgps5_default: osgps5_default {
+		function = "osgps5";
+		groups = "osgps5";
+	};
+
+	pinctrl_osgps6_default: osgps6_default {
+		function = "osgps6";
+		groups = "osgps6";
+	};
+
+	pinctrl_osgps7_default: osgps7_default {
+		function = "osgps7";
+		groups = "osgps7";
+	};
+
+	pinctrl_osgps8_default: osgps8_default {
+		function = "osgps8";
+		groups = "osgps8";
+	};
+
+	pinctrl_osgps9_default: osgps9_default {
+		function = "osgps9";
+		groups = "osgps9";
+	};
+
+	pinctrl_osgps10_default: osgps10_default {
+		function = "osgps10";
+		groups = "osgps10";
+	};
+
+	pinctrl_osgps11_default: osgps11_default {
+		function = "osgps11";
+		groups = "osgps11";
+	};
+
+	pinctrl_osgps12_default: osgps12_default {
+		function = "osgps12";
+		groups = "osgps12";
+	};
+
+	pinctrl_osgps13_default: osgps13_default {
+		function = "osgps13";
+		groups = "osgps13";
+	};
+
+	pinctrl_osgps14_default: osgps14_default {
+		function = "osgps14";
+		groups = "osgps14";
+	};
+
+	pinctrl_osgps15_default: osgps15_default {
+		function = "osgps15";
+		groups = "osgps15";
+	};
+
+	pinctrl_osgps16_default: osgps16_default {
+		function = "osgps16";
+		groups = "osgps16";
+	};
+
+	pinctrl_osgps17_default: osgps17_default {
+		function = "osgps17";
+		groups = "osgps17";
+	};
+
+	pinctrl_osgps18_default: osgps18_default {
+		function = "osgps18";
+		groups = "osgps18";
+	};
+
+	pinctrl_osgps19_default: osgps19_default {
+		function = "osgps19";
+		groups = "osgps19";
+	};
+
+	pinctrl_osgps20_default: osgps20_default {
+		function = "osgps20";
+		groups = "osgps20";
+	};
+
+	pinctrl_osgps21_default: osgps21_default {
+		function = "osgps21";
+		groups = "osgps21";
+	};
+
+	pinctrl_osgps22_default: osgps22_default {
+		function = "osgps22";
+		groups = "osgps22";
+	};
+
+	pinctrl_osgps23_default: osgps23_default {
+		function = "osgps23";
+		groups = "osgps23";
+	};
+
+	pinctrl_osgps24_default: osgps24_default {
+		function = "osgps24";
+		groups = "osgps24";
+	};
+
+	pinctrl_osgps25_default: osgps25_default {
+		function = "osgps25";
+		groups = "osgps25";
+	};
+
+	pinctrl_osgps26_default: osgps26_default {
+		function = "osgps26";
+		groups = "osgps26";
+	};
+
+	pinctrl_osgps27_default: osgps27_default {
+		function = "osgps27";
+		groups = "osgps27";
+	};
+
+	pinctrl_osgps28_default: osgps28_default {
+		function = "osgps28";
+		groups = "osgps28";
+	};
+
+	pinctrl_osgps29_default: osgps29_default {
+		function = "osgps29";
+		groups = "osgps29";
+	};
+
+	pinctrl_osgps30_default: osgps30_default {
+		function = "osgps30";
+		groups = "osgps30";
+	};
+
+	pinctrl_osgps31_default: osgps31_default {
+		function = "osgps31";
+		groups = "osgps31";
+	};
+
+	pinctrl_i3c1_default: i3c1_default {
+		function = "i3c1";
+		groups = "i3c1";
+	};
+
+	pinctrl_i3c2_default: i3c2_default {
+		function = "i3c2";
+		groups = "i3c2";
+	};
+
+	pinctrl_i3c3_default: i3c3_default {
+		function = "i3c3";
+		groups = "i3c3";
+	};
+
+	pinctrl_i3c4_default: i3c4_default {
+		function = "i3c4";
+		groups = "i3c4";
+	};
+
+	pinctrl_i3c5_default: i3c5_default {
+		function = "i3c5";
+		groups = "i3c5";
+	};
+
+	pinctrl_i3c6_default: i3c6_default {
+		function = "i3c6";
+		groups = "i3c6";
+	};
+
+	pinctrl_jtagm_default: jtagm_default {
+		function = "jtagm";
+		groups = "jtagm";
+	};
+
+	pinctrl_mjtag_default: mjtag_default {
+		function = "mjtag";
+		groups = "mjtag";
+	};
+};

@@ -1,0 +1,357 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+// Copyright (C) 2024 IASI Technology
+
+/dts-v1/;
+
+#include "aspeed-g7.dtsi"
+#include "aspeed-g7-pinctrl.dtsi"
+
+/ {
+	model = "ASPEED AST2700 EVB";
+	compatible = "aspeed,ast2700-evb", "aspeed,ast2700";
+
+	aliases {
+		serial0 = &uart0;
+		serial1 = &uart1;
+		serial2 = &uart2;
+		serial3 = &uart3;
+		serial4 = &uart4;
+		serial5 = &uart5;
+		serial6 = &uart6;
+		serial7 = &uart7;
+		serial8 = &uart8;
+		serial9 = &uart9;
+		serial10 = &uart10;
+		serial11 = &uart11;
+		serial12 = &uart12;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory@400000000 {
+		device_type = "memory";
+		reg = <0x4 0x00000000 0x0 0x80000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		vga_memory: framebuffer@40000000 {
+			compatible = "shared-dma-pool";
+			size = <0x0 0x02000000>;
+			alignment = <0x0 0x100000>;
+			no-map;
+		};
+
+		video_engine_memory: jpegbuffer@42000000 {
+			compatible = "shared-dma-pool";
+			size = <0x0 0x02000000>;
+			alignment = <0x0 0x100000>;
+			no-map;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		status_led: status {
+			gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
+		};
+
+		fault_led: fault {
+			gpios = <&gpio0 1 GPIO_ACTIVE_LOW>;
+			default-state = "off";
+		};
+	};
+
+	iio-hwmon {
+		compatible = "iio-hwmon";
+		io-channels = <&adc 0>, <&adc 1>, <&adc 2>,
+			    <&adc 3>, <&adc 4>, <&adc 5>,
+			    <&adc 6>, <&adc 7>;
+	};
+};
+
+&fmc {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		spi-max-frequency = <50000000>;
+		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <1>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			u-boot@0 {
+				label = "u-boot";
+				reg = <0x0 0x100000>;
+			};
+
+			u-boot-env@100000 {
+				label = "u-boot-env";
+				reg = <0x100000 0x40000>;
+			};
+
+			kernel@140000 {
+				label = "kernel";
+				reg = <0x140000 0x600000>;
+			};
+
+			rofs@740000 {
+				label = "rofs";
+				reg = <0x740000 0x2000000>;
+			};
+
+			rwfs@2740000 {
+				label = "rwfs";
+				reg = <0x2740000 0x58c0000>;
+			};
+		};
+	};
+};
+
+&spi1 {
+	status = "okay";
+};
+
+&spi2 {
+	status = "okay";
+};
+
+&spi3 {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	status = "okay";
+};
+
+&uart2 {
+	status = "okay";
+};
+
+&uart3 {
+	status = "okay";
+};
+
+&uart4 {
+	status = "okay";
+};
+
+&uart5 {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+};
+
+&i2c1 {
+	status = "okay";
+};
+
+&i2c2 {
+	status = "okay";
+};
+
+&i2c3 {
+	status = "okay";
+};
+
+&i2c4 {
+	status = "okay";
+};
+
+&i2c5 {
+	status = "okay";
+};
+
+&i2c6 {
+	status = "okay";
+};
+
+&i2c7 {
+	status = "okay";
+};
+
+&i2c8 {
+	status = "okay";
+};
+
+&i2c9 {
+	status = "okay";
+};
+
+&i2c10 {
+	status = "okay";
+};
+
+&i2c11 {
+	status = "okay";
+};
+
+&i2c12 {
+	status = "okay";
+};
+
+&i2c13 {
+	status = "okay";
+};
+
+&i2c14 {
+	status = "okay";
+};
+
+&i2c15 {
+	status = "okay";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&gpio2 {
+	status = "okay";
+};
+
+&gpio3 {
+	status = "okay";
+};
+
+&rtc {
+	status = "okay";
+};
+
+&wdt0 {
+	status = "okay";
+};
+
+&wdt1 {
+	status = "okay";
+};
+
+&wdt2 {
+	status = "okay";
+};
+
+&wdt3 {
+	status = "okay";
+};
+
+&adc {
+	status = "okay";
+};
+
+&pwm {
+	status = "okay";
+};
+
+&tach {
+	status = "okay";
+};
+
+&mac0 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_rgmii1_default>;
+	phy-handle = <&phy0>;
+};
+
+&mac1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_rgmii2_default>;
+	phy-handle = <&phy1>;
+};
+
+&mdio0 {
+	status = "okay";
+
+	phy0: ethernet-phy@0 {
+		reg = <0>;
+	};
+
+	phy1: ethernet-phy@1 {
+		reg = <1>;
+	};
+};
+
+&sdhci0 {
+	status = "okay";
+};
+
+&sdhci1 {
+	status = "okay";
+};
+
+&emmc {
+	status = "okay";
+};
+
+&ehci0 {
+	status = "okay";
+};
+
+&ohci0 {
+	status = "okay";
+};
+
+&ehci1 {
+	status = "okay";
+};
+
+&ohci1 {
+	status = "okay";
+};
+
+&lpc {
+	status = "okay";
+};
+
+&kcs0 {
+	status = "okay";
+};
+
+&kcs1 {
+	status = "okay";
+};
+
+&kcs2 {
+	status = "okay";
+};
+
+&kcs3 {
+	status = "okay";
+};
+
+&bt {
+	status = "okay";
+};
+
+&mailbox {
+	status = "okay";
+};
+
+&rng {
+	status = "okay";
+};

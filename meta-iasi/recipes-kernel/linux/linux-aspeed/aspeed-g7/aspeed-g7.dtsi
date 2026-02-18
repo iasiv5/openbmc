@@ -1,0 +1,368 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+// Copyright (C) 2024 IASI Technology
+// AST2700 SoC Device Tree (Simplified for Community Kernel)
+
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/clock/ast2700-clock.h>
+
+/ {
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	interrupt-parent = <&gic>;
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu@0 {
+			compatible = "arm,cortex-a35";
+			device_type = "cpu";
+			reg = <0x0>;
+			enable-method = "psci";
+		};
+
+		cpu@1 {
+			compatible = "arm,cortex-a35";
+			device_type = "cpu";
+			reg = <0x1>;
+			enable-method = "psci";
+		};
+	};
+
+	psci {
+		compatible = "arm,psci-1.0";
+		method = "smc";
+		cpu_suspend = <0xc4000001>;
+		cpu_off = <0xc4000002>;
+		cpu_on = <0xc4000003>;
+		cpu_idle = <0xc4000004>;
+	};
+
+	timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_LOW)>,
+			     <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_LOW)>,
+			     <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_LOW)>,
+			     <GIC_PPI 10 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_LOW)>;
+	};
+
+	pmu {
+		compatible = "arm,armv8-pmuv3";
+		interrupts = <GIC_PPI 7 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>;
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		gic: interrupt-controller@40400000 {
+			compatible = "arm,gic-v3";
+			#interrupt-cells = <3>;
+			interrupt-controller;
+			interrupt-parent = <&gic>;
+			reg = <0x0 0x40400000 0x0 0x10000>,
+			      <0x0 0x40440000 0x0 0x40000>;
+			interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>;
+		};
+
+		scu: clock-controller@40100000 {
+			compatible = "aspeed,ast2700-scu";
+			reg = <0x0 0x40100000 0x0 0x1000>;
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+		};
+
+		// UART Controllers - UART5 is BMC Console (ttyS4)
+		uart0: serial@40140000 {
+			compatible = "ns16550a";
+			reg = <0x0 0x40140000 0x0 0x100>;
+			reg-shift = <2>;
+			interrupts = <GIC_SPI 32 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_UART>;
+			clock-frequency = <1843200>;
+			status = "disabled";
+		};
+
+		uart1: serial@40140100 {
+			compatible = "ns16550a";
+			reg = <0x0 0x40140100 0x0 0x100>;
+			reg-shift = <2>;
+			interrupts = <GIC_SPI 33 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_UART>;
+			clock-frequency = <1843200>;
+			status = "disabled";
+		};
+
+		uart2: serial@40140200 {
+			compatible = "ns16550a";
+			reg = <0x0 0x40140200 0x0 0x100>;
+			reg-shift = <2>;
+			interrupts = <GIC_SPI 34 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_UART>;
+			clock-frequency = <1843200>;
+			status = "disabled";
+		};
+
+		uart3: serial@40140300 {
+			compatible = "ns16550a";
+			reg = <0x0 0x40140300 0x0 0x100>;
+			reg-shift = <2>;
+			interrupts = <GIC_SPI 35 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_UART>;
+			clock-frequency = <1843200>;
+			status = "disabled";
+		};
+
+		uart4: serial@40140400 {
+			compatible = "ns16550a";
+			reg = <0x0 0x40140400 0x0 0x100>;
+			reg-shift = <2>;
+			interrupts = <GIC_SPI 36 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_UART>;
+			clock-frequency = <1843200>;
+			status = "disabled";
+		};
+
+		uart5: serial@40140500 {
+			compatible = "ns16550a";
+			reg = <0x0 0x40140500 0x0 0x100>;
+			reg-shift = <2>;
+			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_UART>;
+			clock-frequency = <1843200>;
+			status = "disabled";
+		};
+
+		// FMC - Flash Master Controller
+		fmc: spi@40160000 {
+			compatible = "aspeed,ast2700-fmc";
+			reg = <0x0 0x40160000 0x0 0x100>,
+			      <0x0 0x40000000 0x0 0x10000000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_AHB>;
+			status = "disabled";
+		};
+
+		// SPI Controllers
+		spi1: spi@40160100 {
+			compatible = "aspeed,ast2700-spi";
+			reg = <0x0 0x40160100 0x0 0x100>,
+			      <0x0 0x50000000 0x0 0x10000000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_AHB>;
+			status = "disabled";
+		};
+
+		spi2: spi@40160200 {
+			compatible = "aspeed,ast2700-spi";
+			reg = <0x0 0x40160200 0x0 0x100>,
+			      <0x0 0x60000000 0x0 0x10000000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_AHB>;
+			status = "disabled";
+		};
+
+		// I2C Controllers - I2C0-4 (simplified)
+		i2c0: i2c@40150000 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150000 0x0 0x100>;
+			interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c1: i2c@40150100 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150100 0x0 0x100>;
+			interrupts = <GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c2: i2c@40150200 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150200 0x0 0x100>;
+			interrupts = <GIC_SPI 50 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c3: i2c@40150300 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150300 0x0 0x100>;
+			interrupts = <GIC_SPI 51 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c4: i2c@40150400 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150400 0x0 0x100>;
+			interrupts = <GIC_SPI 52 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c5: i2c@40150500 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150500 0x0 0x100>;
+			interrupts = <GIC_SPI 53 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c6: i2c@40150600 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150600 0x0 0x100>;
+			interrupts = <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c7: i2c@40150700 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150700 0x0 0x100>;
+			interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c8: i2c@40150800 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150800 0x0 0x100>;
+			interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c9: i2c@40150900 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150900 0x0 0x100>;
+			interrupts = <GIC_SPI 57 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c10: i2c@40150a00 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150a00 0x0 0x100>;
+			interrupts = <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c11: i2c@40150b00 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150b00 0x0 0x100>;
+			interrupts = <GIC_SPI 59 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c12: i2c@40150c00 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150c00 0x0 0x100>;
+			interrupts = <GIC_SPI 60 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c13: i2c@40150d00 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150d00 0x0 0x100>;
+			interrupts = <GIC_SPI 61 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c14: i2c@40150e00 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150e00 0x0 0x100>;
+			interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		i2c15: i2c@40150f00 {
+			compatible = "aspeed,ast2700-i2c";
+			reg = <0x0 0x40150f00 0x0 0x100>;
+			interrupts = <GIC_SPI 63 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		// MAC Controllers
+		mdio0: mdio@401a0000 {
+			compatible = "aspeed,ast2700-mdio";
+			reg = <0x0 0x401a0000 0x0 0x100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		mac0: ethernet@401a0000 {
+			compatible = "aspeed,ast2700-mac", "faraday,ftgmac100";
+			reg = <0x0 0x401a0000 0x0 0x100>;
+			interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
+			phy-mode = "rgmii";
+			status = "disabled";
+		};
+
+		mdio1: mdio@401a1000 {
+			compatible = "aspeed,ast2700-mdio";
+			reg = <0x0 0x401a1000 0x0 0x100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		mac1: ethernet@401a1000 {
+			compatible = "aspeed,ast2700-mac", "faraday,ftgmac100";
+			reg = <0x0 0x401a1000 0x0 0x100>;
+			interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+			phy-mode = "rmii";
+			status = "disabled";
+		};
+
+		// GPIO Controller
+		gpio0: gpio@40170000 {
+			compatible = "aspeed,ast2700-gpio";
+			reg = <0x0 0x40170000 0x0 0x1000>;
+			interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			ngpios = <256>;
+			status = "disabled";
+		};
+
+		// Watchdog
+		wdt0: watchdog@40140100 {
+			compatible = "aspeed,ast2700-wdt";
+			reg = <0x0 0x40140100 0x0 0x40>;
+			interrupts = <GIC_SPI 67 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_APB>;
+			status = "disabled";
+		};
+
+		// SDHCI
+		sdhci0: mmc@40180000 {
+			compatible = "aspeed,ast2700-sdhci";
+			reg = <0x0 0x40180000 0x0 0x100>;
+			interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scu AST2700_CLK_SD>;
+			status = "disabled";
+		};
+	};
+};

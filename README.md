@@ -80,6 +80,12 @@ The OpenBMC community maintains a set of tutorials new users can go through to
 get up to speed on OpenBMC development out
 [here](https://github.com/openbmc/docs/blob/master/development/README.md)
 
+## Lesson Learned (MVP)
+
+This repository includes a structured Lesson Learned hub for reusable debugging
+and remediation knowledge. See [docs/lessons/README.md](docs/lessons/README.md)
+for templates, metadata schema, and validation workflow.
+
 ## Build Validation and Testing
 
 Commits submitted by members of the OpenBMC GitHub community are compiled and

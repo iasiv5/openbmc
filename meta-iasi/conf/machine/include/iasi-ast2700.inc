@@ -1,0 +1,12 @@
+# AST2700 SoC flash layout overrides for IASI-2700
+
+require conf/machine/include/ast2700.inc
+
+# Flash layout - 128MB
+FLASH_SIZE = "131072"
+FLASH_UBOOT_OFFSET = "0"
+FLASH_UBOOT_ENV_OFFSET = "4096"
+FLASH_KERNEL_OFFSET = "4224"
+FLASH_ROFS_OFFSET = "13440"
+FLASH_RWFS_OFFSET = "98304"
+RWFS_SIZE = "33554432"

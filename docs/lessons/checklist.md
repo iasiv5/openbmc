@@ -13,8 +13,8 @@
 - [ ] `sensitivity` is correctly set (`public`/`internal`/`confidential`)
 - [ ] No secrets, tokens, private keys, or credentials are present
 - [ ] `symptoms`, `root_cause`, `fix`, and `prevention` are actionable
-- [ ] Validation passes: `python3 scripts/lessons/validate_lessons.py`
-- [ ] Index rebuilt: `python3 scripts/lessons/build_index.py`
+- [ ] Validation passes: `python3 docs/lessons/scripts/validate_lessons.py`
+- [ ] Index rebuilt: `python3 docs/lessons/scripts/build_index.py`
 
 ## Reviewer checks
 

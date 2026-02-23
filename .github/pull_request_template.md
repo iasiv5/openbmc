@@ -11,5 +11,5 @@ complete the checklist below:
 
 - [ ] This change adds or updates a lesson entry under `docs/lessons/entries/`
 - [ ] If no lesson is added, reason provided: _N/A / no reusable lesson / already covered_
-- [ ] `python3 scripts/lessons/validate_lessons.py` passes
-- [ ] `python3 scripts/lessons/build_index.py` has been run
+- [ ] `python3 docs/lessons/scripts/validate_lessons.py` passes
+- [ ] `python3 docs/lessons/scripts/build_index.py` has been run

@@ -33,6 +33,6 @@ Never output secrets, private keys, credentials, or internal identifiers.
 
 When adding or updating lessons:
 - Follow `docs/lessons/schema.md`
-- Run `python3 scripts/lessons/validate_lessons.py`
-- Run `python3 scripts/lessons/build_index.py`
+- Run `python3 docs/lessons/scripts/validate_lessons.py`
+- Run `python3 docs/lessons/scripts/build_index.py`
 - Follow `docs/lessons/checklist.md`

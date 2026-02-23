@@ -28,9 +28,9 @@ progressive disclosure:
 2. Fill YAML frontmatter per `schema.md`
 3. Put file under `docs/lessons/entries/` (create if absent)
 4. Run validation:
-   - `python3 scripts/lessons/validate_lessons.py`
+   - `python3 docs/lessons/scripts/validate_lessons.py`
 5. Rebuild index:
-   - `python3 scripts/lessons/build_index.py`
+   - `python3 docs/lessons/scripts/build_index.py`
 
 ## Metadata search examples
 

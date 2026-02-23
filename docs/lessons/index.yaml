@@ -1,6 +1,22 @@
 version: 1
-updated_at: 2026-02-22T11:16:06Z
+updated_at: 2026-02-23T07:49:55Z
 entries:
+  - id: "LL-2026-003"
+    title: "Skill pipeline smoke test lesson"
+    date: "2026-02-23"
+    component: "meta-iasi/skill"
+    topic: "build"
+    failure_mode: "config-drift"
+    impact: "medium"
+    confidence: "validated"
+    sensitivity: "internal"
+    status: "draft"
+    owner: "iasi-bsp-team"
+    tags:
+      - "skill"
+      - "automation"
+      - "lesson"
+    path: "docs/lessons/entries/LL-2026-003-skill-pipeline-smoke-test-lesson.md"
   - id: "LL-2026-002"
     title: "Provider conflicts from broad machine override blocks"
     date: "2026-02-22"

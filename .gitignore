@@ -3,3 +3,6 @@ customrc
 *.sw?
 .repo/
 .vscode/
+*.pyc
+__pycache__/
+poky/bitbake/lib/bb/pysh/pyshtables.py
